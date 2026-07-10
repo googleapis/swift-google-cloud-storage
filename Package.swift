@@ -30,8 +30,11 @@ let package = Package(
   dependencies: [
     .package(path: "../auth"),
     .package(path: "../gax"),
+    .package(path: "../wkt"),
     .package(path: "../../generated/google-rpc"),
     .package(url: "https://github.com/apple/swift-log", from: "1.12.0"),
+    .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.28.2"),
+    .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.23.0"),
   ],
   targets: [
     .target(
@@ -39,8 +42,10 @@ let package = Package(
       dependencies: [
         .product(name: "GoogleCloudAuth", package: "auth"),
         .product(name: "GoogleCloudGax", package: "gax"),
+        .product(name: "GoogleCloudWkt", package: "wkt"),
         .product(name: "Logging", package: "swift-log"),
-      ]
+      ],
+      path: "Sources/GoogleCloudStorage"
     ),
     .testTarget(
       name: "GoogleCloudStorageTests",
@@ -56,6 +61,14 @@ let package = Package(
         "GoogleCloudStorage"
       ],
       path: "Tests/IntegrationTests"
+    ),
+    .target(
+      name: "StorageControlProtos",
+      dependencies: [
+        .product(name: "SwiftProtobuf", package: "swift-protobuf"),
+        .product(name: "GRPC", package: "grpc-swift"),
+      ],
+      path: "Sources/Generated/StorageControlProtos"
     ),
   ]
 )
