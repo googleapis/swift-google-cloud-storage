@@ -19,10 +19,15 @@ public struct StorageClientOptions: Sendable {
   /// Common options used by all Google Swift SDK clients.
   public var client: GoogleCloudGax.ClientOptions
 
+  /// Default configuration inherited by data-plane operations (e.g., Uploads).
+  public var upload: UploadOptions
+
   public init(
     client: GoogleCloudGax.ClientOptions = .init(),
+    upload: UploadOptions = .default
   ) {
     self.client = client
+    self.upload = upload
   }
 
   /// Override specific values using closure modification.

@@ -16,5 +16,37 @@ import Foundation
 
 /// Protocol defining the high-level object data-plane operations.
 public protocol StorageClientProtocol {
-  // TODO: Add methods here
+  /// Core upload method accepting any upload source.
+  func upload(
+    _ source: some UploadSource,
+    to bucket: String,
+    as objectName: String,
+    metadata: UploadMetadata?,
+    options: UploadOptions
+  ) -> UploadTask
+
+  /// Resumes a previously interrupted file upload using a saved upload ID (Session URI).
+  func resumeUpload(
+    _ source: some SeekableUploadSource,
+    uploadId: String,
+    options: UploadOptions
+  ) -> UploadTask
+
+  /// Convenience upload method for a local file URL.
+  func upload(
+    _ fileURL: URL,
+    to bucket: String,
+    as objectName: String,
+    metadata: UploadMetadata?,
+    options: UploadOptions
+  ) -> UploadTask
+
+  /// Convenience upload method for in-memory Data.
+  func upload(
+    _ data: Data,
+    to bucket: String,
+    as objectName: String,
+    metadata: UploadMetadata?,
+    options: UploadOptions
+  ) -> UploadTask
 }

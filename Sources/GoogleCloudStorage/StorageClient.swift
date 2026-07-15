@@ -26,12 +26,14 @@ import GoogleCloudGax
 ///
 /// [Cloud Storage]: https://docs.cloud.google.com/storage
 public final class StorageClient: StorageClientProtocol {
+  public static let defaultEndpoint = "https://storage.googleapis.com"
+
   public let inner: GoogleCloudGax.HTTPClient
   public let options: StorageClientOptions
 
   public init(_ options: StorageClientOptions = .init()) throws {
     self.options = options
     self.inner = try GoogleCloudGax.HTTPClient(
-      from: options.client, withDefaultEndpoint: "https://storage.googleapis.com")
+      from: options.client, withDefaultEndpoint: Self.defaultEndpoint)
   }
 }
