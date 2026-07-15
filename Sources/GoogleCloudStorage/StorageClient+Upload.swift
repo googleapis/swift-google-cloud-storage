@@ -408,7 +408,7 @@ extension HTTPClient {
       throw UploadError.unexpectedServerResponse(
         statusCode: response.statusCode, message: String(data: data, encoding: .utf8) ?? "")
     }
-    let decoder = JSONDecoder()
+    let decoder = GoogleCloudWkt._ProtoJSONDecoder()
     return try decoder.decode(StorageObject.self, from: data)
   }
 }

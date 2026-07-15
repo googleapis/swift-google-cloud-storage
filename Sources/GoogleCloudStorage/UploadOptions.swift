@@ -123,14 +123,16 @@ public struct UploadOptions: Sendable {
 /// Represents a GCS Object.
 // TODO(#323): Replace with actual generated struct if available.
 public struct StorageObject: Sendable, Codable {
-  public let bucket: String
-  public let name: String
-  public let generation: Int64
-  public let metageneration: Int64
-  public let size: Int64
-  public let contentType: String?
-  public let timeCreated: GoogleCloudWkt.Timestamp?
-  public let updated: GoogleCloudWkt.Timestamp?
+  public var bucket: String = String()
+  public var name: String = String()
+  public var generation: Int64 = Int64()
+  public var metageneration: Int64 = Int64()
+  public var size: Int64 = Int64()
+  public var contentType: String?
+  public var timeCreated: GoogleCloudWkt.Timestamp?
+  public var updated: GoogleCloudWkt.Timestamp?
+
+  public init() {}
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -174,23 +176,16 @@ public struct StorageObject: Sendable, Codable {
     case updated
   }
 
-  public init(
-    bucket: String,
-    name: String,
-    generation: Int64 = 0,
-    metageneration: Int64 = 0,
-    size: Int64 = 0,
-    contentType: String? = nil,
-    timeCreated: GoogleCloudWkt.Timestamp? = nil,
-    updated: GoogleCloudWkt.Timestamp? = nil
-  ) {
-    self.bucket = bucket
-    self.name = name
-    self.generation = generation
-    self.metageneration = metageneration
-    self.size = size
-    self.contentType = contentType
-    self.timeCreated = timeCreated
-    self.updated = updated
+  /// Use `config` to return a new instance of this object, with some fields updated.
+  ///
+  /// Commonly used to initialize the value, for example:
+  ///
+  /// ```
+  /// let value = StorageObject().with { $0.name = ... }
+  /// ```
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
   }
 }
