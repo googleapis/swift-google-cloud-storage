@@ -32,6 +32,7 @@ let package = Package(
     .package(path: "../gax"),
     .package(path: "../wkt"),
     .package(path: "../../generated/google-rpc"),
+    .package(path: "../../generated/google-type"),
     .package(url: "https://github.com/apple/swift-log", from: "1.12.0"),
     .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.28.2"),
     .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.23.0"),
@@ -43,7 +44,10 @@ let package = Package(
         .product(name: "GoogleCloudAuth", package: "auth"),
         .product(name: "GoogleCloudGax", package: "gax"),
         .product(name: "GoogleCloudWkt", package: "wkt"),
+        .product(name: "GoogleType", package: "google-type"),
         .product(name: "Logging", package: "swift-log"),
+        "StorageControlProtos",
+        .product(name: "SwiftProtobuf", package: "swift-protobuf"),
       ],
       path: "Sources/GoogleCloudStorage"
     ),
@@ -68,7 +72,7 @@ let package = Package(
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
         .product(name: "GRPC", package: "grpc-swift"),
       ],
-      path: "Sources/Generated/StorageControlProtos"
+      path: "Sources/generated/StorageControlProtos"
     ),
   ]
 )
