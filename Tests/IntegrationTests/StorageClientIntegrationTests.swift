@@ -98,6 +98,122 @@ import Testing
 
       print("Large upload successful: \(object)")
     }
+
+    @Test func testFailedResumableUploadAndResume() async throws {
+      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
+        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
+        return
+      }
+      let bucketName =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
+      let objectName = "test-failed-resumable-\(UUID().uuidString).bin"
+
+      let fileSize = 10 * 1024 * 1024  // 10MB
+      let data = Data(repeating: 42, count: fileSize)
+      let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(objectName)
+      try data.write(to: fileURL)
+      defer {
+        try? FileManager.default.removeItem(at: fileURL)
+      }
+
+      let storage = try StorageClient()
+
+      // Set chunk size to 2MB and configure failing source to throw after 4MB read
+      let chunkSize = 2 * 1024 * 1024
+      let failAfterBytes = Int64(4 * 1024 * 1024)
+      let options = UploadOptions(chunkSize: chunkSize)
+      let failingSource = FailingUploadSource(fileURL: fileURL, failAfterBytes: failAfterBytes)
+
+      let task = storage.upload(failingSource, to: bucketName, as: objectName, options: options)
+
+      var statusUpdates = [UploadStatus]()
+      for await status in task.makeStatusStream() {
+        statusUpdates.append(status)
+        print(
+          "Failed test status: bytes=\(status.bytesUploaded), total=\(status.totalBytes ?? -1), ID=\(status.uploadId ?? "nil")"
+        )
+      }
+
+      // Verify that upload task failed with SimulatedUploadError
+      do {
+        _ = try await task.value
+        Issue.record("Expected upload to fail, but it succeeded")
+      } catch is FailingUploadSource.SimulatedUploadError {
+        // Expected error
+      } catch {
+        Issue.record("Expected SimulatedUploadError, got \(error)")
+      }
+
+      // Extract the upload ID from the recorded status updates
+      let uploadId = statusUpdates.compactMap(\.uploadId).first
+      #expect(uploadId != nil)
+      guard let uploadId = uploadId else {
+        Issue.record("No uploadId captured before upload failure")
+        return
+      }
+
+      // Verify that partially uploaded bytes reached 4MB before failure
+      let lastUploadedBytes = statusUpdates.last?.bytesUploaded ?? 0
+      #expect(lastUploadedBytes == failAfterBytes)
+
+      // Now resume the upload using full FileSource and original uploadId
+      let fileSource = FileSource(fileURL: fileURL)
+      let resumeTask = storage.resumeUpload(fileSource, uploadId: uploadId, options: options)
+
+      var resumeStatusUpdates = [UploadStatus]()
+      for await status in resumeTask.makeStatusStream() {
+        resumeStatusUpdates.append(status)
+        print(
+          "Resumed status: bytes=\(status.bytesUploaded), total=\(status.totalBytes ?? -1), ID=\(status.uploadId ?? "nil")"
+        )
+      }
+
+      let object = try await resumeTask.value
+      #expect(object.bucket == bucketName)
+      #expect(object.name == objectName)
+      #expect(object.size == Int64(fileSize))
+
+      // Verify resume status starts at the 4MB offset reported by GCS
+      if let firstResumeStatus = resumeStatusUpdates.first {
+        #expect(firstResumeStatus.bytesUploaded == failAfterBytes)
+      }
+
+      print("Resumed upload successful: \(object)")
+    }
+  }
+
+  private struct FailingUploadSource: SeekableUploadSource {
+    struct SimulatedUploadError: Error {}
+
+    private var fileSource: FileSource
+    let failAfterBytes: Int64
+    private var bytesRead: Int64 = 0
+
+    var totalSize: Int64? {
+      fileSource.totalSize
+    }
+
+    init(fileURL: URL, failAfterBytes: Int64) {
+      self.fileSource = FileSource(fileURL: fileURL)
+      self.failAfterBytes = failAfterBytes
+    }
+
+    mutating func read(maxBytes: Int) async throws -> Data? {
+      guard bytesRead < failAfterBytes else {
+        throw SimulatedUploadError()
+      }
+      let bytesToRead = min(Int64(maxBytes), failAfterBytes - bytesRead)
+      guard let chunk = try await fileSource.read(maxBytes: Int(bytesToRead)) else {
+        return nil
+      }
+      bytesRead += Int64(chunk.count)
+      return chunk
+    }
+
+    mutating func seek(to offset: Int64) async throws {
+      try await fileSource.seek(to: offset)
+      bytesRead = offset
+    }
   }
 
 #endif
