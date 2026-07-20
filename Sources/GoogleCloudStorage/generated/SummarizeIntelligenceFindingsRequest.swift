@@ -119,7 +119,7 @@ public struct SummarizeIntelligenceFindingsRequest: Codable, Equatable, GoogleCl
     /// Returns the string value (or name) associated with the enumeration.
     ///
     /// If the enumeration was initialized with an unknown integer value, this returns `nil`.
-    public var stringValue: String? {
+    public var stringValue: Swift.String? {
       switch self {
       case .unspecified: return "RESOURCE_SCOPE_UNSPECIFIED"
       case .parent: return "PARENT"
@@ -132,7 +132,7 @@ public struct SummarizeIntelligenceFindingsRequest: Codable, Equatable, GoogleCl
     /// Initialize from a string value.
     ///
     /// If the value is unknown, this initializes to ``.unknownStringValue(_:)``.
-    public init(stringValue: String) {
+    public init(stringValue: Swift.String) {
       switch stringValue {
       case "RESOURCE_SCOPE_UNSPECIFIED": self = .unspecified
       case "PARENT": self = .parent
@@ -183,7 +183,7 @@ public struct SummarizeIntelligenceFindingsRequest: Codable, Equatable, GoogleCl
     }
   }
 
-  public static var _anyTypeUrl: String {
+  public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.SummarizeIntelligenceFindingsRequest"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {

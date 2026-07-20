@@ -51,7 +51,7 @@ public struct IntelligenceFindingRevision: Codable, Equatable, GoogleCloudWkt._A
     return copy
   }
 
-  public static var _anyTypeUrl: String {
+  public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.IntelligenceFindingRevision"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {

@@ -57,7 +57,7 @@ public enum FindingCategory: Codable, Equatable, Sendable {
   /// Returns the string value (or name) associated with the enumeration.
   ///
   /// If the enumeration was initialized with an unknown integer value, this returns `nil`.
-  public var stringValue: String? {
+  public var stringValue: Swift.String? {
     switch self {
     case .unspecified: return "FINDING_CATEGORY_UNSPECIFIED"
     case .dataManagement: return "FINDING_CATEGORY_DATA_MANAGEMENT"
@@ -70,7 +70,7 @@ public enum FindingCategory: Codable, Equatable, Sendable {
   /// Initialize from a string value.
   ///
   /// If the value is unknown, this initializes to ``.unknownStringValue(_:)``.
-  public init(stringValue: String) {
+  public init(stringValue: Swift.String) {
     switch stringValue {
     case "FINDING_CATEGORY_UNSPECIFIED": self = .unspecified
     case "FINDING_CATEGORY_DATA_MANAGEMENT": self = .dataManagement

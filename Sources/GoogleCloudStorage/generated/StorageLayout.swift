@@ -81,7 +81,7 @@ public struct StorageLayout: Codable, Equatable, GoogleCloudWkt._AnyPackable,
       return copy
     }
 
-    public static var _anyTypeUrl: String {
+    public static var _anyTypeUrl: Swift.String {
       return "type.googleapis.com/google.storage.control.v2.StorageLayout.CustomPlacementConfig"
     }
     public init(fromAny any: GoogleCloudWkt.`Any`) throws {
@@ -115,7 +115,7 @@ public struct StorageLayout: Codable, Equatable, GoogleCloudWkt._AnyPackable,
       return copy
     }
 
-    public static var _anyTypeUrl: String {
+    public static var _anyTypeUrl: Swift.String {
       return "type.googleapis.com/google.storage.control.v2.StorageLayout.HierarchicalNamespace"
     }
     public init(fromAny any: GoogleCloudWkt.`Any`) throws {
@@ -126,7 +126,7 @@ public struct StorageLayout: Codable, Equatable, GoogleCloudWkt._AnyPackable,
     }
   }
 
-  public static var _anyTypeUrl: String {
+  public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.StorageLayout"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {

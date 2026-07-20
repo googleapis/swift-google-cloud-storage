@@ -83,7 +83,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
     return copy
   }
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: Swift.String, CodingKey {
     case name = "name"
     case description = "description"
     case type = "type"
@@ -247,7 +247,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
         return copy
       }
 
-      private enum CodingKeys: String, CodingKey {
+      private enum CodingKeys: Swift.String, CodingKey {
         case bucket = "bucket"
         case percentageIncrease = "percentageIncrease"
         case totalOperationsCount = "totalOperationsCount"
@@ -359,7 +359,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
             return copy
           }
 
-          private enum CodingKeys: String, CodingKey {
+          private enum CodingKeys: Swift.String, CodingKey {
             case `prefix` = "prefix"
             case percentageIncrease = "percentageIncrease"
             case totalOperationsCount = "totalOperationsCount"
@@ -381,7 +381,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
             try container.encode(self.totalOperationsCount, forKey: .totalOperationsCount)
           }
 
-          public static var _anyTypeUrl: String {
+          public static var _anyTypeUrl: Swift.String {
             return
               "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike.BucketContribution.Contribution.PrefixContribution"
           }
@@ -393,7 +393,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
           }
         }
 
-        public static var _anyTypeUrl: String {
+        public static var _anyTypeUrl: Swift.String {
           return
             "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike.BucketContribution.Contribution"
         }
@@ -417,7 +417,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
         indirect case error(GoogleRpc.Status?)
       }
 
-      public static var _anyTypeUrl: String {
+      public static var _anyTypeUrl: Swift.String {
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike.BucketContribution"
       }
@@ -429,7 +429,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
       }
     }
 
-    public static var _anyTypeUrl: String {
+    public static var _anyTypeUrl: Swift.String {
       return
         "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike"
     }
@@ -510,7 +510,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
         return copy
       }
 
-      private enum CodingKeys: String, CodingKey {
+      private enum CodingKeys: Swift.String, CodingKey {
         case bucket = "bucket"
         case totalEgressBytes = "totalEgressBytes"
         case percentageIncrease = "percentageIncrease"
@@ -623,7 +623,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
             return copy
           }
 
-          private enum CodingKeys: String, CodingKey {
+          private enum CodingKeys: Swift.String, CodingKey {
             case `prefix` = "prefix"
             case totalEgressBytes = "totalEgressBytes"
             case percentageIncrease = "percentageIncrease"
@@ -645,7 +645,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
             try container.encode(self.percentageIncrease, forKey: .percentageIncrease)
           }
 
-          public static var _anyTypeUrl: String {
+          public static var _anyTypeUrl: Swift.String {
             return
               "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.CrossRegionEgressSpike.BucketContribution.Contribution.PrefixContribution"
           }
@@ -657,7 +657,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
           }
         }
 
-        public static var _anyTypeUrl: String {
+        public static var _anyTypeUrl: Swift.String {
           return
             "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.CrossRegionEgressSpike.BucketContribution.Contribution"
         }
@@ -680,7 +680,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
         indirect case error(GoogleRpc.Status?)
       }
 
-      public static var _anyTypeUrl: String {
+      public static var _anyTypeUrl: Swift.String {
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.CrossRegionEgressSpike.BucketContribution"
       }
@@ -692,7 +692,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
       }
     }
 
-    public static var _anyTypeUrl: String {
+    public static var _anyTypeUrl: Swift.String {
       return
         "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.CrossRegionEgressSpike"
     }
@@ -771,7 +771,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
         return copy
       }
 
-      private enum CodingKeys: String, CodingKey {
+      private enum CodingKeys: Swift.String, CodingKey {
         case bucket = "bucket"
         case throttledRequests = "throttledRequests"
         case percentageIncrease = "percentageIncrease"
@@ -882,7 +882,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
             return copy
           }
 
-          private enum CodingKeys: String, CodingKey {
+          private enum CodingKeys: Swift.String, CodingKey {
             case `prefix` = "prefix"
             case throttledRequests = "throttledRequests"
             case percentageIncrease = "percentageIncrease"
@@ -904,7 +904,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
             try container.encode(self.percentageIncrease, forKey: .percentageIncrease)
           }
 
-          public static var _anyTypeUrl: String {
+          public static var _anyTypeUrl: Swift.String {
             return
               "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ThrottledRequestSpike.BucketContribution.Contribution.PrefixContribution"
           }
@@ -916,7 +916,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
           }
         }
 
-        public static var _anyTypeUrl: String {
+        public static var _anyTypeUrl: Swift.String {
           return
             "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ThrottledRequestSpike.BucketContribution.Contribution"
         }
@@ -939,7 +939,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
         indirect case error(GoogleRpc.Status?)
       }
 
-      public static var _anyTypeUrl: String {
+      public static var _anyTypeUrl: Swift.String {
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ThrottledRequestSpike.BucketContribution"
       }
@@ -951,7 +951,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
       }
     }
 
-    public static var _anyTypeUrl: String {
+    public static var _anyTypeUrl: Swift.String {
       return
         "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ThrottledRequestSpike"
     }
@@ -1027,7 +1027,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
         return copy
       }
 
-      private enum CodingKeys: String, CodingKey {
+      private enum CodingKeys: Swift.String, CodingKey {
         case bucket = "bucket"
         case totalStorageGrowthBytes = "totalStorageGrowthBytes"
         case percentageIncrease = "percentageIncrease"
@@ -1080,7 +1080,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
         indirect case error(GoogleRpc.Status?)
       }
 
-      public static var _anyTypeUrl: String {
+      public static var _anyTypeUrl: Swift.String {
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.StorageGrowthAboveTrend.BucketContribution"
       }
@@ -1092,7 +1092,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
       }
     }
 
-    public static var _anyTypeUrl: String {
+    public static var _anyTypeUrl: Swift.String {
       return
         "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.StorageGrowthAboveTrend"
     }
@@ -1120,7 +1120,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWkt._AnyPackab
     indirect case storageGrowthAboveTrend(IntelligenceFinding.StorageGrowthAboveTrend?)
   }
 
-  public static var _anyTypeUrl: String {
+  public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.IntelligenceFinding"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {

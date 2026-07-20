@@ -95,7 +95,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
       return copy
     }
 
-    private enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: Swift.String, CodingKey {
       case includedCloudStorageLocations = "includedCloudStorageLocations"
       case excludedCloudStorageLocations = "excludedCloudStorageLocations"
       case includedCloudStorageBuckets = "includedCloudStorageBuckets"
@@ -203,7 +203,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
         return copy
       }
 
-      public static var _anyTypeUrl: String {
+      public static var _anyTypeUrl: Swift.String {
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceConfig.Filter.CloudStorageLocations"
       }
@@ -245,7 +245,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
         return copy
       }
 
-      public static var _anyTypeUrl: String {
+      public static var _anyTypeUrl: Swift.String {
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceConfig.Filter.CloudStorageBuckets"
       }
@@ -273,7 +273,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
       indirect case excludedCloudStorageBuckets(IntelligenceConfig.Filter.CloudStorageBuckets?)
     }
 
-    public static var _anyTypeUrl: String {
+    public static var _anyTypeUrl: Swift.String {
       return "type.googleapis.com/google.storage.control.v2.IntelligenceConfig.Filter"
     }
     public init(fromAny any: GoogleCloudWkt.`Any`) throws {
@@ -355,7 +355,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
       /// Returns the string value (or name) associated with the enumeration.
       ///
       /// If the enumeration was initialized with an unknown integer value, this returns `nil`.
-      public var stringValue: String? {
+      public var stringValue: Swift.String? {
         switch self {
         case .unspecified: return "EFFECTIVE_EDITION_UNSPECIFIED"
         case .`none`: return "NONE"
@@ -368,7 +368,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
       /// Initialize from a string value.
       ///
       /// If the value is unknown, this initializes to ``.unknownStringValue(_:)``.
-      public init(stringValue: String) {
+      public init(stringValue: Swift.String) {
         switch stringValue {
         case "EFFECTIVE_EDITION_UNSPECIFIED": self = .unspecified
         case "NONE": self = .`none`
@@ -419,7 +419,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
       }
     }
 
-    public static var _anyTypeUrl: String {
+    public static var _anyTypeUrl: Swift.String {
       return
         "type.googleapis.com/google.storage.control.v2.IntelligenceConfig.EffectiveIntelligenceConfig"
     }
@@ -454,7 +454,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
       return copy
     }
 
-    public static var _anyTypeUrl: String {
+    public static var _anyTypeUrl: Swift.String {
       return "type.googleapis.com/google.storage.control.v2.IntelligenceConfig.TrialConfig"
     }
     public init(fromAny any: GoogleCloudWkt.`Any`) throws {
@@ -522,7 +522,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
     /// Returns the string value (or name) associated with the enumeration.
     ///
     /// If the enumeration was initialized with an unknown integer value, this returns `nil`.
-    public var stringValue: String? {
+    public var stringValue: Swift.String? {
       switch self {
       case .unspecified: return "EDITION_CONFIG_UNSPECIFIED"
       case .inherit: return "INHERIT"
@@ -537,7 +537,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
     /// Initialize from a string value.
     ///
     /// If the value is unknown, this initializes to ``.unknownStringValue(_:)``.
-    public init(stringValue: String) {
+    public init(stringValue: Swift.String) {
       switch stringValue {
       case "EDITION_CONFIG_UNSPECIFIED": self = .unspecified
       case "INHERIT": self = .inherit
@@ -594,7 +594,7 @@ public struct IntelligenceConfig: Codable, Equatable, GoogleCloudWkt._AnyPackabl
     }
   }
 
-  public static var _anyTypeUrl: String {
+  public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.IntelligenceConfig"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {

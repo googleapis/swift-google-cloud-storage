@@ -75,7 +75,7 @@ public struct ListFoldersRequest: Codable, Equatable, GoogleCloudWkt._AnyPackabl
     return copy
   }
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: Swift.String, CodingKey {
     case parent = "parent"
     case pageSize = "pageSize"
     case pageToken = "pageToken"
@@ -110,7 +110,7 @@ public struct ListFoldersRequest: Codable, Equatable, GoogleCloudWkt._AnyPackabl
     try container.encode(self.requestId, forKey: .requestId)
   }
 
-  public static var _anyTypeUrl: String {
+  public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.ListFoldersRequest"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {
