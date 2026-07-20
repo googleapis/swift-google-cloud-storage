@@ -66,6 +66,9 @@ public struct FileSource: SeekableUploadSource {
     guard offset >= 0 else {
       throw UploadError.internalError("Invalid seek offset: \(offset)")
     }
+    if let size = totalSize, offset > size {
+      throw UploadError.localSourceTooSmall(localSize: size, gcsOffset: offset)
+    }
     self.offset = offset
   }
 }
@@ -91,9 +94,12 @@ public struct BytesSource: SeekableUploadSource {
   }
 
   public mutating func seek(to offset: Int64) async throws {
-    guard offset >= 0 && offset <= data.count else {
-      // TODO(#324): Throw appropriate error
-      return
+    guard offset >= 0 else {
+      throw UploadError.internalError("Invalid seek offset: \(offset)")
+    }
+    let size = Int64(data.count)
+    guard offset <= size else {
+      throw UploadError.localSourceTooSmall(localSize: size, gcsOffset: offset)
     }
     self.offset = offset
   }
