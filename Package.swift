@@ -36,6 +36,7 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-log", from: "1.12.0"),
     .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.28.2"),
     .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.23.0"),
+    .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
   ],
   targets: [
     .target(
@@ -49,6 +50,7 @@ let package = Package(
         .product(name: "Logging", package: "swift-log"),
         "StorageControlProtos",
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
+        .product(name: "Crypto", package: "swift-crypto"),
       ],
       path: "Sources/GoogleCloudStorage"
     ),

@@ -152,9 +152,13 @@ import Testing
         return
       }
 
-      // Verify that partially uploaded bytes reached 4MB before failure
+      // ChecksummedSource looks ahead 1 chunk to detect the final chunk.
+      // Reading chunk 1 (2MB) triggers a lookahead read for chunk 2 (2MB), advancing bytesRead to 4MB.
+      // When chunk 2 is processed, the lookahead for chunk 3 fails because bytesRead reached 4MB.
+      // Thus, GCS receives 1 chunk (2MB) before the upload task fails.
+      let expectedUploadedBytes = Int64(2 * 1024 * 1024)
       let lastUploadedBytes = statusUpdates.last?.bytesUploaded ?? 0
-      #expect(lastUploadedBytes == failAfterBytes)
+      #expect(lastUploadedBytes == expectedUploadedBytes)
 
       // Now resume the upload using full FileSource and original uploadId
       let fileSource = FileSource(fileURL: fileURL)
@@ -173,12 +177,78 @@ import Testing
       #expect(object.name == objectName)
       #expect(object.size == Int64(fileSize))
 
-      // Verify resume status starts at the 4MB offset reported by GCS
+      // Verify resume status starts at the 2MB offset reported by GCS
       if let firstResumeStatus = resumeStatusUpdates.first {
-        #expect(firstResumeStatus.bytesUploaded == failAfterBytes)
+        #expect(firstResumeStatus.bytesUploaded == expectedUploadedBytes)
       }
 
       print("Resumed upload successful: \(object)")
+    }
+
+    @Test func testSimpleUploadWithChecksumValidation() async throws {
+      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
+        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
+        return
+      }
+      let bucketName =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
+
+      let storage = try StorageClient()
+
+      for validation in [ChecksumValidation.crc32c, ChecksumValidation.md5] {
+        let objectName = "test-checksum-simple-\(UUID().uuidString).txt"
+        let content = "Hello Google Cloud Storage checksum validation: \(validation)"
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(objectName)
+        try content.write(to: fileURL, atomically: true, encoding: .utf8)
+        defer {
+          try? FileManager.default.removeItem(at: fileURL)
+        }
+
+        let options = UploadOptions(validation: validation)
+        let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
+
+        let object = try await task.value
+        #expect(object.bucket == bucketName)
+        #expect(object.name == objectName)
+        #expect(object.size == Int64(content.utf8.count))
+
+        print("Simple upload with \(validation) successful: \(object)")
+      }
+    }
+
+    @Test func testResumableUploadWithChecksumValidation() async throws {
+      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
+        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
+        return
+      }
+      let bucketName =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
+
+      let storage = try StorageClient()
+
+      for validation in [ChecksumValidation.crc32c, ChecksumValidation.md5] {
+        let objectName = "test-checksum-resumable-\(UUID().uuidString).bin"
+        let fileSize = 10 * 1024 * 1024
+        var data = Data(count: fileSize)
+        for i in 0..<fileSize {
+          data[i] = UInt8(i % 256)
+        }
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(objectName)
+        try data.write(to: fileURL)
+        defer {
+          try? FileManager.default.removeItem(at: fileURL)
+        }
+
+        let options = UploadOptions(validation: validation)
+        let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
+
+        let object = try await task.value
+        #expect(object.bucket == bucketName)
+        #expect(object.name == objectName)
+        #expect(object.size == Int64(fileSize))
+
+        print("Resumable upload with \(validation) successful: \(object)")
+      }
     }
   }
 

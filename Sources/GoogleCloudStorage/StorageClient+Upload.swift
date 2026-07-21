@@ -18,6 +18,7 @@ import Foundation
 #endif
 import GoogleCloudGax
 import GoogleCloudWkt
+import Crypto
 
 extension StorageClient {
   /// Core upload method accepting any upload source.
@@ -86,8 +87,15 @@ extension StorageClient {
     guard let data = try await source.read(maxBytes: Int(totalSize ?? 0)) else {
       throw UploadError.internalError("Failed to read data from source")
     }
+    let checksum = try computeSimpleChecksum(data, validation: options.validation)
     let request = try await httpClient.buildSimpleUploadRequest(
-      bucket: bucket, objectName: objectName, data: data, metadata: metadata, options: options)
+      bucket: bucket,
+      objectName: objectName,
+      data: data,
+      metadata: metadata,
+      options: options,
+      checksum: checksum
+    )
     let (responseData, response) = try await httpClient.data(for: request)
     let object = try httpClient.handleObjectResponse(data: responseData, response: response)
     continuation.yield(
@@ -130,6 +138,7 @@ extension StorageClient {
       offset: 0,
       chunkSize: chunkSize,
       totalSize: totalSize,
+      options: options,
       continuation: continuation
     )
   }
@@ -141,15 +150,23 @@ extension StorageClient {
     offset: Int64,
     chunkSize: Int,
     totalSize: Int64?,
+    options: UploadOptions,
     continuation: AsyncStream<UploadStatus>.Continuation
   ) async throws -> StorageObject {
     var offset = offset
+    var checksummedSource = ChecksummedSource(source: source, validation: options.validation)
     while true {
-      guard let chunk = try await source.read(maxBytes: chunkSize), !chunk.isEmpty else {
+      guard let chunkInfo = try await checksummedSource.readChunk(maxBytes: chunkSize),
+        !chunkInfo.data.isEmpty
+      else {
         break
       }
+      let chunk = chunkInfo.data
+      let isLast = chunkInfo.isLast
+      let checksum = (isLast && offset == 0) ? chunkInfo.checksum : nil
+
       let uploadRequest = try await httpClient.buildUploadChunkRequest(
-        uploadId: uploadId, data: chunk, offset: offset, totalSize: totalSize)
+        uploadId: uploadId, data: chunk, offset: offset, totalSize: totalSize, checksum: checksum)
       let (uploadData, uploadResponse) = try await httpClient.data(for: uploadRequest)
 
       if uploadResponse.statusCode == 200 || uploadResponse.statusCode == 201 {
@@ -170,9 +187,7 @@ extension StorageClient {
           UploadStatus(
             bytesUploaded: offset, totalBytes: totalSize, uploadId: uploadId))
       } else {
-        throw UploadError.unexpectedServerResponse(
-          statusCode: uploadResponse.statusCode,
-          message: String(data: uploadData, encoding: .utf8) ?? "")
+        _ = try httpClient.handleObjectResponse(data: uploadData, response: uploadResponse)
       }
     }
 
@@ -237,6 +252,7 @@ extension StorageClient {
         offset: offset,
         chunkSize: chunkSize,
         totalSize: totalSize,
+        options: options,
         continuation: continuation
       )
     }
@@ -278,7 +294,8 @@ extension HTTPClient {
     objectName: String,
     data: Data,
     metadata: UploadMetadata?,
-    options: UploadOptions
+    options: UploadOptions,
+    checksum: String? = nil
   ) async throws -> URLRequest {
     var queryItems = [URLQueryItem(name: "uploadType", value: "multipart")]
     queryItems.append(URLQueryItem(name: "name", value: objectName))
@@ -286,6 +303,10 @@ extension HTTPClient {
     var request = try await self.Request(
       path: "/upload/storage/v1/b/\(bucket)/o", query: queryItems)
     request.httpMethod = "POST"
+
+    if let checksum = checksum {
+      request.setValue(checksum, forHTTPHeaderField: "x-goog-hash")
+    }
 
     let boundary = "Boundary-\(UUID().uuidString)"
     request.setValue("multipart/related; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
@@ -347,7 +368,8 @@ extension HTTPClient {
     uploadId: String,
     data: Data,
     offset: Int64,
-    totalSize: Int64?
+    totalSize: Int64?,
+    checksum: String? = nil
   ) async throws -> URLRequest {
     guard let url = URL(string: uploadId),
       let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
@@ -358,6 +380,10 @@ extension HTTPClient {
       path: components.path, query: components.queryItems ?? [])
     request.httpMethod = "PUT"
     request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+
+    if let checksum = checksum {
+      request.setValue(checksum, forHTTPHeaderField: "x-goog-hash")
+    }
 
     let end = offset + Int64(data.count) - 1
     let totalStr = totalSize.map { String($0) } ?? "*"
@@ -405,10 +431,74 @@ extension HTTPClient {
     -> StorageObject
   {
     guard (200..<300).contains(response.statusCode) else {
+      let message = String(data: data, encoding: .utf8) ?? ""
+      if response.statusCode == 400 {
+        if let match = StorageClient.parseChecksumMismatch(message) {
+          throw UploadError.checksumMismatch(
+            localChecksum: match.local, serverChecksum: match.server)
+        }
+      }
       throw UploadError.unexpectedServerResponse(
-        statusCode: response.statusCode, message: String(data: data, encoding: .utf8) ?? "")
+        statusCode: response.statusCode, message: message)
     }
     let decoder = GoogleCloudWkt._ProtoJSONDecoder()
     return try decoder.decode(StorageObject.self, from: data)
+  }
+}
+
+extension StorageClient {
+  fileprivate static func computeSimpleChecksum(_ data: Data, validation: ChecksumValidation) throws
+    -> String?
+  {
+    switch validation {
+    case .crc32c:
+      let crc = CRC32C.compute(data)
+      let bigEndian = crc.bigEndian
+      var bytes = [UInt8]()
+      withUnsafeBytes(of: bigEndian) {
+        bytes = Array($0)
+      }
+      return "crc32c=" + Data(bytes).base64EncodedString()
+    case .md5:
+      let digest = Insecure.MD5.hash(data: data)
+      return "md5=" + Data(digest).base64EncodedString()
+    case .none:
+      return nil
+    }
+  }
+
+  internal static func parseChecksumMismatch(_ message: String) -> (local: String, server: String)?
+  {
+    let crcRegex = try? NSRegularExpression(
+      pattern: "Provided CRC32C[:\\s]+(\\S+)\\s+.*calculated CRC32C[:\\s]+(\\S+)",
+      options: .caseInsensitive)
+    if let match = crcRegex?.firstMatch(
+      in: message, options: [], range: NSRange(message.startIndex..., in: message))
+    {
+      if let localRange = Range(match.range(at: 1), in: message),
+        let serverRange = Range(match.range(at: 2), in: message)
+      {
+        let local = String(message[localRange])
+        let server = String(message[serverRange])
+        return ("crc32c=" + local, "crc32c=" + server)
+      }
+    }
+
+    let md5Regex = try? NSRegularExpression(
+      pattern: "Provided MD5[:\\s]+(\\S+)\\s+.*calculated MD5[:\\s]+(\\S+)",
+      options: .caseInsensitive)
+    if let match = md5Regex?.firstMatch(
+      in: message, options: [], range: NSRange(message.startIndex..., in: message))
+    {
+      if let localRange = Range(match.range(at: 1), in: message),
+        let serverRange = Range(match.range(at: 2), in: message)
+      {
+        let local = String(message[localRange])
+        let server = String(message[serverRange])
+        return ("md5=" + local, "md5=" + server)
+      }
+    }
+
+    return nil
   }
 }
