@@ -16,8 +16,8 @@
 
 import Foundation
 import GoogleCloudGax
-internal import SwiftProtobuf
 internal import StorageControlProtos
+internal import SwiftProtobuf
 
 extension FindingSeverity {
   internal init(proto: StorageControlProtos.Google_Storage_Control_V2_FindingSeverity) {

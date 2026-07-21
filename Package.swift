@@ -44,6 +44,7 @@ let package = Package(
         .product(name: "GoogleCloudAuth", package: "auth"),
         .product(name: "GoogleCloudGax", package: "gax"),
         .product(name: "GoogleCloudWkt", package: "wkt"),
+        .product(name: "GoogleCloudWktConvert", package: "wkt"),
         .product(name: "GoogleType", package: "google-type"),
         .product(name: "Logging", package: "swift-log"),
         "StorageControlProtos",
@@ -55,6 +56,7 @@ let package = Package(
       name: "GoogleCloudStorageTests",
       dependencies: [
         "GoogleCloudStorage",
+        "StorageControlProtos",
       ],
       path: "Tests",
       exclude: ["IntegrationTests"]
