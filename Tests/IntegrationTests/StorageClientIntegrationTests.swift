@@ -250,6 +250,70 @@ import Testing
         print("Resumable upload with \(validation) successful: \(object)")
       }
     }
+
+    @Test func testMultipleChecksumsUpload() async throws {
+      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
+        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
+        return
+      }
+      let bucketName =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
+      let objectName = "test-multiple-checksums-\(UUID().uuidString).txt"
+
+      let content = "Hello Google Cloud Storage with multiple checksums!"
+      let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(objectName)
+      try content.write(to: fileURL, atomically: true, encoding: .utf8)
+      defer {
+        try? FileManager.default.removeItem(at: fileURL)
+      }
+
+      let storage = try StorageClient()
+      let options = UploadOptions(checksums: ChecksumOptions(crc32c: .auto, md5: .auto))
+      let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
+
+      let object = try await task.value
+      #expect(object.bucket == bucketName)
+      #expect(object.name == objectName)
+      #expect(object.size == Int64(content.utf8.count))
+
+      print("Multiple checksums upload successful: \(object)")
+    }
+
+    @Test func testBadChecksumUploadRejection() async throws {
+      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
+        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
+        return
+      }
+      let bucketName =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
+      let objectName = "test-bad-checksum-\(UUID().uuidString).bin"
+
+      // 10MB file to trigger resumable upload where x-goog-hash is validated by GCS
+      let fileSize = 10 * 1024 * 1024
+      let data = Data(repeating: 42, count: fileSize)
+      let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(objectName)
+      try data.write(to: fileURL)
+      defer {
+        try? FileManager.default.removeItem(at: fileURL)
+      }
+
+      let storage = try StorageClient()
+      // Provide an intentionally invalid pre-calculated CRC32C checksum ("AAAAAA==")
+      let options = UploadOptions(checksums: ChecksumOptions(crc32c: "AAAAAA=="))
+      let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
+
+      do {
+        _ = try await task.value
+        Issue.record("Expected GCS to reject upload with bad checksum, but it succeeded")
+      } catch UploadError.checksumMismatch(let localChecksum, let serverChecksum) {
+        #expect(localChecksum == "crc32c=AAAAAA==")
+        #expect(!serverChecksum.isEmpty)
+        print(
+          "GCS correctly rejected bad checksum: local=\(localChecksum), server=\(serverChecksum)")
+      } catch {
+        Issue.record("Expected UploadError.checksumMismatch, but got \(error)")
+      }
+    }
   }
 
   private struct FailingUploadSource: SeekableUploadSource {

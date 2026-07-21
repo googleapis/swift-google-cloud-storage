@@ -27,6 +27,55 @@ public enum ChecksumValidation: Sendable {
   case md5
 }
 
+/// Configuration options for upload checksum validation.
+public struct ChecksumOptions: Sendable, Hashable {
+  /// Checksum mode / value for CRC32C.
+  public var crc32c: ChecksumValue?
+
+  /// Checksum mode / value for MD5.
+  public var md5: ChecksumValue?
+
+  /// Specifies how a checksum should be provided for upload validation.
+  public enum ChecksumValue: Sendable, Hashable, ExpressibleByStringLiteral {
+    /// Automatically calculate the checksum on-the-fly during upload streaming.
+    case auto
+
+    /// Use a pre-computed checksum value (e.g., Base64 encoded string).
+    case value(String)
+
+    /// Creates a `ChecksumValue` from a string literal containing a pre-computed checksum.
+    public init(stringLiteral value: String) {
+      self = .value(value)
+    }
+  }
+
+  /// Creates a new `ChecksumOptions` configuration for validating uploads with Google Cloud Storage.
+  ///
+  /// You can configure automatic on-the-fly calculation (`.auto`), pre-computed values (e.g., `.value("...")` or a string literal `"..."`),
+  /// or enable multiple checksum types simultaneously in a single upload request. `crc32c` is the default and recommended checksum option,
+  /// as it provides better computational performance compared to MD5.
+  public init(crc32c: ChecksumValue? = .auto, md5: ChecksumValue? = nil) {
+    self.crc32c = crc32c
+    self.md5 = md5
+  }
+
+  /// Default options: Automatically calculate CRC32C on-the-fly.
+  public static var `default`: ChecksumOptions {
+    ChecksumOptions(crc32c: .auto, md5: nil)
+  }
+
+  /// No checksum validation.
+  public static var none: ChecksumOptions {
+    ChecksumOptions(crc32c: nil, md5: nil)
+  }
+
+  public var hasUserProvidedChecksum: Bool {
+    if case .value = crc32c { return true }
+    if case .value = md5 { return true }
+    return false
+  }
+}
+
 /// Options for [Customer-Supplied Encryption Keys] (CSEK).
 ///
 /// As an additional layer on top of [standard Cloud Storage encryption], you can choose to provide
@@ -101,7 +150,30 @@ public struct UploadOptions: Sendable {
   public var preconditions: StoragePreconditions?
   public var kmsKeyName: String?
   public var customerEncryptionKey: CustomerEncryptionKey?
-  public var validation: ChecksumValidation
+  public var checksums: ChecksumOptions
+
+  /// Legacy validation enum property for backward compatibility.
+  public var validation: ChecksumValidation {
+    get {
+      if checksums.crc32c == .auto && checksums.md5 == nil {
+        return .crc32c
+      } else if checksums.md5 == .auto && checksums.crc32c == nil {
+        return .md5
+      } else {
+        return .none
+      }
+    }
+    set {
+      switch newValue {
+      case .none:
+        checksums = .none
+      case .crc32c:
+        checksums = ChecksumOptions(crc32c: .auto, md5: nil)
+      case .md5:
+        checksums = ChecksumOptions(crc32c: nil, md5: .auto)
+      }
+    }
+  }
 
   public static var `default`: UploadOptions { UploadOptions() }
 
@@ -110,12 +182,27 @@ public struct UploadOptions: Sendable {
     preconditions: StoragePreconditions? = nil,
     kmsKeyName: String? = nil,
     customerEncryptionKey: CustomerEncryptionKey? = nil,
-    validation: ChecksumValidation = .crc32c
+    checksums: ChecksumOptions = .default
   ) {
     self.chunkSize = chunkSize
     self.preconditions = preconditions
     self.kmsKeyName = kmsKeyName
     self.customerEncryptionKey = customerEncryptionKey
+    self.checksums = checksums
+  }
+
+  public init(
+    chunkSize: Int = 8 * 1024 * 1024,
+    preconditions: StoragePreconditions? = nil,
+    kmsKeyName: String? = nil,
+    customerEncryptionKey: CustomerEncryptionKey? = nil,
+    validation: ChecksumValidation
+  ) {
+    self.chunkSize = chunkSize
+    self.preconditions = preconditions
+    self.kmsKeyName = kmsKeyName
+    self.customerEncryptionKey = customerEncryptionKey
+    self.checksums = .none
     self.validation = validation
   }
 }

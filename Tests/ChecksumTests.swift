@@ -74,7 +74,7 @@ import Testing
   }
 
   @Test func testParseChecksumMismatchCRC32C() throws {
-    let message = "Provided CRC32C n03x6A== doesn't match calculated CRC32C AAAAAA=="
+    let message = "Provided CRC32C \"n03x6A==\" doesn't match calculated CRC32C \"AAAAAA==\""
     let match = StorageClient.parseChecksumMismatch(message)
     #expect(match != nil)
     #expect(match!.local == "crc32c=n03x6A==")
@@ -82,7 +82,7 @@ import Testing
   }
 
   @Test func testParseChecksumMismatchMD5() throws {
-    let message = "Provided MD5 wXyZ123... doesn't match calculated MD5 AAAAAA..."
+    let message = "Provided MD5 \"wXyZ123...\" doesn't match calculated MD5 \"AAAAAA...\""
     let match = StorageClient.parseChecksumMismatch(message)
     #expect(match != nil)
     #expect(match!.local == "md5=wXyZ123...")
@@ -99,7 +99,8 @@ import Testing
     let uploadUrl = registry.url(
       "/upload/storage/v1/b/\(bucket)/o?uploadType=multipart&name=\(objectName)")
 
-    let errorMessage = "Provided CRC32C invalid_crc doesn't match calculated CRC32C valid_crc"
+    let errorMessage =
+      "Provided CRC32C \"invalid_crc\" doesn't match calculated CRC32C \"valid_crc\""
     registry.register(
       response: .success(
         statusCode: 400, data: errorMessage.data(using: .utf8)!,
@@ -141,7 +142,7 @@ import Testing
       "/upload/storage/v1/b/\(bucket)/o?uploadType=resumable&name=\(objectName)")
     let chunkUrl = registry.url("/upload/storage/v1/b/\(bucket)/o?upload_id=test-id")
 
-    let errorMessage = "Provided MD5 invalid_md5 doesn't match calculated MD5 valid_md5"
+    let errorMessage = "Provided MD5 \"invalid_md5\" doesn't match calculated MD5 \"valid_md5\""
 
     registry.register(
       response: .success(
@@ -176,5 +177,47 @@ import Testing
       #expect(local == "md5=invalid_md5")
       #expect(server == "md5=valid_md5")
     }
+  }
+
+  @Test func testChecksummedSourceMultipleAuto() async throws {
+    let data1 = "Hello, ".data(using: .utf8)!
+    let data2 = "World!".data(using: .utf8)!
+    let combinedData = data1 + data2
+
+    let source = BytesSource(data: combinedData)
+    let checksums = ChecksumOptions(crc32c: .auto, md5: .auto)
+    var checksummedSource = ChecksummedSource(source: source, options: checksums)
+
+    _ = try await checksummedSource.readChunk(maxBytes: 7)
+    let chunk2 = try await checksummedSource.readChunk(maxBytes: 7)
+
+    #expect(chunk2 != nil)
+    #expect(chunk2!.isLast == true)
+    #expect(chunk2!.checksum == "crc32c=TVUQaA==, md5=ZajifYh5KDgxtmS9i38K1A==")
+  }
+
+  @Test func testChecksummedSourceUserProvidedValues() async throws {
+    let source = BytesSource(data: "Some data".data(using: .utf8)!)
+    let checksums = ChecksumOptions(crc32c: "PRE_CRC", md5: "PRE_MD5")
+    var checksummedSource = ChecksummedSource(source: source, options: checksums)
+
+    let chunk = try await checksummedSource.readChunk(maxBytes: 100)
+
+    #expect(chunk != nil)
+    #expect(chunk!.isLast == true)
+    #expect(chunk!.checksum == "crc32c=PRE_CRC, md5=PRE_MD5")
+  }
+
+  @Test func testChecksummedSourceMixedAutoAndUserProvided() async throws {
+    let data = "Hello, World!".data(using: .utf8)!
+    let source = BytesSource(data: data)
+    let checksums = ChecksumOptions(crc32c: .auto, md5: "CUSTOM_MD5")
+    var checksummedSource = ChecksummedSource(source: source, options: checksums)
+
+    let chunk = try await checksummedSource.readChunk(maxBytes: 100)
+
+    #expect(chunk != nil)
+    #expect(chunk!.isLast == true)
+    #expect(chunk!.checksum == "crc32c=TVUQaA==, md5=CUSTOM_MD5")
   }
 }

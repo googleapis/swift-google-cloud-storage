@@ -87,7 +87,7 @@ extension StorageClient {
     guard let data = try await source.read(maxBytes: Int(totalSize ?? 0)) else {
       throw UploadError.internalError("Failed to read data from source")
     }
-    let checksum = try computeSimpleChecksum(data, validation: options.validation)
+    let checksum = try computeSimpleChecksum(data, options: options.checksums)
     let request = try await httpClient.buildSimpleUploadRequest(
       bucket: bucket,
       objectName: objectName,
@@ -153,8 +153,9 @@ extension StorageClient {
     options: UploadOptions,
     continuation: AsyncStream<UploadStatus>.Continuation
   ) async throws -> StorageObject {
+    let initialOffset = offset
     var offset = offset
-    var checksummedSource = ChecksummedSource(source: source, validation: options.validation)
+    var checksummedSource = ChecksummedSource(source: source, options: options.checksums)
     while true {
       guard let chunkInfo = try await checksummedSource.readChunk(maxBytes: chunkSize),
         !chunkInfo.data.isEmpty
@@ -163,7 +164,9 @@ extension StorageClient {
       }
       let chunk = chunkInfo.data
       let isLast = chunkInfo.isLast
-      let checksum = (isLast && offset == 0) ? chunkInfo.checksum : nil
+      let checksum =
+        (isLast && (initialOffset == 0 || options.checksums.hasUserProvidedChecksum))
+        ? chunkInfo.checksum : nil
 
       let uploadRequest = try await httpClient.buildUploadChunkRequest(
         uploadId: uploadId, data: chunk, offset: offset, totalSize: totalSize, checksum: checksum)
@@ -447,30 +450,45 @@ extension HTTPClient {
 }
 
 extension StorageClient {
-  fileprivate static func computeSimpleChecksum(_ data: Data, validation: ChecksumValidation) throws
+  fileprivate static func computeSimpleChecksum(_ data: Data, options: ChecksumOptions) throws
     -> String?
   {
-    switch validation {
-    case .crc32c:
-      let crc = CRC32C.compute(data)
-      let bigEndian = crc.bigEndian
-      var bytes = [UInt8]()
-      withUnsafeBytes(of: bigEndian) {
-        bytes = Array($0)
+    var parts = [String]()
+
+    if let crcOption = options.crc32c {
+      switch crcOption {
+      case .auto:
+        let crc = CRC32C.compute(data)
+        let bigEndian = crc.bigEndian
+        var bytes = [UInt8]()
+        withUnsafeBytes(of: bigEndian) {
+          bytes = Array($0)
+        }
+        parts.append("crc32c=" + Data(bytes).base64EncodedString())
+      case .value(let val):
+        let formatted = val.hasPrefix("crc32c=") ? val : "crc32c=" + val
+        parts.append(formatted)
       }
-      return "crc32c=" + Data(bytes).base64EncodedString()
-    case .md5:
-      let digest = Insecure.MD5.hash(data: data)
-      return "md5=" + Data(digest).base64EncodedString()
-    case .none:
-      return nil
     }
+
+    if let md5Option = options.md5 {
+      switch md5Option {
+      case .auto:
+        let digest = Insecure.MD5.hash(data: data)
+        parts.append("md5=" + Data(digest).base64EncodedString())
+      case .value(let val):
+        let formatted = val.hasPrefix("md5=") ? val : "md5=" + val
+        parts.append(formatted)
+      }
+    }
+
+    return parts.isEmpty ? nil : parts.joined(separator: ", ")
   }
 
   internal static func parseChecksumMismatch(_ message: String) -> (local: String, server: String)?
   {
     let crcRegex = try? NSRegularExpression(
-      pattern: "Provided CRC32C[:\\s]+(\\S+)\\s+.*calculated CRC32C[:\\s]+(\\S+)",
+      pattern: "Provided CRC32C \\\\?\"([^\"]+?)\\\\?\".*calculated CRC32C \\\\?\"([^\"]+?)\\\\?\"",
       options: .caseInsensitive)
     if let match = crcRegex?.firstMatch(
       in: message, options: [], range: NSRange(message.startIndex..., in: message))
@@ -485,7 +503,7 @@ extension StorageClient {
     }
 
     let md5Regex = try? NSRegularExpression(
-      pattern: "Provided MD5[:\\s]+(\\S+)\\s+.*calculated MD5[:\\s]+(\\S+)",
+      pattern: "Provided MD5 \\\\?\"([^\"]+?)\\\\?\".*calculated MD5 \\\\?\"([^\"]+?)\\\\?\"",
       options: .caseInsensitive)
     if let match = md5Regex?.firstMatch(
       in: message, options: [], range: NSRange(message.startIndex..., in: message))

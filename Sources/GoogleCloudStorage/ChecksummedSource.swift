@@ -23,16 +23,28 @@ struct ChunkInfo: Sendable {
 
 struct ChecksummedSource<S: UploadSource> {
   var source: S
-  let validation: ChecksumValidation
+  let options: ChecksumOptions
   private var md5 = Insecure.MD5()
   private var crc32c = CRC32C()
   private var nextChunk: Data? = nil
   private var isInitialized = false
   private var isFinished = false
 
+  init(source: S, options: ChecksumOptions) {
+    self.source = source
+    self.options = options
+  }
+
   init(source: S, validation: ChecksumValidation) {
     self.source = source
-    self.validation = validation
+    switch validation {
+    case .none:
+      self.options = .none
+    case .crc32c:
+      self.options = ChecksumOptions(crc32c: .auto, md5: nil)
+    case .md5:
+      self.options = ChecksumOptions(crc32c: nil, md5: .auto)
+    }
   }
 
   mutating func readChunk(maxBytes: Int) async throws -> ChunkInfo? {
@@ -48,30 +60,47 @@ struct ChecksummedSource<S: UploadSource> {
     nextChunk = try await source.read(maxBytes: maxBytes)
     let isLast = nextChunk == nil || nextChunk!.isEmpty
 
+    if options.crc32c == .auto {
+      crc32c.update(currentChunk)
+    }
+    if options.md5 == .auto {
+      md5.update(data: currentChunk)
+    }
+
     var checksumStr: String? = nil
-    if validation != .none {
-      switch validation {
-      case .crc32c:
-        crc32c.update(currentChunk)
-        if isLast {
+    if isLast {
+      var parts = [String]()
+
+      if let crcOption = options.crc32c {
+        switch crcOption {
+        case .auto:
           let bigEndian = crc32c.finalize().bigEndian
           var bytes = [UInt8]()
           withUnsafeBytes(of: bigEndian) {
             bytes = Array($0)
           }
-          checksumStr = "crc32c=" + Data(bytes).base64EncodedString()
-          isFinished = true
+          parts.append("crc32c=" + Data(bytes).base64EncodedString())
+        case .value(let val):
+          let formatted = val.hasPrefix("crc32c=") ? val : "crc32c=" + val
+          parts.append(formatted)
         }
-      case .md5:
-        md5.update(data: currentChunk)
-        if isLast {
-          let digest = md5.finalize()
-          checksumStr = "md5=" + Data(digest).base64EncodedString()
-          isFinished = true
-        }
-      case .none:
-        break
       }
+
+      if let md5Option = options.md5 {
+        switch md5Option {
+        case .auto:
+          let digest = md5.finalize()
+          parts.append("md5=" + Data(digest).base64EncodedString())
+        case .value(let val):
+          let formatted = val.hasPrefix("md5=") ? val : "md5=" + val
+          parts.append(formatted)
+        }
+      }
+
+      if !parts.isEmpty {
+        checksumStr = parts.joined(separator: ", ")
+      }
+      isFinished = true
     }
 
     return ChunkInfo(data: currentChunk, isLast: isLast, checksum: checksumStr)
