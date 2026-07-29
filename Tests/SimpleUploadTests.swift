@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import Crypto
 import Foundation
 #if canImport(FoundationNetworking)
   import FoundationNetworking
@@ -21,6 +22,14 @@ import GoogleCloudGax
 import Testing
 
 @Suite struct SimpleUploadTests {
+  private func sampleKey() -> (data: Data, keyBase64: String, keyHashBase64: String) {
+    let keyData = Data(repeating: 0x42, count: 32)
+    let keyBase64 = keyData.base64EncodedString()
+    let sha256Digest = SHA256.hash(data: keyData)
+    let keyHashBase64 = Data(sha256Digest).base64EncodedString()
+    return (keyData, keyBase64, keyHashBase64)
+  }
+
   /// Tests a successful simple (single-part) upload for payloads smaller than the 8MB resumable threshold.
   @Test func simpleUploadSuccess() async throws {
     let registry = MockRegistry.create()
@@ -226,5 +235,71 @@ import Testing
     if case .internalError(let message) = error {
       #expect(message == "Failed to read data from source")
     }
+  }
+
+  @Test func simpleUploadWithCSEKHeaders() async throws {
+    let registry = MockRegistry.create()
+    let bucket = "test-bucket"
+    let objectName = "test-csek-object"
+    let data = Data(repeating: 1, count: 1024)
+    let source = BytesSource(data: data)
+
+    let sample = sampleKey()
+    let csek = try CustomerEncryptionKeyOptions(key: sample.data)
+
+    let simpleUploadUrl = registry.url(
+      "/upload/storage/v1/b/\(bucket)/o?uploadType=multipart&name=\(objectName)")
+
+    let responseJSON = """
+      {
+        "name": "\(objectName)",
+        "bucket": "\(bucket)",
+        "generation": "1",
+        "metageneration": "1",
+        "size": "\(data.count)",
+        "contentType": "application/octet-stream",
+        "customerEncryption": {
+          "encryptionAlgorithm": "AES256",
+          "keySha256": "\(sample.keyHashBase64)"
+        }
+      }
+      """
+
+    registry.register(
+      response: .success(
+        statusCode: 200, data: responseJSON.data(using: .utf8)!,
+        headers: nil),
+      for: simpleUploadUrl)
+
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [MockURLProtocol.self]
+    let session = URLSession(configuration: config)
+
+    let options = StorageClientOptions().with {
+      $0.client = .init().with {
+        $0.endpoint = registry.endpoint
+        $0._testSession = session
+      }
+    }
+
+    let client = try StorageClient(options)
+    let uploadOptions = UploadOptions(customerEncryptionKey: csek)
+    let task = client.upload(source, to: bucket, as: objectName, options: uploadOptions)
+    let object = try await task.value
+
+    #expect(object.name == objectName)
+    #expect(object.customerEncryption?.encryptionAlgorithm == "AES256")
+    #expect(object.customerEncryption?.keySha256 == sample.keyHashBase64)
+
+    let requests = registry.recordedRequests()
+    #expect(!requests.isEmpty)
+    let uploadReq = requests.first {
+      $0.url?.path.contains("/upload/storage/v1/b/\(bucket)/o") == true
+    }
+    #expect(uploadReq != nil)
+    #expect(uploadReq?.value(forHTTPHeaderField: "x-goog-encryption-algorithm") == "AES256")
+    #expect(uploadReq?.value(forHTTPHeaderField: "x-goog-encryption-key") == sample.keyBase64)
+    #expect(
+      uploadReq?.value(forHTTPHeaderField: "x-goog-encryption-key-sha256") == sample.keyHashBase64)
   }
 }

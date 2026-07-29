@@ -129,6 +129,7 @@ public final class MockRegistry: @unchecked Sendable {
 
   public let id: String
   private var mocks: [URL: [MockResponse]] = [:]
+  private var requests: [URLRequest] = []
   private let queue = DispatchQueue(label: "com.mockregistry.queue", attributes: .concurrent)
 
   private init(id: String) {
@@ -147,6 +148,18 @@ public final class MockRegistry: @unchecked Sendable {
   public func register(response: MockResponse, for url: URL) {
     queue.async(flags: .barrier) {
       self.mocks[url, default: []].append(response)
+    }
+  }
+
+  internal func record(request: URLRequest) {
+    queue.async(flags: .barrier) {
+      self.requests.append(request)
+    }
+  }
+
+  public func recordedRequests() -> [URLRequest] {
+    queue.sync {
+      return self.requests
     }
   }
 
@@ -184,6 +197,8 @@ public final class MockURLProtocol: URLProtocol {
       client?.urlProtocol(self, didFailWithError: URLError(.resourceUnavailable))
       return
     }
+
+    registry.record(request: request)
 
     switch mock {
     case .success(let statusCode, let data, let headers):

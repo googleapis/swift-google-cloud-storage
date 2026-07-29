@@ -314,6 +314,71 @@ import Testing
         Issue.record("Expected UploadError.checksumMismatch, but got \(error)")
       }
     }
+
+    @Test func testCSEKSimpleUpload() async throws {
+      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
+        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
+        return
+      }
+      let bucketName =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
+      let objectName = "test-csek-simple-\(UUID().uuidString).txt"
+
+      let content = "Hello Google Cloud Storage CSEK simple upload!"
+      let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(objectName)
+      try content.write(to: fileURL, atomically: true, encoding: .utf8)
+      defer {
+        try? FileManager.default.removeItem(at: fileURL)
+      }
+
+      let keyBytes: [UInt8] = (0..<32).map { UInt8(($0 * 11 + 17) % 256) }
+      let csek = try CustomerEncryptionKeyOptions(keyBytes: keyBytes)
+
+      let storage = try StorageClient()
+      let options = UploadOptions(customerEncryptionKey: csek)
+      let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
+
+      let object = try await task.value
+      #expect(object.bucket == bucketName)
+      #expect(object.name == objectName)
+      #expect(object.size == Int64(content.utf8.count))
+      #expect(object.customerEncryption?.keySha256 == csek.keyHashBase64)
+
+      print("CSEK simple upload successful: \(object)")
+    }
+
+    @Test func testCSEKResumableUpload() async throws {
+      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
+        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
+        return
+      }
+      let bucketName =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
+      let objectName = "test-csek-resumable-\(UUID().uuidString).bin"
+
+      let fileSize = 10 * 1024 * 1024  // 10MB to trigger resumable upload
+      let data = Data(repeating: 0x5A, count: fileSize)
+      let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(objectName)
+      try data.write(to: fileURL)
+      defer {
+        try? FileManager.default.removeItem(at: fileURL)
+      }
+
+      let keyData = Data((0..<32).map { UInt8(($0 * 13 + 37) % 256) })
+      let csek = try CustomerEncryptionKeyOptions(key: keyData)
+
+      let storage = try StorageClient()
+      let options = UploadOptions(customerEncryptionKey: csek)
+      let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
+
+      let object = try await task.value
+      #expect(object.bucket == bucketName)
+      #expect(object.name == objectName)
+      #expect(object.size == Int64(fileSize))
+      #expect(object.customerEncryption?.keySha256 == csek.keyHashBase64)
+
+      print("CSEK resumable upload successful: \(object)")
+    }
   }
 
   private struct FailingUploadSource: SeekableUploadSource {
