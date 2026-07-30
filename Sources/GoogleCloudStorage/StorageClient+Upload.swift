@@ -27,14 +27,12 @@ extension StorageClient {
   ///   - source: The upload source containing the data.
   ///   - bucket: The destination GCS bucket name.
   ///   - objectName: The destination GCS object name.
-  ///   - metadata: Optional metadata to associate with the object.
   ///   - options: Configuration options for the upload.
   /// - Returns: An `UploadTask` to monitor and control the upload.
   public func upload(
     _ source: some UploadSource,
     to bucket: String,
     as objectName: String,
-    metadata: UploadMetadata? = nil,
     options: UploadOptions = .default
   ) -> UploadTask {
     let clientOptions = self.options.client
@@ -54,7 +52,7 @@ extension StorageClient {
           source: &source,
           bucket: bucket,
           objectName: objectName,
-          metadata: metadata,
+          metadata: options.metadata,
           options: options,
           totalSize: totalSize,
           continuation: continuation
@@ -65,7 +63,7 @@ extension StorageClient {
           source: &source,
           bucket: bucket,
           objectName: objectName,
-          metadata: metadata,
+          metadata: options.metadata,
           options: options,
           totalSize: totalSize,
           continuation: continuation
@@ -269,12 +267,10 @@ extension StorageClient {
     _ fileURL: URL,
     to bucket: String,
     as objectName: String,
-    metadata: UploadMetadata? = nil,
     options: UploadOptions = .default
   ) -> UploadTask {
     return self.upload(
-      FileSource(fileURL: fileURL), to: bucket, as: objectName, metadata: metadata,
-      options: options)
+      FileSource(fileURL: fileURL), to: bucket, as: objectName, options: options)
   }
 
   /// Convenience upload method for in-memory Data.
@@ -282,11 +278,10 @@ extension StorageClient {
     _ data: Data,
     to bucket: String,
     as objectName: String,
-    metadata: UploadMetadata? = nil,
     options: UploadOptions = .default
   ) -> UploadTask {
     return self.upload(
-      BytesSource(data: data), to: bucket, as: objectName, metadata: metadata, options: options)
+      BytesSource(data: data), to: bucket, as: objectName, options: options)
   }
 }
 
@@ -306,6 +301,9 @@ extension HTTPClient {
 
     if let kmsKeyName = options.kmsKeyName {
       queryItems.append(URLQueryItem(name: "kmsKeyName", value: kmsKeyName))
+    }
+    if let predefinedAcl = options.predefinedAcl {
+      queryItems.append(URLQueryItem(name: "predefinedAcl", value: predefinedAcl.rawValue))
     }
     if let preconditions = options.preconditions {
       queryItems.append(contentsOf: preconditions.queryItems)
@@ -332,7 +330,8 @@ extension HTTPClient {
     body.append(Data("\r\n".utf8))
 
     body.append(Data("--\(boundary)\r\n".utf8))
-    body.append(Data("Content-Type: application/octet-stream\r\n\r\n".utf8))
+    let dataPartContentType = metadata?.contentType ?? "application/octet-stream"
+    body.append(Data("Content-Type: \(dataPartContentType)\r\n\r\n".utf8))
     body.append(data)
     body.append(Data("\r\n".utf8))
 
@@ -353,6 +352,9 @@ extension HTTPClient {
 
     if let kmsKeyName = options.kmsKeyName {
       queryItems.append(URLQueryItem(name: "kmsKeyName", value: kmsKeyName))
+    }
+    if let predefinedAcl = options.predefinedAcl {
+      queryItems.append(URLQueryItem(name: "predefinedAcl", value: predefinedAcl.rawValue))
     }
     if let preconditions = options.preconditions {
       queryItems.append(contentsOf: preconditions.queryItems)

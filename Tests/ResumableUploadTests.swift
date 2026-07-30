@@ -646,7 +646,7 @@ import Testing
     }
 
     let client = try StorageClient(options)
-    let uploadOptions = UploadOptions(customerEncryptionKey: csek)
+    let uploadOptions = UploadOptions().with { $0.customerEncryptionKey = csek }
     let task = client.upload(source, to: bucket, as: objectName, options: uploadOptions)
     let object = try await task.value
 

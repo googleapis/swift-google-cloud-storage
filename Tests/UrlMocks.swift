@@ -163,6 +163,12 @@ public final class MockRegistry: @unchecked Sendable {
     }
   }
 
+  public func lastRequest(for url: URL) -> URLRequest? {
+    queue.sync {
+      return self.requests.last(where: { $0.url == url })
+    }
+  }
+
   internal func response(for url: URL) -> MockResponse? {
     var response: MockResponse?
     queue.sync(flags: .barrier) {

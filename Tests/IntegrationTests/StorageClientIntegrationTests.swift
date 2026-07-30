@@ -121,7 +121,7 @@ import Testing
       // Set chunk size to 2MB and configure failing source to throw after 4MB read
       let chunkSize = 2 * 1024 * 1024
       let failAfterBytes = Int64(4 * 1024 * 1024)
-      let options = UploadOptions(chunkSize: chunkSize)
+      let options = UploadOptions().with { $0.chunkSize = chunkSize }
       let failingSource = FailingUploadSource(fileURL: fileURL, failAfterBytes: failAfterBytes)
 
       let task = storage.upload(failingSource, to: bucketName, as: objectName, options: options)
@@ -204,7 +204,7 @@ import Testing
           try? FileManager.default.removeItem(at: fileURL)
         }
 
-        let options = UploadOptions(validation: validation)
+        let options = UploadOptions().with { $0.validation = validation }
         let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
 
         let object = try await task.value
@@ -239,7 +239,7 @@ import Testing
           try? FileManager.default.removeItem(at: fileURL)
         }
 
-        let options = UploadOptions(validation: validation)
+        let options = UploadOptions().with { $0.validation = validation }
         let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
 
         let object = try await task.value
@@ -268,7 +268,9 @@ import Testing
       }
 
       let storage = try StorageClient()
-      let options = UploadOptions(checksums: ChecksumOptions(crc32c: .auto, md5: .auto))
+      let options = UploadOptions().with {
+        $0.checksums = ChecksumOptions(crc32c: .auto, md5: .auto)
+      }
       let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
 
       let object = try await task.value
@@ -299,7 +301,9 @@ import Testing
 
       let storage = try StorageClient()
       // Provide an intentionally invalid pre-calculated CRC32C checksum ("AAAAAA==")
-      let options = UploadOptions(checksums: ChecksumOptions(crc32c: "AAAAAA=="))
+      let options = UploadOptions().with {
+        $0.checksums = ChecksumOptions(crc32c: "AAAAAA==")
+      }
       let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
 
       do {
@@ -335,7 +339,9 @@ import Testing
       let csek = try CustomerEncryptionKeyOptions(keyBytes: keyBytes)
 
       let storage = try StorageClient()
-      let options = UploadOptions(customerEncryptionKey: csek)
+      let options = UploadOptions().with {
+        $0.customerEncryptionKey = csek
+      }
       let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
 
       let object = try await task.value
@@ -368,7 +374,9 @@ import Testing
       let csek = try CustomerEncryptionKeyOptions(key: keyData)
 
       let storage = try StorageClient()
-      let options = UploadOptions(customerEncryptionKey: csek)
+      let options = UploadOptions().with {
+        $0.customerEncryptionKey = csek
+      }
       let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
 
       let object = try await task.value

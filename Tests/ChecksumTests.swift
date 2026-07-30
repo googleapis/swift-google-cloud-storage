@@ -119,7 +119,7 @@ import Testing
     }
 
     let client = try StorageClient(options)
-    let uploadOptions = UploadOptions(validation: .crc32c)
+    let uploadOptions = UploadOptions().with { $0.validation = .crc32c }
     let task = client.upload(source, to: bucket, as: objectName, options: uploadOptions)
 
     do {
@@ -167,7 +167,7 @@ import Testing
     }
 
     let client = try StorageClient(options)
-    let uploadOptions = UploadOptions(validation: .md5)
+    let uploadOptions = UploadOptions().with { $0.validation = .md5 }
     let task = client.upload(source, to: bucket, as: objectName, options: uploadOptions)
 
     do {

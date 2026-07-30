@@ -231,16 +231,12 @@ public struct StoragePreconditions: Sendable {
   /// Makes the operation succeed only if the object's current metageneration does not match this value.
   public var ifMetagenerationNotMatch: Int64?
 
-  public init(
-    ifGenerationMatch: Int64? = nil,
-    ifGenerationNotMatch: Int64? = nil,
-    ifMetagenerationMatch: Int64? = nil,
-    ifMetagenerationNotMatch: Int64? = nil
-  ) {
-    self.ifGenerationMatch = ifGenerationMatch
-    self.ifGenerationNotMatch = ifGenerationNotMatch
-    self.ifMetagenerationMatch = ifMetagenerationMatch
-    self.ifMetagenerationNotMatch = ifMetagenerationNotMatch
+  public init() {}
+
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
   }
 }
 
@@ -266,8 +262,80 @@ extension StoragePreconditions {
   }
 }
 
+/// Predefined ACL options for object uploads.
+public enum PredefinedAcl: String, Sendable, Equatable {
+  case authenticatedRead
+  case bucketOwnerFullControl
+  case bucketOwnerRead
+  case `private`
+  case projectPrivate
+  case publicRead
+}
+
+/// Project team info for ObjectAccessControl.
+public struct ProjectTeam: Sendable, Codable, Equatable {
+  public var projectNumber: String?
+  public var team: String?
+
+  public init() {}
+
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
+  }
+}
+
+/// Access Control List (ACL) entry for a GCS Object.
+public struct ObjectAccessControl: Sendable, Codable, Equatable {
+  public var entity: String?
+  public var role: String?
+  public var email: String?
+  public var domain: String?
+  public var entityId: String?
+  public var etag: String?
+  public var id: String?
+  public var projectTeam: ProjectTeam?
+
+  public init() {}
+
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
+  }
+}
+
+/// Object retention policy configuration for a GCS Object.
+public struct ObjectRetention: Sendable, Codable, Equatable {
+  public var mode: String?
+  public var retainUntilTime: GoogleCloudWkt.Timestamp?
+
+  public init() {}
+
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
+  }
+}
+
+/// Owner metadata for a GCS Object.
+public struct ObjectOwner: Sendable, Codable, Equatable {
+  public var entity: String?
+  public var entityId: String?
+
+  public init() {}
+
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
+  }
+}
+
 /// Represents the metadata of the object to be created.
-public struct UploadMetadata: Sendable, Codable {
+public struct UploadMetadata: Sendable, Codable, Equatable {
   /// Content-Type header of the object data (e.g. "application/json", "image/png").
   public var contentType: String?
 
@@ -286,27 +354,56 @@ public struct UploadMetadata: Sendable, Codable {
   /// Custom key-value metadata pairs associated with the object.
   public var customMetadata: [String: String]?
 
-  public init(
-    contentType: String? = nil,
-    contentEncoding: String? = nil,
-    contentDisposition: String? = nil,
-    contentLanguage: String? = nil,
-    cacheControl: String? = nil,
-    customMetadata: [String: String]? = nil
-  ) {
-    self.contentType = contentType
-    self.contentEncoding = contentEncoding
-    self.contentDisposition = contentDisposition
-    self.contentLanguage = contentLanguage
-    self.cacheControl = cacheControl
-    self.customMetadata = customMetadata
+  /// Storage class of the object (e.g., "STANDARD", "NEARLINE", "COLDLINE", "ARCHIVE").
+  public var storageClass: String?
+
+  /// Custom time set by user for the object.
+  public var customTime: GoogleCloudWkt.Timestamp?
+
+  /// Event-based hold status for the object.
+  public var eventBasedHold: Bool?
+
+  /// Temporary hold status for the object.
+  public var temporaryHold: Bool?
+
+  /// Access Control List (ACL) entries for the object.
+  public var acl: [ObjectAccessControl]?
+
+  /// Object retention configuration.
+  public var retention: ObjectRetention?
+
+  /// Owner information for the object.
+  public var owner: ObjectOwner?
+
+  enum CodingKeys: String, CodingKey {
+    case contentType
+    case contentEncoding
+    case contentDisposition
+    case contentLanguage
+    case cacheControl
+    case customMetadata = "metadata"
+    case storageClass
+    case customTime
+    case eventBasedHold
+    case temporaryHold
+    case acl
+    case retention
+    case owner
+  }
+
+  public init() {}
+
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
   }
 }
 
 /// Configuration options for the upload request/session.
 public struct UploadOptions: Sendable {
   /// The chunk size in bytes for resumable uploads. Defaults to 8 MB (8 * 1024 * 1024).
-  public var chunkSize: Int
+  public var chunkSize: Int = 8 * 1024 * 1024
 
   /// Preconditions (e.g. `ifGenerationMatch`) for the upload operation.
   public var preconditions: StoragePreconditions?
@@ -318,7 +415,13 @@ public struct UploadOptions: Sendable {
   public var customerEncryptionKey: CustomerEncryptionKeyOptions?
 
   /// Configuration options for upload checksum validation.
-  public var checksums: ChecksumOptions
+  public var checksums: ChecksumOptions = .default
+
+  /// Metadata associated with the object to be created.
+  public var metadata: UploadMetadata?
+
+  /// Predefined ACL to apply to the uploaded object (e.g. `.publicRead`, `.private`).
+  public var predefinedAcl: PredefinedAcl?
 
   /// Legacy validation enum property for backward compatibility.
   public var validation: ChecksumValidation {
@@ -345,33 +448,12 @@ public struct UploadOptions: Sendable {
 
   public static var `default`: UploadOptions { UploadOptions() }
 
-  public init(
-    chunkSize: Int = 8 * 1024 * 1024,
-    preconditions: StoragePreconditions? = nil,
-    kmsKeyName: String? = nil,
-    customerEncryptionKey: CustomerEncryptionKeyOptions? = nil,
-    checksums: ChecksumOptions = .default
-  ) {
-    self.chunkSize = chunkSize
-    self.preconditions = preconditions
-    self.kmsKeyName = kmsKeyName
-    self.customerEncryptionKey = customerEncryptionKey
-    self.checksums = checksums
-  }
+  public init() {}
 
-  public init(
-    chunkSize: Int = 8 * 1024 * 1024,
-    preconditions: StoragePreconditions? = nil,
-    kmsKeyName: String? = nil,
-    customerEncryptionKey: CustomerEncryptionKeyOptions? = nil,
-    validation: ChecksumValidation
-  ) {
-    self.chunkSize = chunkSize
-    self.preconditions = preconditions
-    self.kmsKeyName = kmsKeyName
-    self.customerEncryptionKey = customerEncryptionKey
-    self.checksums = .none
-    self.validation = validation
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
   }
 }
 
@@ -383,41 +465,56 @@ public struct CustomerEncryption: Sendable, Codable, Equatable {
   /// The Base64-encoded SHA-256 hash of the customer-supplied encryption key.
   public var keySha256: String?
 
-  public init(encryptionAlgorithm: String? = nil, keySha256: String? = nil) {
-    self.encryptionAlgorithm = encryptionAlgorithm
-    self.keySha256 = keySha256
+  public init() {}
+
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
   }
 }
 
 /// Represents a GCS Object.
 // TODO(#323): Replace with actual generated struct if available.
-public struct StorageObject: Sendable, Codable {
+public struct StorageObject: Sendable, Codable, Equatable {
   public var bucket: String = String()
   public var name: String = String()
   public var generation: Int64 = Int64()
   public var metageneration: Int64 = Int64()
   public var size: Int64 = Int64()
   public var contentType: String?
+  public var contentEncoding: String?
+  public var contentDisposition: String?
+  public var contentLanguage: String?
+  public var cacheControl: String?
+  public var customMetadata: [String: String]?
   public var customerEncryption: CustomerEncryption?
   public var md5Hash: String?
   public var crc32c: String?
   public var etag: String?
   public var storageClass: String?
+  public var customTime: GoogleCloudWkt.Timestamp?
   public var timeCreated: GoogleCloudWkt.Timestamp?
   public var updated: GoogleCloudWkt.Timestamp?
+  public var eventBasedHold: Bool?
+  public var temporaryHold: Bool?
+  public var acl: [ObjectAccessControl]?
+  public var retention: ObjectRetention?
+  public var owner: ObjectOwner?
 
   public init() {}
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    bucket = try container.decode(String.self, forKey: .bucket)
-    name = try container.decode(String.self, forKey: .name)
+    bucket = (try? container.decode(String.self, forKey: .bucket)) ?? ""
+    name = (try? container.decode(String.self, forKey: .name)) ?? ""
 
-    if let genStr = try? container.decode(String.self, forKey: .generation), let gen = Int64(genStr)
+    if let genStr = try? container.decode(String.self, forKey: .generation),
+      let gen = Int64(genStr)
     {
       generation = gen
     } else {
-      generation = try container.decode(Int64.self, forKey: .generation)
+      generation = (try? container.decode(Int64.self, forKey: .generation)) ?? 0
     }
 
     if let metaStr = try? container.decode(String.self, forKey: .metageneration),
@@ -425,23 +522,35 @@ public struct StorageObject: Sendable, Codable {
     {
       metageneration = meta
     } else {
-      metageneration = try container.decode(Int64.self, forKey: .metageneration)
+      metageneration = (try? container.decode(Int64.self, forKey: .metageneration)) ?? 0
     }
 
     if let sizeStr = try? container.decode(String.self, forKey: .size), let s = Int64(sizeStr) {
       size = s
     } else {
-      size = try container.decode(Int64.self, forKey: .size)
+      size = (try? container.decode(Int64.self, forKey: .size)) ?? 0
     }
 
     contentType = try? container.decode(String.self, forKey: .contentType)
-    customerEncryption = try? container.decode(CustomerEncryption.self, forKey: .customerEncryption)
+    contentEncoding = try? container.decode(String.self, forKey: .contentEncoding)
+    contentDisposition = try? container.decode(String.self, forKey: .contentDisposition)
+    contentLanguage = try? container.decode(String.self, forKey: .contentLanguage)
+    cacheControl = try? container.decode(String.self, forKey: .cacheControl)
+    customMetadata = try? container.decode([String: String].self, forKey: .customMetadata)
+    customerEncryption = try? container.decode(
+      CustomerEncryption.self, forKey: .customerEncryption)
     md5Hash = try? container.decode(String.self, forKey: .md5Hash)
     crc32c = try? container.decode(String.self, forKey: .crc32c)
     etag = try? container.decode(String.self, forKey: .etag)
     storageClass = try? container.decode(String.self, forKey: .storageClass)
+    customTime = try? container.decode(GoogleCloudWkt.Timestamp.self, forKey: .customTime)
     timeCreated = try? container.decode(GoogleCloudWkt.Timestamp.self, forKey: .timeCreated)
     updated = try? container.decode(GoogleCloudWkt.Timestamp.self, forKey: .updated)
+    eventBasedHold = try? container.decode(Bool.self, forKey: .eventBasedHold)
+    temporaryHold = try? container.decode(Bool.self, forKey: .temporaryHold)
+    acl = try? container.decode([ObjectAccessControl].self, forKey: .acl)
+    retention = try? container.decode(ObjectRetention.self, forKey: .retention)
+    owner = try? container.decode(ObjectOwner.self, forKey: .owner)
   }
 
   enum CodingKeys: String, CodingKey {
@@ -451,13 +560,24 @@ public struct StorageObject: Sendable, Codable {
     case metageneration
     case size
     case contentType
+    case contentEncoding
+    case contentDisposition
+    case contentLanguage
+    case cacheControl
+    case customMetadata = "metadata"
     case customerEncryption
     case md5Hash
     case crc32c
     case etag
     case storageClass
+    case customTime
     case timeCreated
     case updated
+    case eventBasedHold
+    case temporaryHold
+    case acl
+    case retention
+    case owner
   }
 
   /// Use `config` to return a new instance of this object, with some fields updated.

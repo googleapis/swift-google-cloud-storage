@@ -21,7 +21,6 @@ public protocol StorageClientProtocol {
     _ source: some UploadSource,
     to bucket: String,
     as objectName: String,
-    metadata: UploadMetadata?,
     options: UploadOptions
   ) -> UploadTask
 
@@ -37,7 +36,6 @@ public protocol StorageClientProtocol {
     _ fileURL: URL,
     to bucket: String,
     as objectName: String,
-    metadata: UploadMetadata?,
     options: UploadOptions
   ) -> UploadTask
 
@@ -46,7 +44,6 @@ public protocol StorageClientProtocol {
     _ data: Data,
     to bucket: String,
     as objectName: String,
-    metadata: UploadMetadata?,
     options: UploadOptions
   ) -> UploadTask
 }
