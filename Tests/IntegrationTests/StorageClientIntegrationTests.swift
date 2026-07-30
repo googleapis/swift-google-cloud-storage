@@ -387,6 +387,47 @@ import Testing
 
       print("CSEK resumable upload successful: \(object)")
     }
+
+    @Test func testUploadWithMetadata() async throws {
+      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
+        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
+        return
+      }
+      let bucketName =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
+      let objectName = "test-metadata-\(UUID().uuidString).txt"
+
+      let content = "Hello Google Cloud Storage metadata upload!"
+      let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(objectName)
+      try content.write(to: fileURL, atomically: true, encoding: .utf8)
+      defer {
+        try? FileManager.default.removeItem(at: fileURL)
+      }
+
+      let storage = try StorageClient()
+      let metadata = UploadMetadata().with {
+        $0.contentType = "text/plain"
+        $0.contentLanguage = "en"
+        $0.cacheControl = "public, max-age=3600"
+        $0.customMetadata = ["environment": "integration-test", "author": "swift-sdk"]
+      }
+      let options = UploadOptions().with {
+        $0.metadata = metadata
+      }
+
+      let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
+
+      let object = try await task.value
+      #expect(object.bucket == bucketName)
+      #expect(object.name == objectName)
+      #expect(object.contentType == "text/plain")
+      #expect(object.contentLanguage == "en")
+      #expect(object.cacheControl == "public, max-age=3600")
+      #expect(object.customMetadata?["environment"] == "integration-test")
+      #expect(object.customMetadata?["author"] == "swift-sdk")
+
+      print("Upload with metadata successful: \(object)")
+    }
   }
 
   private struct FailingUploadSource: SeekableUploadSource {
