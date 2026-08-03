@@ -9,7 +9,7 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for theing specific language governing permissions and
+// See the License for the specific language governing permissions and
 // limitations under the License.
 
 import Foundation
@@ -142,9 +142,9 @@ extension StorageClient {
     )
   }
 
-  fileprivate static func continueResumableUpload(
+  fileprivate static func continueStreamingUpload<S: UploadSource>(
     httpClient: HTTPClient,
-    source: inout some UploadSource,
+    checksummedSource: inout ChecksummedSource<S>,
     uploadId: String,
     offset: Int64,
     chunkSize: Int,
@@ -152,9 +152,7 @@ extension StorageClient {
     options: UploadOptions,
     continuation: AsyncStream<UploadStatus>.Continuation
   ) async throws -> StorageObject {
-    let initialOffset = offset
     var offset = offset
-    var checksummedSource = ChecksummedSource(source: source, options: options.checksums)
     while true {
       guard let chunkInfo = try await checksummedSource.readChunk(maxBytes: chunkSize),
         !chunkInfo.data.isEmpty
@@ -163,9 +161,7 @@ extension StorageClient {
       }
       let chunk = chunkInfo.data
       let isLast = chunkInfo.isLast
-      let checksum =
-        (isLast && (initialOffset == 0 || options.checksums.hasUserProvidedChecksum))
-        ? chunkInfo.checksum : nil
+      let checksum = isLast ? chunkInfo.checksum : nil
 
       let uploadRequest = try await httpClient.buildUploadChunkRequest(
         uploadId: uploadId, data: chunk, offset: offset, totalSize: totalSize, options: options,
@@ -197,6 +193,59 @@ extension StorageClient {
     throw UploadError.internalError("Upload completed but object not returned")
   }
 
+  fileprivate static func continueResumableUpload<S: UploadSource>(
+    httpClient: HTTPClient,
+    source: inout S,
+    uploadId: String,
+    offset: Int64,
+    chunkSize: Int,
+    totalSize: Int64?,
+    options: UploadOptions,
+    continuation: AsyncStream<UploadStatus>.Continuation
+  ) async throws -> StorageObject {
+    var checksummedSource = ChecksummedSource(source: source, options: options.checksums)
+    return try await continueStreamingUpload(
+      httpClient: httpClient,
+      checksummedSource: &checksummedSource,
+      uploadId: uploadId,
+      offset: offset,
+      chunkSize: chunkSize,
+      totalSize: totalSize,
+      options: options,
+      continuation: continuation
+    )
+  }
+
+  fileprivate static func continueResumableUpload<S: SeekableUploadSource>(
+    httpClient: HTTPClient,
+    source: inout S,
+    uploadId: String,
+    offset: Int64,
+    crc32cSeed: UInt32? = nil,
+    chunkSize: Int,
+    totalSize: Int64?,
+    options: UploadOptions,
+    continuation: AsyncStream<UploadStatus>.Continuation
+  ) async throws -> StorageObject {
+    var checksummedSource = ChecksummedSource(source: source, options: options.checksums)
+    if let seed = crc32cSeed {
+      checksummedSource.seedCRC32C(seed: seed, bytesHashed: offset)
+    }
+    if offset > 0 {
+      try await checksummedSource.seek(to: offset)
+    }
+    return try await continueStreamingUpload(
+      httpClient: httpClient,
+      checksummedSource: &checksummedSource,
+      uploadId: uploadId,
+      offset: offset,
+      chunkSize: chunkSize,
+      totalSize: totalSize,
+      options: options,
+      continuation: continuation
+    )
+  }
+
   /// Resumes a previously interrupted file upload using a saved upload ID.
   ///
   /// - Parameters:
@@ -216,12 +265,13 @@ extension StorageClient {
       var source = source
       let totalSize = source.totalSize
 
-      // 1. Query GCS for current status
+      // Query GCS for current status - this includes any partially calculated
+      // checksums if available.
       let queryRequest = try await httpClient.buildQueryResumableUploadRequest(
         uploadId: uploadId, options: options)
       let (queryData, queryResponse) = try await httpClient.data(for: queryRequest)
 
-      var offset: Int64 = 0
+      var status = ResumableUploadQueryStatus(nextOffset: 0, crc32cSeed: nil)
       if queryResponse.statusCode == 200 || queryResponse.statusCode == 201 {
         let object = try httpClient.handleObjectResponse(data: queryData, response: queryResponse)
         continuation.yield(
@@ -230,30 +280,25 @@ extension StorageClient {
             uploadId: uploadId))
         return object
       } else if queryResponse.statusCode == 308 {
-        if let rangeHeader = queryResponse.value(forHTTPHeaderField: "Range") {
-          offset = try httpClient.parseNextRangeStart(rangeHeader)
-        }
+        status = try httpClient.parseResumableUploadQueryStatus(from: queryResponse)
       } else {
         throw UploadError.unexpectedServerResponse(
           statusCode: queryResponse.statusCode,
           message: String(data: queryData, encoding: .utf8) ?? "")
       }
 
-      // 2. Seek source to GCS offset
-      try await source.seek(to: offset)
-
       continuation.yield(
         UploadStatus(
-          bytesUploaded: offset, totalBytes: totalSize, uploadId: uploadId))
+          bytesUploaded: status.nextOffset, totalBytes: totalSize, uploadId: uploadId))
 
-      // 3. Continue upload
-      let chunkSize = options.chunkSize
+      // Continue the main upload loop
       return try await Self.continueResumableUpload(
         httpClient: httpClient,
         source: &source,
         uploadId: uploadId,
-        offset: offset,
-        chunkSize: chunkSize,
+        offset: status.nextOffset,
+        crc32cSeed: status.crc32cSeed,
+        chunkSize: options.chunkSize,
         totalSize: totalSize,
         options: options,
         continuation: continuation
@@ -287,6 +332,12 @@ extension StorageClient {
 }
 
 // --- Helper Methods Extension ---
+
+/// Status returned by GCS when querying an in-progress resumable upload.
+struct ResumableUploadQueryStatus: Sendable {
+  let nextOffset: Int64
+  let crc32cSeed: UInt32?
+}
 
 extension HTTPClient {
   fileprivate func buildSimpleUploadRequest(
@@ -424,6 +475,36 @@ extension HTTPClient {
     request.setValue("bytes \(offset)-\(end)/\(totalStr)", forHTTPHeaderField: "Content-Range")
     request.httpBody = data
     return request
+  }
+
+  internal func parseResumableUploadQueryStatus(from response: HTTPURLResponse) throws
+    -> ResumableUploadQueryStatus
+  {
+    var nextOffset: Int64 = 0
+    if let rangeHeader = response.value(forHTTPHeaderField: "Range") {
+      nextOffset = try parseNextRangeStart(rangeHeader)
+    }
+
+    var crc32cSeed: UInt32? = nil
+    if let runningHashHeader = response.value(forHTTPHeaderField: "x-goog-running-hash") {
+      crc32cSeed = parseCRC32CFromRunningHash(runningHashHeader)
+    }
+
+    return ResumableUploadQueryStatus(nextOffset: nextOffset, crc32cSeed: crc32cSeed)
+  }
+
+  internal func parseCRC32CFromRunningHash(_ headerValue: String) -> UInt32? {
+    let parts = headerValue.split(separator: ",")
+    for part in parts {
+      let trimmed = part.trimmingCharacters(in: .whitespaces)
+      if trimmed.hasPrefix("crc32c=") {
+        let b64 = String(trimmed.dropFirst("crc32c=".count))
+        guard let data = Data(base64Encoded: b64), data.count == 4 else { return nil }
+        let bigEndian = data.withUnsafeBytes { $0.load(as: UInt32.self) }
+        return UInt32(bigEndian: bigEndian)
+      }
+    }
+    return nil
   }
 
   internal func parseNextRangeStart(_ rangeHeader: String) throws -> Int64 {
