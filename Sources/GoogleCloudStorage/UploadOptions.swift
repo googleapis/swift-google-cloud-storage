@@ -400,7 +400,117 @@ public struct UploadMetadata: Sendable, Codable, Equatable {
   }
 }
 
-/// Configuration options for the upload request/session.
+/// Configuration options for object upload operations in Google Cloud Storage.
+///
+/// Use `UploadOptions` to customize upload behaviors when calling `StorageClient.upload(...)`.
+/// Options include setting chunk size for resumable uploads, object metadata, preconditions (such as generation matches),
+/// encryption settings (CMEK and CSEK), checksum validation strategies, and access control presets (Predefined ACLs).
+///
+/// ## Configuration Styles
+///
+/// Configure `UploadOptions` by using the `.with` closure builder.
+///
+/// ```swift
+/// let options = UploadOptions().with {
+///   $0.chunkSize = 16 * 1024 * 1024  // 16 MiB
+///   $0.predefinedAcl = .publicRead
+///   $0.metadata = UploadMetadata().with { meta in
+///     meta.contentType = "application/json"
+///     meta.customMetadata = ["env": "prod"]
+///   }
+/// }
+/// ```
+///
+/// ## Key Configuration Features
+///
+/// ### Object Metadata
+///
+/// Attach fixed key metadata (such as `Content-Type` or `Cache-Control`) and custom key-value pairs to the uploaded object:
+///
+/// ```swift
+/// let options = UploadOptions().with {
+///   $0.metadata = UploadMetadata().with {
+///     $0.contentType = "image/png"
+///     $0.cacheControl = "public, max-age=3600"
+///     $0.customMetadata = ["author": "Jane Doe", "department": "Engineering"]
+///   }
+/// }
+/// ```
+///
+/// ### Preconditions
+///
+/// Apply preconditions to the upload. For example, guaranteeing an object is only created if it does not already exist:
+///
+/// ```swift
+/// let options = UploadOptions().with {
+///   $0.preconditions = StoragePreconditions().with {
+///     $0.ifGenerationMatch = 0  // Succeeds only if the object does not exist
+///   }
+/// }
+/// ```
+///
+/// ### Checksum Validation
+///
+/// Configure client-side data integrity verification (CRC32C and/or MD5):
+///
+/// ```swift
+/// // Use automatic CRC32C calculation (default)
+/// let options = UploadOptions().with {
+///   $0.checksums = .default
+/// }
+///
+/// // Pass a pre-computed CRC32C checksum
+/// let options = UploadOptions().with {
+///   $0.checksums = ChecksumOptions(crc32c: "AAAAAA==")
+/// }
+/// ```
+///
+/// ### Encryption (CMEK / CSEK)
+///
+/// Protect uploaded objects with Customer-Managed Encryption Keys (CMEK) or Customer-Supplied Encryption Keys (CSEK):
+///
+/// ```swift
+/// // Customer-Managed Encryption Key (CMEK) via Cloud KMS
+/// let options = UploadOptions().with {
+///   $0.kmsKeyName = "projects/my-project/locations/global/keyRings/my-ring/cryptoKeys/my-key"
+/// }
+///
+/// // Customer-Supplied Encryption Key (CSEK)
+/// let csek = try CustomerEncryptionKeyOptions(keyBase64: "your-base64-encoded-256bit-key==")
+/// let options = UploadOptions().with {
+///   $0.customerEncryptionKey = csek
+/// }
+/// ```
+///
+/// ### Predefined Access Control Lists (ACLs)
+///
+/// Set predefined permissions for the object upon upload:
+///
+/// ```swift
+/// let options = UploadOptions().with {
+///   $0.predefinedAcl = .publicRead
+/// }
+/// ```
+///
+/// ## Uploading with Options
+///
+/// Pass your configured options to `StorageClient.upload(...)`:
+///
+/// ```swift
+/// let options = UploadOptions().with {
+///   $0.chunkSize = 16 * 1024 * 1024
+///   $0.metadata = UploadMetadata().with {
+///     $0.contentType = "text/csv"
+///   }
+/// }
+///
+/// let task = storageClient.upload(
+///   fileURL,
+///   to: "my-bucket",
+///   as: "data/report.csv",
+///   options: options
+/// )
+/// ```
 public struct UploadOptions: Sendable {
   /// The chunk size in bytes for resumable uploads. Defaults to 8 MB (8 * 1024 * 1024).
   public var chunkSize: Int = 8 * 1024 * 1024
@@ -475,7 +585,7 @@ public struct CustomerEncryption: Sendable, Codable, Equatable {
 }
 
 /// Represents a GCS Object.
-// TODO(#323): Replace with actual generated struct if available.
+// TODO(#27): Replace with actual generated struct if available.
 public struct StorageObject: Sendable, Codable, Equatable {
   public var bucket: String = String()
   public var name: String = String()
@@ -580,7 +690,7 @@ public struct StorageObject: Sendable, Codable, Equatable {
     case owner
   }
 
-  /// Use `config` to return a new instance of this object, with some fields updated.
+  /// Use `with` to return a new instance of this object, with some fields updated.
   ///
   /// Commonly used to initialize the value, for example:
   ///
