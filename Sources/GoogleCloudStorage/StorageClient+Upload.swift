@@ -221,6 +221,12 @@ extension StorageClient {
     options: UploadOptions,
     continuation: AsyncStream<UploadStatus>.Continuation
   ) async throws -> StorageObject {
+    var options = options
+    // Explicitly disable calculated MD5 checksums if we are resuming an upload at offset >0
+    // as MD5 requires reading the entire file from the start.
+    if offset > 0 && options.checksums.md5 == .auto {
+      options.checksums.md5 = nil
+    }
     var checksummedSource = ChecksummedSource(source: source, options: options.checksums)
     return try await continueStreamingUpload(
       httpClient: httpClient,
@@ -245,6 +251,12 @@ extension StorageClient {
     options: UploadOptions,
     continuation: AsyncStream<UploadStatus>.Continuation
   ) async throws -> StorageObject {
+    var options = options
+    // Explicitly disable calculated MD5 checksums if we are resuming an upload at offset >0
+    // as MD5 requires reading the entire file from the start.
+    if offset > 0 && options.checksums.md5 == .auto {
+      options.checksums.md5 = nil
+    }
     var checksummedSource = ChecksummedSource(source: source, options: options.checksums)
     if let seed = crc32cSeed {
       checksummedSource.seedCRC32C(seed: seed, bytesHashed: offset)
