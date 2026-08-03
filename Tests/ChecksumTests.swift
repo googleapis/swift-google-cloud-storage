@@ -74,22 +74,6 @@ import Testing
     #expect(chunk2!.checksum == "md5=ZajifYh5KDgxtmS9i38K1A==")
   }
 
-  @Test func testParseChecksumMismatchCRC32C() throws {
-    let message = "Provided CRC32C \"n03x6A==\" doesn't match calculated CRC32C \"AAAAAA==\""
-    let match = StorageClient.parseChecksumMismatch(message)
-    #expect(match != nil)
-    #expect(match!.local == "crc32c=n03x6A==")
-    #expect(match!.server == "crc32c=AAAAAA==")
-  }
-
-  @Test func testParseChecksumMismatchMD5() throws {
-    let message = "Provided MD5 \"wXyZ123...\" doesn't match calculated MD5 \"AAAAAA...\""
-    let match = StorageClient.parseChecksumMismatch(message)
-    #expect(match != nil)
-    #expect(match!.local == "md5=wXyZ123...")
-    #expect(match!.server == "md5=AAAAAA...")
-  }
-
   @Test func testSimpleUploadChecksumMismatch() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
@@ -126,10 +110,10 @@ import Testing
 
     do {
       _ = try await task.value
-      Issue.record("Expected upload to fail with checksum mismatch")
-    } catch UploadError.checksumMismatch(let local, let server) {
-      #expect(local == "crc32c=invalid_crc")
-      #expect(server == "crc32c=valid_crc")
+      Issue.record("Expected upload to fail with unexpected server response")
+    } catch UploadError.unexpectedServerResponse(let statusCode, let message) {
+      #expect(statusCode == 400)
+      #expect(message == errorMessage)
     }
   }
 
@@ -175,10 +159,10 @@ import Testing
 
     do {
       _ = try await task.value
-      Issue.record("Expected upload to fail with checksum mismatch")
-    } catch UploadError.checksumMismatch(let local, let server) {
-      #expect(local == "md5=invalid_md5")
-      #expect(server == "md5=valid_md5")
+      Issue.record("Expected upload to fail with unexpected server response")
+    } catch UploadError.unexpectedServerResponse(let statusCode, let message) {
+      #expect(statusCode == 400)
+      #expect(message == errorMessage)
     }
   }
 

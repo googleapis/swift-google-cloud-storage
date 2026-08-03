@@ -436,13 +436,11 @@ import Testing
       do {
         _ = try await task.value
         Issue.record("Expected GCS to reject upload with bad checksum, but it succeeded")
-      } catch UploadError.checksumMismatch(let localChecksum, let serverChecksum) {
-        #expect(localChecksum == "crc32c=AAAAAA==")
-        #expect(!serverChecksum.isEmpty)
-        print(
-          "GCS correctly rejected bad checksum: local=\(localChecksum), server=\(serverChecksum)")
+      } catch UploadError.unexpectedServerResponse(let statusCode, let message) {
+        #expect(statusCode == 400)
+        print("GCS correctly rejected bad checksum: \(message)")
       } catch {
-        Issue.record("Expected UploadError.checksumMismatch, but got \(error)")
+        Issue.record("Expected UploadError.unexpectedServerResponse, but got \(error)")
       }
     }
 

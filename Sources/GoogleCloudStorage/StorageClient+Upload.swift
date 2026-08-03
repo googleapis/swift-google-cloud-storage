@@ -569,12 +569,6 @@ extension HTTPClient {
   {
     guard (200..<300).contains(response.statusCode) else {
       let message = String(data: data, encoding: .utf8) ?? ""
-      if response.statusCode == 400 {
-        if let match = StorageClient.parseChecksumMismatch(message) {
-          throw UploadError.checksumMismatch(
-            localChecksum: match.local, serverChecksum: match.server)
-        }
-      }
       throw UploadError.unexpectedServerResponse(
         statusCode: response.statusCode, message: message)
     }
@@ -617,41 +611,6 @@ extension StorageClient {
     }
 
     return parts.isEmpty ? nil : parts.joined(separator: ", ")
-  }
-
-  internal static func parseChecksumMismatch(_ message: String) -> (local: String, server: String)?
-  {
-    let crcRegex = try? NSRegularExpression(
-      pattern: "Provided CRC32C \\\\?\"([^\"]+?)\\\\?\".*calculated CRC32C \\\\?\"([^\"]+?)\\\\?\"",
-      options: .caseInsensitive)
-    if let match = crcRegex?.firstMatch(
-      in: message, options: [], range: NSRange(message.startIndex..., in: message))
-    {
-      if let localRange = Range(match.range(at: 1), in: message),
-        let serverRange = Range(match.range(at: 2), in: message)
-      {
-        let local = String(message[localRange])
-        let server = String(message[serverRange])
-        return ("crc32c=" + local, "crc32c=" + server)
-      }
-    }
-
-    let md5Regex = try? NSRegularExpression(
-      pattern: "Provided MD5 \\\\?\"([^\"]+?)\\\\?\".*calculated MD5 \\\\?\"([^\"]+?)\\\\?\"",
-      options: .caseInsensitive)
-    if let match = md5Regex?.firstMatch(
-      in: message, options: [], range: NSRange(message.startIndex..., in: message))
-    {
-      if let localRange = Range(match.range(at: 1), in: message),
-        let serverRange = Range(match.range(at: 2), in: message)
-      {
-        let local = String(message[localRange])
-        let server = String(message[serverRange])
-        return ("md5=" + local, "md5=" + server)
-      }
-    }
-
-    return nil
   }
 }
 
