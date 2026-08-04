@@ -554,6 +554,42 @@ import Testing
       print("Upload with metadata successful: \(object)")
     }
 
+    @Test func testUploadWithObjectContexts() async throws {
+      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
+        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
+        return
+      }
+      let bucketName =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
+      let objectName = "test-contexts-\(UUID().uuidString).txt"
+
+      let content = "Hello Google Cloud Storage object contexts upload!"
+      let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(objectName)
+      try content.write(to: fileURL, atomically: true, encoding: .utf8)
+      defer {
+        try? FileManager.default.removeItem(at: fileURL)
+      }
+
+      let storage = try StorageClient()
+      let options = UploadOptions().with {
+        $0.metadata = UploadMetadata().with {
+          $0.contexts = ObjectContexts(customValues: [
+            "environment": "integration-test", "team": "swift-sdk",
+          ])
+        }
+      }
+
+      let task = storage.upload(fileURL, to: bucketName, as: objectName, options: options)
+
+      let object = try await task.value
+      #expect(object.bucket == bucketName)
+      #expect(object.name == objectName)
+      #expect(object.contexts?.custom?["environment"]?.value == "integration-test")
+      #expect(object.contexts?.custom?["team"]?.value == "swift-sdk")
+
+      print("Upload with object contexts successful: \(object)")
+    }
+
     @Test func testDynamicSourceCompletelyEmptyUpload() async throws {
       guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
         Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")

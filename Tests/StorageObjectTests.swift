@@ -89,4 +89,38 @@ import Testing
     #expect(object.timeCreated == expectedTime)
     #expect(object.updated == expectedTime)
   }
+
+  @Test func storageObjectWithContextsDeserialization() throws {
+    let jsonString = """
+      {
+        "bucket": "my-bucket",
+        "name": "data.bin",
+        "generation": "1",
+        "metageneration": "1",
+        "size": "1024",
+        "contexts": {
+          "custom": {
+            "classification": {
+              "value": "confidential",
+              "createTime": "2026-08-01T10:00:00Z",
+              "updateTime": "2026-08-01T10:30:00Z"
+            }
+          }
+        }
+      }
+      """
+    guard let data = jsonString.data(using: .utf8) else {
+      Issue.record("Failed to convert JSON string to Data")
+      return
+    }
+
+    let decoder = GoogleCloudWkt._ProtoJSONDecoder()
+    let object = try decoder.decode(StorageObject.self, from: data)
+
+    #expect(object.bucket == "my-bucket")
+    #expect(object.name == "data.bin")
+    #expect(object.contexts?.custom?["classification"]?.value == "confidential")
+    #expect(object.contexts?.custom?["classification"]?.createTime != nil)
+    #expect(object.contexts?.custom?["classification"]?.updateTime != nil)
+  }
 }

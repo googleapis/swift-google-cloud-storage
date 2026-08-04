@@ -348,6 +348,65 @@ public struct ObjectOwner: Sendable, Codable, Equatable {
   }
 }
 
+/// Payload for a custom context entry on a Cloud Storage object.
+public struct ObjectCustomContextPayload: Sendable, Codable, Equatable, ExpressibleByStringLiteral {
+  /// Value of the context key.
+  public var value: String?
+
+  /// Timestamp when the context key was created.
+  public var createTime: GoogleCloudWkt.Timestamp?
+
+  /// Timestamp when the context key was last updated.
+  public var updateTime: GoogleCloudWkt.Timestamp?
+
+  public init(
+    value: String? = nil,
+    createTime: GoogleCloudWkt.Timestamp? = nil,
+    updateTime: GoogleCloudWkt.Timestamp? = nil
+  ) {
+    self.value = value
+    self.createTime = createTime
+    self.updateTime = updateTime
+  }
+
+  public init(stringLiteral value: String) {
+    self.init(value: value)
+  }
+
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
+  }
+}
+
+/// Container for object contexts on a Cloud Storage object.
+///
+/// Object contexts allow attaching custom key-value pairs to Cloud Storage objects
+/// to improve how you categorize, track, and search your data.
+public struct ObjectContexts: Sendable, Codable, Equatable, ExpressibleByDictionaryLiteral {
+  /// Map of custom context keys to their payloads.
+  public var custom: [String: ObjectCustomContextPayload]?
+
+  public init(custom: [String: ObjectCustomContextPayload]? = nil) {
+    self.custom = custom
+  }
+
+  public init(customValues: [String: String]) {
+    self.custom = customValues.mapValues { ObjectCustomContextPayload(value: $0) }
+  }
+
+  public init(dictionaryLiteral elements: (String, ObjectCustomContextPayload)...) {
+    self.custom = Dictionary(uniqueKeysWithValues: elements)
+  }
+
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
+  }
+}
+
 /// Represents the metadata of the object to be created.
 public struct UploadMetadata: Sendable, Codable, Equatable {
   /// Content-Type header of the object data (e.g. "application/json", "image/png").
@@ -389,6 +448,9 @@ public struct UploadMetadata: Sendable, Codable, Equatable {
   /// Owner information for the object.
   public var owner: ObjectOwner?
 
+  /// Object contexts associated with the object.
+  public var contexts: ObjectContexts?
+
   enum CodingKeys: String, CodingKey {
     case contentType
     case contentEncoding
@@ -403,6 +465,7 @@ public struct UploadMetadata: Sendable, Codable, Equatable {
     case acl
     case retention
     case owner
+    case contexts
   }
 
   public init() {}
@@ -443,10 +506,25 @@ public struct UploadMetadata: Sendable, Codable, Equatable {
 ///
 /// ```swift
 /// let options = UploadOptions().with {
-///   $0.metadata = UploadMetadata().with {
-///     $0.contentType = "image/png"
-///     $0.cacheControl = "public, max-age=3600"
-///     $0.customMetadata = ["author": "Jane Doe", "department": "Engineering"]
+///   $0.metadata = UploadMetadata().with { meta in
+///     meta.contentType = "image/png"
+///     meta.cacheControl = "public, max-age=3600"
+///     meta.customMetadata = ["author": "Jane Doe", "department": "Engineering"]
+///   }
+/// }
+/// ```
+///
+/// ### Object Contexts
+///
+/// Attach object contexts to improve how you categorize, track, and search your data:
+///
+/// ```swift
+/// let options = UploadOptions().with {
+///   $0.metadata = UploadMetadata().with { meta in
+///     meta.contexts = ObjectContexts(custom: [
+///       "environment": ObjectCustomContextPayload(value: "production"),
+///       "team": "Engineering"
+///     ])
 ///   }
 /// }
 /// ```
@@ -625,6 +703,7 @@ public struct StorageObject: Sendable, Codable, Equatable {
   public var acl: [ObjectAccessControl]?
   public var retention: ObjectRetention?
   public var owner: ObjectOwner?
+  public var contexts: ObjectContexts?
 
   public init() {}
 
@@ -675,6 +754,7 @@ public struct StorageObject: Sendable, Codable, Equatable {
     acl = try? container.decode([ObjectAccessControl].self, forKey: .acl)
     retention = try? container.decode(ObjectRetention.self, forKey: .retention)
     owner = try? container.decode(ObjectOwner.self, forKey: .owner)
+    contexts = try? container.decode(ObjectContexts.self, forKey: .contexts)
   }
 
   enum CodingKeys: String, CodingKey {
@@ -702,6 +782,7 @@ public struct StorageObject: Sendable, Codable, Equatable {
     case acl
     case retention
     case owner
+    case contexts
   }
 
   /// Use `with` to return a new instance of this object, with some fields updated.

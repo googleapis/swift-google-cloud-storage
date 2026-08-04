@@ -304,4 +304,192 @@ import Testing
     #expect(object.owner?.entity == "user-owner@example.com")
     #expect(object.owner?.entityId == "owner123")
   }
+
+  @Test func uploadMetadataWithObjectContextsEncodingAndDecoding() throws {
+    let createTime = try GoogleCloudWkt.Timestamp(seconds: 1_700_000_000, nanos: 0)
+    let updateTime = try GoogleCloudWkt.Timestamp(seconds: 1_700_000_100, nanos: 0)
+
+    let contexts = ObjectContexts(custom: [
+      "customer_id": ObjectCustomContextPayload(
+        value: "cust-78901", createTime: createTime, updateTime: updateTime),
+      "payment_status": "unpaid",
+    ])
+
+    let uploadMetadata = UploadMetadata().with {
+      $0.contentType = "application/json"
+      $0.contexts = contexts
+    }
+
+    #expect(uploadMetadata.contexts?.custom?["customer_id"]?.value == "cust-78901")
+    #expect(uploadMetadata.contexts?.custom?["payment_status"]?.value == "unpaid")
+
+    let encoder = JSONEncoder()
+    let data = try encoder.encode(uploadMetadata)
+    let jsonString = String(data: data, encoding: .utf8) ?? ""
+
+    #expect(jsonString.contains("\"contexts\":"))
+    #expect(jsonString.contains("\"custom\":"))
+    #expect(jsonString.contains("\"customer_id\":"))
+    #expect(jsonString.contains("\"cust-78901\""))
+    #expect(jsonString.contains("\"payment_status\":"))
+    #expect(jsonString.contains("\"unpaid\""))
+
+    let decoder = JSONDecoder()
+    let decoded = try decoder.decode(UploadMetadata.self, from: data)
+
+    #expect(decoded == uploadMetadata)
+    #expect(decoded.contexts?.custom?["customer_id"]?.value == "cust-78901")
+    #expect(decoded.contexts?.custom?["customer_id"]?.createTime == createTime)
+    #expect(decoded.contexts?.custom?["customer_id"]?.updateTime == updateTime)
+    #expect(decoded.contexts?.custom?["payment_status"]?.value == "unpaid")
+  }
+
+  @Test func simpleUploadWithObjectContextsInUploadOptions() async throws {
+    let registry = MockRegistry.create()
+    let bucket = "test-bucket"
+    let objectName = "context-object"
+    let data = Data(repeating: 65, count: 100)
+    let source = BytesSource(data: data)
+
+    let simpleUploadUrl = registry.url(
+      "/upload/storage/v1/b/\(bucket)/o?uploadType=multipart&name=\(objectName)"
+    )
+
+    let responseJson = """
+      {
+        "bucket": "\(bucket)",
+        "name": "\(objectName)",
+        "generation": "1",
+        "metageneration": "1",
+        "size": "\(data.count)",
+        "contentType": "text/plain",
+        "contexts": {
+          "custom": {
+            "dept": {
+              "value": "engineering"
+            },
+            "environment": {
+              "value": "production"
+            }
+          }
+        }
+      }
+      """
+
+    registry.register(
+      response: .success(
+        statusCode: 200, data: Data(responseJson.utf8), headers: nil),
+      for: simpleUploadUrl)
+
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [MockURLProtocol.self]
+    let session = URLSession(configuration: config)
+
+    let clientOptions = StorageClientOptions().with {
+      $0.client = .init().with {
+        $0.endpoint = registry.endpoint
+        $0._testSession = session
+        $0.credentials = try! Credentials(configuration: .anonymous)
+      }
+    }
+
+    let client = try StorageClient(clientOptions)
+    let uploadOptions = UploadOptions().with {
+      $0.metadata = UploadMetadata().with {
+        $0.contexts = ObjectContexts(customValues: [
+          "dept": "engineering", "environment": "production",
+        ])
+      }
+    }
+
+    let task = client.upload(source, to: bucket, as: objectName, options: uploadOptions)
+    let object = try await task.value
+
+    #expect(object.name == objectName)
+    #expect(object.bucket == bucket)
+    #expect(object.contexts?.custom?["dept"]?.value == "engineering")
+    #expect(object.contexts?.custom?["environment"]?.value == "production")
+
+    let recordedReq = registry.lastRequest(for: simpleUploadUrl)
+    #expect(recordedReq != nil)
+    if let body = recordedReq?.httpBody, let bodyString = String(data: body, encoding: .utf8) {
+      #expect(bodyString.contains("\"contexts\":"))
+      #expect(bodyString.contains("\"engineering\""))
+      #expect(bodyString.contains("\"production\""))
+    }
+  }
+
+  @Test func resumableUploadWithObjectContexts() async throws {
+    let registry = MockRegistry.create()
+    let bucket = "test-bucket"
+    let objectName = "resumable-context-object"
+    let data = Data(repeating: 68, count: 10 * 1024 * 1024)
+    let source = BytesSource(data: data)
+
+    let initUrl = registry.url(
+      "/upload/storage/v1/b/\(bucket)/o?uploadType=resumable&name=\(objectName)"
+    )
+    let sessionUrl = registry.url(
+      "/upload/storage/v1/b/\(bucket)/o?uploadType=resumable&upload_id=session456")
+
+    registry.register(
+      response: .success(
+        statusCode: 200, data: Data(),
+        headers: ["Location": sessionUrl.absoluteString]),
+      for: initUrl)
+
+    let finalObjectJson = """
+      {
+        "bucket": "\(bucket)",
+        "name": "\(objectName)",
+        "generation": "1",
+        "metageneration": "1",
+        "size": "\(data.count)",
+        "contexts": {
+          "custom": {
+            "batch_id": {
+              "value": "2026_Q3"
+            }
+          }
+        }
+      }
+      """
+
+    registry.register(
+      response: .success(
+        statusCode: 200, data: Data(finalObjectJson.utf8), headers: nil),
+      for: sessionUrl)
+
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [MockURLProtocol.self]
+    let session = URLSession(configuration: config)
+
+    let clientOptions = StorageClientOptions().with {
+      $0.client = .init().with {
+        $0.endpoint = registry.endpoint
+        $0._testSession = session
+        $0.credentials = try! Credentials(configuration: .anonymous)
+      }
+    }
+
+    let client = try StorageClient(clientOptions)
+    let uploadOptions = UploadOptions().with {
+      $0.metadata = UploadMetadata().with {
+        $0.contexts = ObjectContexts(customValues: ["batch_id": "2026_Q3"])
+      }
+    }
+
+    let task = client.upload(source, to: bucket, as: objectName, options: uploadOptions)
+    let object = try await task.value
+
+    #expect(object.name == objectName)
+    #expect(object.contexts?.custom?["batch_id"]?.value == "2026_Q3")
+
+    let recordedInitReq = registry.lastRequest(for: initUrl)
+    #expect(recordedInitReq != nil)
+    if let body = recordedInitReq?.httpBody, let bodyString = String(data: body, encoding: .utf8) {
+      #expect(
+        bodyString.contains("\"contexts\":{\"custom\":{\"batch_id\":{\"value\":\"2026_Q3\"}}}"))
+    }
+  }
 }
