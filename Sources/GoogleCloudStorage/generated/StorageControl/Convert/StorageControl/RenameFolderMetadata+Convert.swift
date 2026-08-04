@@ -26,12 +26,16 @@ extension RenameFolderMetadata {
 
   internal init(proto: ProtoType) throws {
     self.init()
+    self.commonMetadata = proto.hasCommonMetadata ? try .init(proto: proto.commonMetadata) : nil
     self.sourceFolderId = proto.sourceFolderID
     self.destinationFolderId = proto.destinationFolderID
   }
 
   internal func toProto() throws -> ProtoType {
     var proto = ProtoType()
+    if let commonMetadata = self.commonMetadata {
+      proto.commonMetadata = try commonMetadata.toProto()
+    }
     proto.sourceFolderID = self.sourceFolderId
     proto.destinationFolderID = self.destinationFolderId
     return proto

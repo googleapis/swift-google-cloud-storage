@@ -19,24 +19,22 @@ import GoogleCloudGax
 internal import StorageControlProtos
 internal import SwiftProtobuf
 import GoogleCloudWkt
+import GoogleType
 internal import GoogleCloudWktConvert
 
-extension IntelligenceFindingRevision {
-  internal typealias ProtoType = StorageControlProtos
-    .Google_Storage_Control_V2_IntelligenceFindingRevision
+extension Interval {
+  internal typealias ProtoType = StorageControlProtos.Google_Type_Interval
 
   internal init(proto: ProtoType) throws {
     self.init()
-    self.name = proto.name
-    self.snapshot = proto.hasSnapshot ? try .init(proto: proto.snapshot) : nil
-    self.createTime = proto.hasCreateTime ? try .init(proto: proto.createTime) : nil
+    self.startTime = proto.hasStartTime ? try .init(proto: proto.startTime) : nil
+    self.endTime = proto.hasEndTime ? try .init(proto: proto.endTime) : nil
   }
 
   internal func toProto() throws -> ProtoType {
     var proto = ProtoType()
-    proto.name = self.name
-    if let snapshot = self.snapshot { proto.snapshot = try snapshot.toProto() }
-    if let createTime = self.createTime { proto.createTime = try createTime.toProto() }
+    if let startTime = self.startTime { proto.startTime = try startTime.toProto() }
+    if let endTime = self.endTime { proto.endTime = try endTime.toProto() }
     return proto
   }
 }
