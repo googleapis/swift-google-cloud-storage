@@ -37,7 +37,9 @@ public struct ChecksumOptions: Sendable, Hashable {
   public var md5: ChecksumValue?
 
   /// Specifies how a checksum should be provided for upload validation.
-  public enum ChecksumValue: Sendable, Hashable, ExpressibleByStringLiteral {
+  public enum ChecksumValue: Sendable, Hashable, ExpressibleByStringLiteral,
+    ExpressibleByIntegerLiteral
+  {
     /// Automatically calculate the checksum on-the-fly during upload streaming.
     case auto
 
@@ -47,6 +49,18 @@ public struct ChecksumOptions: Sendable, Hashable {
     /// Creates a `ChecksumValue` from a string literal containing a pre-computed checksum.
     public init(stringLiteral value: String) {
       self = .value(value)
+    }
+
+    /// Creates a `ChecksumValue` from a 32-bit unsigned integer CRC32C checksum value.
+    public init(_ intValue: UInt32) {
+      let bigEndian = intValue.bigEndian
+      let base64 = withUnsafeBytes(of: bigEndian) { Data($0).base64EncodedString() }
+      self = .value(base64)
+    }
+
+    /// Creates a `ChecksumValue` from an integer literal containing a CRC32C checksum value.
+    public init(integerLiteral value: UInt64) {
+      self.init(UInt32(truncatingIfNeeded: value))
     }
   }
 

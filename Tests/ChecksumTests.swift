@@ -195,6 +195,20 @@ import Testing
     #expect(chunk!.checksum == "crc32c=PRE_CRC, md5=PRE_MD5")
   }
 
+  @Test func testChecksummedSourceUserProvidedUInt32() async throws {
+    let source = BytesSource(data: Data("Hello, World!".utf8))
+    // 0x4D551068 (big-endian [0x4D, 0x55, 0x10, 0x68]) encodes to "TVUQaA=="
+    let checksumsLiteral = ChecksumOptions(crc32c: 0x4D551068)
+    #expect(checksumsLiteral.crc32c == .value("TVUQaA=="))
+
+    var checksummedSource = ChecksummedSource(source: source, options: checksumsLiteral)
+    let chunk = try await checksummedSource.readChunk(maxBytes: 100)
+
+    #expect(chunk != nil)
+    #expect(chunk!.isLast == true)
+    #expect(chunk!.checksum == "crc32c=TVUQaA==")
+  }
+
   @Test func testChecksummedSourceMixedAutoAndUserProvided() async throws {
     let data = Data("Hello, World!".utf8)
     let source = BytesSource(data: data)
