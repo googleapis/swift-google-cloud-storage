@@ -18,22 +18,19 @@ import Foundation
 import GoogleCloudGax
 import GoogleCloudWkt
 
-/// Response message to summarize the intelligence findings for a specified
-/// scope (organization, folder or project).
-public struct SummarizeIntelligenceFindingsResponse: Codable, Equatable, GoogleCloudWkt
-    ._AnyPackable,
+/// Response message for ListRapidCaches.
+public struct ListRapidCachesResponse: Codable, Equatable, GoogleCloudWkt._AnyPackable,
   GoogleCloudGax._PaginatedResponse,
   Sendable
 {
-  /// The list of `FindingSummary` summaries.
-  public var findingSummaries: [FindingSummary] = []
+  /// The list of rapid caches.
+  public var rapidCaches: [RapidCache] = []
 
-  /// A token to retrieve the next page of results.
-  /// Pass this value in the `page_token` field in the subsequent call to
-  /// `SummarizeIntelligenceFindings` to retrieve the next page of results.
+  /// A token, which can be sent as `page_token` to retrieve the next page.
+  /// If this field is omitted, there are no subsequent pages.
   public var nextPageToken: Swift.String = Swift.String()
 
-  /// Initialize a new instance of `SummarizeIntelligenceFindingsResponse`.
+  /// Initialize a new instance of `ListRapidCachesResponse`.
   public init() {}
 
   /// Use `config` to return a new instance of this object, with some fields updated.
@@ -41,7 +38,7 @@ public struct SummarizeIntelligenceFindingsResponse: Codable, Equatable, GoogleC
   /// Commonly used to initialize the value, for example:
   ///
   /// ```
-  /// let value = SummarizeIntelligenceFindingsResponse().with { $0.findingSummaries = ... }
+  /// let value = ListRapidCachesResponse().with { $0.rapidCaches = ... }
   /// ```
   public func with(_ config: (inout Self) throws -> Swift.Void) rethrows -> Self {
     var copy = self
@@ -50,7 +47,7 @@ public struct SummarizeIntelligenceFindingsResponse: Codable, Equatable, GoogleC
   }
 
   public static var _anyTypeUrl: Swift.String {
-    return "type.googleapis.com/google.storage.control.v2.SummarizeIntelligenceFindingsResponse"
+    return "type.googleapis.com/google.storage.control.v2.ListRapidCachesResponse"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {
     self = try GoogleCloudWkt._slowAnyDeserialize(Self.self, from: any)
@@ -59,8 +56,8 @@ public struct SummarizeIntelligenceFindingsResponse: Codable, Equatable, GoogleC
     return try GoogleCloudWkt._slowAnySerialize(message: self)
   }
 
-  public func _getPaginatedItems() -> [FindingSummary] {
-    return self.findingSummaries
+  public func _getPaginatedItems() -> [RapidCache] {
+    return self.rapidCaches
   }
 
   public func _nextPageToken() -> Swift.String {

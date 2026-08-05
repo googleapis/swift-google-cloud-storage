@@ -21,33 +21,33 @@ internal import SwiftProtobuf
 import GoogleCloudWkt
 internal import GoogleCloudWktConvert
 
-extension AnywhereCache {
-  internal typealias ProtoType = StorageControlProtos.Google_Storage_Control_V2_AnywhereCache
+extension RapidCache {
+  internal typealias ProtoType = StorageControlProtos.Google_Storage_Control_V2_RapidCache
 
   internal init(proto: ProtoType) throws {
     self.init()
     self.name = proto.name
     self.zone = proto.zone
+    self.cacheType = proto.cacheType
     self.ttl = proto.hasTtl ? try .init(proto: proto.ttl) : nil
     self.admissionPolicy = proto.admissionPolicy
     self.state = proto.state
     self.createTime = proto.hasCreateTime ? try .init(proto: proto.createTime) : nil
     self.updateTime = proto.hasUpdateTime ? try .init(proto: proto.updateTime) : nil
     self.pendingUpdate = proto.pendingUpdate
-    self.ingestOnWrite = proto.hasIngestOnWrite ? proto.ingestOnWrite : nil
   }
 
   internal func toProto() throws -> ProtoType {
     var proto = ProtoType()
     proto.name = self.name
     proto.zone = self.zone
+    proto.cacheType = self.cacheType
     if let ttl = self.ttl { proto.ttl = try ttl.toProto() }
     proto.admissionPolicy = self.admissionPolicy
     proto.state = self.state
     if let createTime = self.createTime { proto.createTime = try createTime.toProto() }
     if let updateTime = self.updateTime { proto.updateTime = try updateTime.toProto() }
     proto.pendingUpdate = self.pendingUpdate
-    if let ingestOnWrite = self.ingestOnWrite { proto.ingestOnWrite = ingestOnWrite }
     return proto
   }
 }

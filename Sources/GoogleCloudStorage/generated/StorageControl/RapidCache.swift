@@ -17,18 +17,22 @@
 import Foundation
 import GoogleCloudWkt
 
-/// An Anywhere Cache Instance.
-public struct AnywhereCache: Codable, Equatable, GoogleCloudWkt._AnyPackable,
+/// A Rapid Cache Instance.
+public struct RapidCache: Codable, Equatable, GoogleCloudWkt._AnyPackable,
   Sendable
 {
-  /// Immutable. The resource name of this AnywhereCache.
+  /// Immutable. The resource name of this RapidCache.
   /// Format:
-  /// `projects/{project}/buckets/{bucket}/anywhereCaches/{anywhere_cache}`
+  /// projects/{project}/buckets/{bucket}/rapidCaches/{rapid_cache}
   public var name: Swift.String = Swift.String()
 
   /// Immutable. The zone in which the cache instance is running. For example,
   /// us-central1-a.
   public var zone: Swift.String = Swift.String()
+
+  /// Immutable. The type of Rapid Cache this represents. Valid values include:
+  /// 'rapid-cache' and 'rapid-cache-ultra'.
+  public var cacheType: Swift.String = Swift.String()
 
   /// Cache entry TTL (ranges between 1h to 7d). This is a cache-level config
   /// that defines how long a cache entry can live. Default ttl value (24hrs)
@@ -37,19 +41,18 @@ public struct AnywhereCache: Codable, Equatable, GoogleCloudWkt._AnyPackable,
   public var ttl: GoogleCloudWkt.Duration? = nil
 
   /// Cache admission policy. Valid policies includes:
-  /// `admit-on-first-miss` and `admit-on-second-miss`. Defaults to
-  /// `admit-on-first-miss`. Default value is applied if not specified in the
-  /// create request.
+  /// no_read_admission, admit-on-first-miss and admit-on-second-miss. Defaults
+  /// to admit-on-first-miss for both AC and RCU. Default value is applied if not
+  /// specified in the create request.
   public var admissionPolicy: Swift.String = Swift.String()
 
-  /// Output only. Cache state including `running`, `creating`, `disabled` and
-  /// `paused`.
+  /// Output only. Cache state including running, creating, and disabled.
   public var state: Swift.String = Swift.String()
 
-  /// Output only. Time when Anywhere cache instance is allocated.
+  /// Output only. Time when Rapid cache instance is allocated.
   public var createTime: GoogleCloudWkt.Timestamp? = nil
 
-  /// Output only. Time when Anywhere cache instance is last updated, including
+  /// Output only. Time when Rapid cache instance is last updated, including
   /// creation.
   public var updateTime: GoogleCloudWkt.Timestamp? = nil
 
@@ -58,11 +61,7 @@ public struct AnywhereCache: Codable, Equatable, GoogleCloudWkt._AnyPackable,
   /// true. Output only.
   public var pendingUpdate: Swift.Bool = Swift.Bool()
 
-  /// Optional. Specifies whether objects are ingested into the cache upon write.
-  /// Defaults to false.
-  public var ingestOnWrite: Swift.Bool? = nil
-
-  /// Initialize a new instance of `AnywhereCache`.
+  /// Initialize a new instance of `RapidCache`.
   public init() {}
 
   /// Use `config` to return a new instance of this object, with some fields updated.
@@ -70,7 +69,7 @@ public struct AnywhereCache: Codable, Equatable, GoogleCloudWkt._AnyPackable,
   /// Commonly used to initialize the value, for example:
   ///
   /// ```
-  /// let value = AnywhereCache().with { $0.name = ... }
+  /// let value = RapidCache().with { $0.name = ... }
   /// ```
   public func with(_ config: (inout Self) throws -> Swift.Void) rethrows -> Self {
     var copy = self
@@ -79,7 +78,7 @@ public struct AnywhereCache: Codable, Equatable, GoogleCloudWkt._AnyPackable,
   }
 
   public static var _anyTypeUrl: Swift.String {
-    return "type.googleapis.com/google.storage.control.v2.AnywhereCache"
+    return "type.googleapis.com/google.storage.control.v2.RapidCache"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {
     self = try GoogleCloudWkt._slowAnyDeserialize(Self.self, from: any)

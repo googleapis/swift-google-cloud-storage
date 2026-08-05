@@ -15,25 +15,32 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
 import GoogleCloudWkt
 
-/// Response message to summarize the intelligence findings for a specified
-/// scope (organization, folder or project).
-public struct SummarizeIntelligenceFindingsResponse: Codable, Equatable, GoogleCloudWkt
-    ._AnyPackable,
-  GoogleCloudGax._PaginatedResponse,
+/// Request message for UpdateRapidCache.
+public struct UpdateRapidCacheRequest: Codable, Equatable, GoogleCloudWkt._AnyPackable,
   Sendable
 {
-  /// The list of `FindingSummary` summaries.
-  public var findingSummaries: [FindingSummary] = []
+  /// Required. The RapidCache to update.
+  public var rapidCache: RapidCache? = nil
 
-  /// A token to retrieve the next page of results.
-  /// Pass this value in the `page_token` field in the subsequent call to
-  /// `SummarizeIntelligenceFindings` to retrieve the next page of results.
-  public var nextPageToken: Swift.String = Swift.String()
+  /// Required. List of fields to be updated. Mutable fields of RapidCache
+  /// include `ttl`, `admission_policy` and `ingest_on_write`.
+  ///
+  /// To specify ALL fields, specify a single field with the value `*`. Note: We
+  /// recommend against doing this. If a new field is introduced at a later time,
+  /// an older client updating with the `*` may accidentally reset the new
+  /// field's value.
+  ///
+  /// Not specifying any fields is an error.
+  public var updateMask: GoogleCloudWkt.FieldMask? = nil
 
-  /// Initialize a new instance of `SummarizeIntelligenceFindingsResponse`.
+  /// Optional. A unique identifier for this request. UUID is the recommended
+  /// format, but other formats are still accepted. This request is only
+  /// idempotent if a `request_id` is provided.
+  public var requestId: Swift.String = Swift.String()
+
+  /// Initialize a new instance of `UpdateRapidCacheRequest`.
   public init() {}
 
   /// Use `config` to return a new instance of this object, with some fields updated.
@@ -41,7 +48,7 @@ public struct SummarizeIntelligenceFindingsResponse: Codable, Equatable, GoogleC
   /// Commonly used to initialize the value, for example:
   ///
   /// ```
-  /// let value = SummarizeIntelligenceFindingsResponse().with { $0.findingSummaries = ... }
+  /// let value = UpdateRapidCacheRequest().with { $0.rapidCache = ... }
   /// ```
   public func with(_ config: (inout Self) throws -> Swift.Void) rethrows -> Self {
     var copy = self
@@ -50,20 +57,12 @@ public struct SummarizeIntelligenceFindingsResponse: Codable, Equatable, GoogleC
   }
 
   public static var _anyTypeUrl: Swift.String {
-    return "type.googleapis.com/google.storage.control.v2.SummarizeIntelligenceFindingsResponse"
+    return "type.googleapis.com/google.storage.control.v2.UpdateRapidCacheRequest"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {
     self = try GoogleCloudWkt._slowAnyDeserialize(Self.self, from: any)
   }
   public func _pack() throws -> GoogleCloudWkt.Struct {
     return try GoogleCloudWkt._slowAnySerialize(message: self)
-  }
-
-  public func _getPaginatedItems() -> [FindingSummary] {
-    return self.findingSummaries
-  }
-
-  public func _nextPageToken() -> Swift.String {
-    return self.nextPageToken
   }
 }

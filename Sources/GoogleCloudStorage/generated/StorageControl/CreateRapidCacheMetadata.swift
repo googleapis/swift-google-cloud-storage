@@ -18,35 +18,38 @@ import Foundation
 import GoogleCloudWkt
 
 /// Message returned in the metadata field of the Operation resource for
-/// UpdateAnywhereCache operation.
-public struct UpdateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWkt._AnyPackable,
+/// CreateRapidCache operations.
+public struct CreateRapidCacheMetadata: Codable, Equatable, GoogleCloudWkt._AnyPackable,
   Sendable
 {
   /// Generic metadata for the long running operation.
   public var commonMetadata: CommonLongRunningOperationMetadata? = nil
 
-  /// Anywhere Cache ID.
-  public var anywhereCacheId: Swift.String? = nil
+  /// Rapid Cache ID.
+  public var rapidCacheId: Swift.String? = nil
 
   /// The zone in which the cache instance is running. For example,
   /// us-central1-a.
   public var zone: Swift.String? = nil
 
-  /// Anywhere Cache entry's TTL between 1h and 7days. A cache-level config that
-  /// is applied to all new cache entries on admission. If `ttl` is pending
-  /// update, this field equals to the new value specified in the Update request.
+  /// Rapid Cache entry's TTL. A cache-level config that is applied to all new
+  /// cache entries on admission. Default ttl value (24hrs) is applied if not
+  /// specified in the create request.
   public var ttl: GoogleCloudWkt.Duration? = nil
 
-  /// Optional. Anywhere Cache entry Admission Policy in kebab-case (e.g.,
-  /// "admit-on-first-miss"). If `admission_policy` is pending
-  /// update, this field equals to the new value specified in the Update request.
+  /// Anywhere Cache entry Admission Policy in kebab-case (e.g.,
+  /// "admit-on-first-miss"). Default admission policy (admit-on-first-miss) is
+  /// applied if not specified in the create request.
   public var admissionPolicy: Swift.String? = nil
 
-  /// Specifies whether objects are ingested into the cache upon write. If not
-  /// set, it defaults to false.
+  /// Optional. Specifies whether objects are ingested into the cache upon write.
+  /// Defaults to false.
   public var ingestOnWrite: Swift.Bool? = nil
 
-  /// Initialize a new instance of `UpdateAnywhereCacheMetadata`.
+  /// Optional. The type of cache. Either rapid cache or rapid cache ultra.
+  public var cacheType: Swift.String? = nil
+
+  /// Initialize a new instance of `CreateRapidCacheMetadata`.
   public init() {}
 
   /// Use `config` to return a new instance of this object, with some fields updated.
@@ -54,7 +57,7 @@ public struct UpdateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWkt._A
   /// Commonly used to initialize the value, for example:
   ///
   /// ```
-  /// let value = UpdateAnywhereCacheMetadata().with { $0.commonMetadata = ... }
+  /// let value = CreateRapidCacheMetadata().with { $0.commonMetadata = ... }
   /// ```
   public func with(_ config: (inout Self) throws -> Swift.Void) rethrows -> Self {
     var copy = self
@@ -63,7 +66,7 @@ public struct UpdateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWkt._A
   }
 
   public static var _anyTypeUrl: Swift.String {
-    return "type.googleapis.com/google.storage.control.v2.UpdateAnywhereCacheMetadata"
+    return "type.googleapis.com/google.storage.control.v2.CreateRapidCacheMetadata"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {
     self = try GoogleCloudWkt._slowAnyDeserialize(Self.self, from: any)

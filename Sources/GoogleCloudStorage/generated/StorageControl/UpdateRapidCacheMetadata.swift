@@ -18,26 +18,26 @@ import Foundation
 import GoogleCloudWkt
 
 /// Message returned in the metadata field of the Operation resource for
-/// UpdateAnywhereCache operation.
-public struct UpdateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWkt._AnyPackable,
+/// UpdateRapidCache operation.
+public struct UpdateRapidCacheMetadata: Codable, Equatable, GoogleCloudWkt._AnyPackable,
   Sendable
 {
   /// Generic metadata for the long running operation.
   public var commonMetadata: CommonLongRunningOperationMetadata? = nil
 
-  /// Anywhere Cache ID.
-  public var anywhereCacheId: Swift.String? = nil
+  /// Rapid Cache ID.
+  public var rapidCacheId: Swift.String? = nil
 
   /// The zone in which the cache instance is running. For example,
   /// us-central1-a.
   public var zone: Swift.String? = nil
 
-  /// Anywhere Cache entry's TTL between 1h and 7days. A cache-level config that
+  /// Rapid Cache entry's TTL between 1h and 7days. A cache-level config that
   /// is applied to all new cache entries on admission. If `ttl` is pending
   /// update, this field equals to the new value specified in the Update request.
   public var ttl: GoogleCloudWkt.Duration? = nil
 
-  /// Optional. Anywhere Cache entry Admission Policy in kebab-case (e.g.,
+  /// Optional. Rapid Cache entry Admission Policy in kebab-case (e.g.,
   /// "admit-on-first-miss"). If `admission_policy` is pending
   /// update, this field equals to the new value specified in the Update request.
   public var admissionPolicy: Swift.String? = nil
@@ -46,7 +46,10 @@ public struct UpdateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWkt._A
   /// set, it defaults to false.
   public var ingestOnWrite: Swift.Bool? = nil
 
-  /// Initialize a new instance of `UpdateAnywhereCacheMetadata`.
+  /// Optional. The type of cache. Either rapid cache or rapid cache ultra.
+  public var cacheType: Swift.String? = nil
+
+  /// Initialize a new instance of `UpdateRapidCacheMetadata`.
   public init() {}
 
   /// Use `config` to return a new instance of this object, with some fields updated.
@@ -54,7 +57,7 @@ public struct UpdateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWkt._A
   /// Commonly used to initialize the value, for example:
   ///
   /// ```
-  /// let value = UpdateAnywhereCacheMetadata().with { $0.commonMetadata = ... }
+  /// let value = UpdateRapidCacheMetadata().with { $0.commonMetadata = ... }
   /// ```
   public func with(_ config: (inout Self) throws -> Swift.Void) rethrows -> Self {
     var copy = self
@@ -63,7 +66,7 @@ public struct UpdateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWkt._A
   }
 
   public static var _anyTypeUrl: Swift.String {
-    return "type.googleapis.com/google.storage.control.v2.UpdateAnywhereCacheMetadata"
+    return "type.googleapis.com/google.storage.control.v2.UpdateRapidCacheMetadata"
   }
   public init(fromAny any: GoogleCloudWkt.`Any`) throws {
     self = try GoogleCloudWkt._slowAnyDeserialize(Self.self, from: any)
