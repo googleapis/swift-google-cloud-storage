@@ -147,53 +147,67 @@ public struct ReadObjectSequence: AsyncSequence, Sendable {
   public typealias Element = Data
 
   /// Name of the bucket containing the object being read.
-  public let bucket: String
+  public var bucket: String = ""
 
   /// Name of the object being read.
-  public let object: String
+  public var object: String = ""
 
   /// Configuration options used for this object download.
-  public let options: ReadObjectOptions
+  public var options: ReadObjectOptions = .init()
+
+  internal var stream: AsyncThrowingStream<Data, Error> = AsyncThrowingStream { $0.finish() }
 
   /// Creates a new `ReadObjectSequence` instance.
-  public init(
-    bucket: String,
-    object: String,
-    options: ReadObjectOptions = .init()
-  ) {
-    self.bucket = bucket
-    self.object = object
-    self.options = options
+  public init() {}
+
+  /// Builder pattern helper to modify configuration in place.
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
   }
 
   /// An asynchronous iterator for iterating over chunks of downloaded object payload data.
   public struct AsyncIterator: AsyncIteratorProtocol, Sendable {
     public typealias Element = Data
 
+    private struct Storage: @unchecked Sendable {
+      var iterator: AsyncThrowingStream<Data, Error>.AsyncIterator
+    }
+
+    private var storage: Storage
+
+    internal init(iterator: AsyncThrowingStream<Data, Error>.AsyncIterator) {
+      self.storage = Storage(iterator: iterator)
+    }
+
     /// Advances to the next `Data` chunk in the downloaded object payload stream.
     public mutating func next() async throws -> Data? {
-      // Stub implementation
-      return nil
+      try await storage.iterator.next()
     }
   }
 
   /// Creates an asynchronous iterator for iterating over object payload chunks.
   public func makeAsyncIterator() -> AsyncIterator {
-    AsyncIterator()
+    AsyncIterator(iterator: stream.makeAsyncIterator())
   }
 }
 
 /// Container object returned by `readObject` containing metadata and the streaming body sequence.
 public struct ReadObjectResult: Sendable {
   /// Object metadata extracted from initial HTTP response headers.
-  public let metadata: ReadObjectMetadata
+  public var metadata: ReadObjectMetadata = .init()
 
   /// Asynchronous sequence yielding chunks of binary data payload.
-  public let body: ReadObjectSequence
+  public var body: ReadObjectSequence = .init()
 
   /// Creates a new `ReadObjectResult` instance.
-  public init(metadata: ReadObjectMetadata, body: ReadObjectSequence) {
-    self.metadata = metadata
-    self.body = body
+  public init() {}
+
+  /// Builder pattern helper to modify configuration in place.
+  public func with(_ config: (inout Self) -> Void) -> Self {
+    var copy = self
+    config(&copy)
+    return copy
   }
 }

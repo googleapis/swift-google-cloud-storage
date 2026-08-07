@@ -183,7 +183,8 @@ public final class MockRegistry: @unchecked Sendable {
 
 public final class MockURLProtocol: URLProtocol {
   public override class func canInit(with request: URLRequest) -> Bool {
-    return true
+    guard let host = request.url?.host else { return false }
+    return MockRegistry.registry(for: host) != nil
   }
 
   public override class func canonicalRequest(for request: URLRequest) -> URLRequest {

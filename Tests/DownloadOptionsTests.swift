@@ -97,7 +97,11 @@ import Testing
       $0.object = "obj"
     }
     let options = ReadObjectOptions().with { $0.autoResume = false }
-    let sequence = ReadObjectSequence(bucket: "bkt", object: "obj", options: options)
+    let sequence = ReadObjectSequence().with {
+      $0.bucket = "bkt"
+      $0.object = "obj"
+      $0.options = options
+    }
 
     #expect(sequence.bucket == "bkt")
     #expect(sequence.object == "obj")
@@ -107,7 +111,10 @@ import Testing
     let firstChunk = try await iterator.next()
     #expect(firstChunk == nil)
 
-    let response = ReadObjectResult(metadata: metadata, body: sequence)
+    let response = ReadObjectResult().with {
+      $0.metadata = metadata
+      $0.body = sequence
+    }
     #expect(response.metadata.bucket == "bkt")
     #expect(response.metadata.object == "obj")
     #expect(response.body.bucket == "bkt")
