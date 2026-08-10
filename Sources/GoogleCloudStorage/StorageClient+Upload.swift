@@ -21,6 +21,12 @@ import GoogleCloudWkt
 @_spi(GoogleCloudInternal) import struct GoogleCloudGax._CRC32C
 import Crypto
 
+package enum ResumableUploadStatus: Sendable {
+  case unknown
+  case inprogress(UInt64)
+  case done(StorageObject)
+}
+
 extension StorageClient {
   /// Core upload method accepting any upload source.
   ///
@@ -37,6 +43,17 @@ extension StorageClient {
     options: UploadOptions = .default
   ) -> UploadTask {
     let clientOptions = self.options.client
+    let effectiveRetryPolicy =
+      options.retryPolicy ?? self.options.upload.retryPolicy
+      ?? clientOptions.retryPolicy
+    let effectiveBackoffPolicy =
+      options.backoffPolicy ?? self.options.upload.backoffPolicy ?? clientOptions.backoffPolicy
+    let retryLoop = _RetryLoop(
+      retryPolicy: effectiveRetryPolicy,
+      backoffPolicy: effectiveBackoffPolicy,
+      retryThrottler: clientOptions.retryThrottler,
+      idempotent: true
+    )
     return UploadTask.create { continuation in
       let httpClient = try HTTPClient(
         from: clientOptions, withDefaultEndpoint: StorageClient.defaultEndpoint)
@@ -56,10 +73,59 @@ extension StorageClient {
           metadata: options.metadata,
           options: options,
           totalSize: totalSize,
-          continuation: continuation
+          continuation: continuation,
+          retryLoop: retryLoop
         )
       } else {
-        return try await Self.performResumableUpload(
+        return try await Self.continueStreamingUpload(
+          httpClient: httpClient,
+          source: &source,
+          bucket: bucket,
+          objectName: objectName,
+          metadata: options.metadata,
+          uploadId: nil,
+          initialStatus: .inprogress(0),
+          chunkSize: options.chunkSize,
+          totalSize: totalSize,
+          options: options,
+          continuation: continuation,
+          retryLoop: retryLoop
+        )
+      }
+    }
+  }
+
+  /// Upload method accepting any seekable upload source.
+  public func upload(
+    _ source: some SeekableUploadSource,
+    to bucket: String,
+    as objectName: String,
+    options: UploadOptions = .default
+  ) -> UploadTask {
+    let clientOptions = self.options.client
+    let effectiveRetryPolicy =
+      options.retryPolicy ?? self.options.upload.retryPolicy
+      ?? clientOptions.retryPolicy
+    let effectiveBackoffPolicy =
+      options.backoffPolicy ?? self.options.upload.backoffPolicy ?? clientOptions.backoffPolicy
+    let retryLoop = _RetryLoop(
+      retryPolicy: effectiveRetryPolicy,
+      backoffPolicy: effectiveBackoffPolicy,
+      retryThrottler: clientOptions.retryThrottler,
+      idempotent: true
+    )
+    return UploadTask.create { continuation in
+      let httpClient = try HTTPClient(
+        from: clientOptions, withDefaultEndpoint: StorageClient.defaultEndpoint)
+      var source = source
+      let totalSize = source.totalSize
+
+      // Determine if simple or resumable
+      let threshold = 8 * 1024 * 1024  // 8MB default threshold
+      let useResumable = totalSize == nil || totalSize! >= threshold
+
+      if !useResumable {
+        return try await Self.performSimpleUpload(
           httpClient: httpClient,
           source: &source,
           bucket: bucket,
@@ -67,7 +133,23 @@ extension StorageClient {
           metadata: options.metadata,
           options: options,
           totalSize: totalSize,
-          continuation: continuation
+          continuation: continuation,
+          retryLoop: retryLoop
+        )
+      } else {
+        return try await Self.continueResumableSeekableUpload(
+          httpClient: httpClient,
+          source: &source,
+          bucket: bucket,
+          objectName: objectName,
+          metadata: options.metadata,
+          uploadId: nil,
+          initialStatus: .inprogress(0),
+          chunkSize: options.chunkSize,
+          totalSize: totalSize,
+          options: options,
+          continuation: continuation,
+          retryLoop: retryLoop
         )
       }
     }
@@ -81,7 +163,8 @@ extension StorageClient {
     metadata: UploadMetadata?,
     options: UploadOptions,
     totalSize: Int64?,
-    continuation: AsyncStream<UploadStatus>.Continuation
+    continuation: AsyncStream<UploadStatus>.Continuation,
+    retryLoop: _RetryLoop
   ) async throws -> StorageObject {
     guard let data = try await source.read(maxBytes: Int(totalSize ?? 0)) else {
       throw UploadError.internalError("Failed to read data from source")
@@ -95,185 +178,374 @@ extension StorageClient {
       options: options,
       checksum: checksum
     )
-    let (responseData, response) = try await httpClient.data(for: request)
-    let object = try httpClient.handleObjectResponse(data: responseData, response: response)
-    continuation.yield(
-      UploadStatus(
-        bytesUploaded: Int64(data.count), totalBytes: totalSize))
-    return object
+
+    return try await retryLoop.run { _ in
+      let (responseData, response): (Data, HTTPURLResponse)
+      do {
+        (responseData, response) = try await httpClient.data(for: request)
+      } catch {
+        throw RequestError.io(error)
+      }
+      if response.statusCode == 503 {
+        throw HTTPClient.parseError(data: responseData, response: response)
+      }
+      let object = try httpClient.handleObjectResponse(data: responseData, response: response)
+      continuation.yield(
+        UploadStatus(
+          bytesUploaded: Int64(data.count), totalBytes: totalSize))
+      return object
+    }
   }
 
-  fileprivate static func performResumableUpload(
+  fileprivate static func startResumableSession(
     httpClient: HTTPClient,
-    source: inout some UploadSource,
     bucket: String,
     objectName: String,
     metadata: UploadMetadata?,
-    options: UploadOptions,
-    totalSize: Int64?,
-    continuation: AsyncStream<UploadStatus>.Continuation
-  ) async throws -> StorageObject {
+    options: UploadOptions
+  ) async throws -> String {
     let startRequest = try await httpClient.buildStartResumableUploadRequest(
       bucket: bucket, objectName: objectName, metadata: metadata, options: options)
-    let (startData, startResponse) = try await httpClient.data(for: startRequest)
+    let (startData, startResponse): (Data, HTTPURLResponse)
+    do {
+      (startData, startResponse) = try await httpClient.data(for: startRequest)
+    } catch {
+      throw RequestError.io(error)
+    }
     guard startResponse.statusCode == 200,
       let location = startResponse.value(forHTTPHeaderField: "Location")
     else {
+      if startResponse.statusCode == 503 {
+        throw HTTPClient.parseError(data: startData, response: startResponse)
+      }
       throw UploadError.unexpectedServerResponse(
         statusCode: startResponse.statusCode,
         message: String(data: startData, encoding: .utf8) ?? "")
     }
-    let uploadId = location
+    return location
+  }
 
-    continuation.yield(
-      UploadStatus(
-        bytesUploaded: 0, totalBytes: totalSize, uploadId: uploadId))
+  fileprivate static func queryUploadStatus(
+    httpClient: HTTPClient,
+    uploadId: String,
+    options: UploadOptions
+  ) async throws -> (status: ResumableUploadStatus, crc32cSeed: UInt32?) {
+    let queryRequest = try await httpClient.buildQueryResumableUploadRequest(
+      uploadId: uploadId, options: options)
+    let (queryData, queryResponse): (Data, HTTPURLResponse)
+    do {
+      (queryData, queryResponse) = try await httpClient.data(for: queryRequest)
+    } catch {
+      throw RequestError.io(error)
+    }
 
-    let chunkSize = options.chunkSize
-    return try await Self.continueResumableUpload(
-      httpClient: httpClient,
-      source: &source,
+    if queryResponse.statusCode == 200 || queryResponse.statusCode == 201 {
+      let object = try httpClient.handleObjectResponse(data: queryData, response: queryResponse)
+      return (.done(object), nil)
+    } else if queryResponse.statusCode == 308 {
+      let queryStatus = try httpClient.parseResumableUploadQueryStatus(from: queryResponse)
+      return (.inprogress(UInt64(queryStatus.nextOffset)), queryStatus.crc32cSeed)
+    } else if queryResponse.statusCode == 503 {
+      throw HTTPClient.parseError(data: queryData, response: queryResponse)
+    } else {
+      throw UploadError.unexpectedServerResponse(
+        statusCode: queryResponse.statusCode,
+        message: String(data: queryData, encoding: .utf8) ?? "")
+    }
+  }
+
+  fileprivate static func sendNextChunk<S: UploadSource>(
+    httpClient: HTTPClient,
+    checksummedSource: inout ChecksummedSource<S>,
+    uploadId: String,
+    committedBytes: UInt64,
+    chunkSize: Int,
+    totalSize: Int64?,
+    options: UploadOptions,
+    continuation: AsyncStream<UploadStatus>.Continuation
+  ) async throws -> (status: ResumableUploadStatus, crc32cSeed: UInt32?) {
+    let chunkInfo = try await checksummedSource.readChunk(maxBytes: chunkSize)
+    let chunk: Data
+    let effectiveTotalSize: Int64?
+    let checksum: String?
+
+    if let chunkInfo = chunkInfo, !chunkInfo.data.isEmpty {
+      chunk = chunkInfo.data
+      let isLast = chunkInfo.isLast
+      checksum = isLast ? chunkInfo.checksum : nil
+      effectiveTotalSize =
+        (isLast && totalSize == nil) ? (Int64(committedBytes) + Int64(chunk.count)) : totalSize
+    } else {
+      chunk = Data()
+      effectiveTotalSize = totalSize ?? Int64(committedBytes)
+      checksum = checksummedSource.finalizeChecksum()
+    }
+
+    let uploadRequest = try await httpClient.buildUploadChunkRequest(
       uploadId: uploadId,
-      offset: 0,
-      chunkSize: chunkSize,
-      totalSize: totalSize,
+      data: chunk,
+      offset: Int64(committedBytes),
+      totalSize: effectiveTotalSize,
       options: options,
-      continuation: continuation
+      checksum: checksum
     )
+
+    let (uploadData, uploadResponse): (Data, HTTPURLResponse)
+    do {
+      (uploadData, uploadResponse) = try await httpClient.data(for: uploadRequest)
+    } catch {
+      throw RequestError.io(error)
+    }
+
+    if uploadResponse.statusCode == 200 || uploadResponse.statusCode == 201 {
+      let object = try httpClient.handleObjectResponse(data: uploadData, response: uploadResponse)
+      continuation.yield(
+        UploadStatus(
+          bytesUploaded: Int64(committedBytes) + Int64(chunk.count),
+          totalBytes: effectiveTotalSize,
+          uploadId: uploadId
+        )
+      )
+      return (.done(object), nil)
+    } else if uploadResponse.statusCode == 308 {
+      let nextOffset: Int64
+      if let rangeHeader = uploadResponse.value(forHTTPHeaderField: "Range") {
+        nextOffset = try httpClient.parseNextRangeStart(rangeHeader)
+      } else {
+        nextOffset = Int64(committedBytes) + Int64(chunk.count)
+      }
+      var crc32cSeed: UInt32? = nil
+      if let runningHashHeader = uploadResponse.value(forHTTPHeaderField: "x-goog-running-hash") {
+        crc32cSeed = httpClient.parseCRC32CFromRunningHash(runningHashHeader)
+      }
+      continuation.yield(
+        UploadStatus(
+          bytesUploaded: nextOffset,
+          totalBytes: totalSize,
+          uploadId: uploadId
+        )
+      )
+      return (.inprogress(UInt64(nextOffset)), crc32cSeed)
+    } else if uploadResponse.statusCode == 503 {
+      throw HTTPClient.parseError(data: uploadData, response: uploadResponse)
+    } else {
+      _ = try httpClient.handleObjectResponse(data: uploadData, response: uploadResponse)
+      throw UploadError.unexpectedServerResponse(
+        statusCode: uploadResponse.statusCode,
+        message: String(data: uploadData, encoding: .utf8) ?? ""
+      )
+    }
   }
 
   fileprivate static func continueStreamingUpload<S: UploadSource>(
     httpClient: HTTPClient,
-    checksummedSource: inout ChecksummedSource<S>,
-    uploadId: String,
-    offset: Int64,
+    source: inout S,
+    bucket: String? = nil,
+    objectName: String? = nil,
+    metadata: UploadMetadata? = nil,
+    uploadId: String?,
+    initialStatus: ResumableUploadStatus,
     chunkSize: Int,
     totalSize: Int64?,
     options: UploadOptions,
-    continuation: AsyncStream<UploadStatus>.Continuation
+    continuation: AsyncStream<UploadStatus>.Continuation,
+    retryLoop: _RetryLoop
   ) async throws -> StorageObject {
-    var offset = offset
-    var chunksSent = 0
-    while true {
-      guard let chunkInfo = try await checksummedSource.readChunk(maxBytes: chunkSize),
-        !chunkInfo.data.isEmpty
-      else {
-        break
-      }
-      chunksSent += 1
-      let chunk = chunkInfo.data
-      let isLast = chunkInfo.isLast
-      let checksum = isLast ? chunkInfo.checksum : nil
+    var options = options
+    var uploadStatus = initialStatus
+    var currentUploadId = uploadId
+    var checksummedSource: ChecksummedSource<S>? = nil
+    var lastCommittedBytes: UInt64 = 0
 
-      let effectiveTotalSize =
-        (isLast && totalSize == nil) ? (offset + Int64(chunk.count)) : totalSize
-
-      let uploadRequest = try await httpClient.buildUploadChunkRequest(
-        uploadId: uploadId, data: chunk, offset: offset, totalSize: effectiveTotalSize,
-        options: options,
-        checksum: checksum)
-      let (uploadData, uploadResponse) = try await httpClient.data(for: uploadRequest)
-
-      if uploadResponse.statusCode == 200 || uploadResponse.statusCode == 201 {
-        let object = try httpClient.handleObjectResponse(
-          data: uploadData, response: uploadResponse)
-        continuation.yield(
-          UploadStatus(
-            bytesUploaded: offset + Int64(chunk.count),
-            totalBytes: effectiveTotalSize, uploadId: uploadId))
-        return object
-      } else if uploadResponse.statusCode == 308 {
-        if let rangeHeader = uploadResponse.value(forHTTPHeaderField: "Range") {
-          offset = try httpClient.parseNextRangeStart(rangeHeader)
+    return try await retryLoop.run { _ in
+      while true {
+        let activeUploadId: String
+        if let id = currentUploadId {
+          activeUploadId = id
         } else {
-          offset += Int64(chunk.count)
+          guard let bucket = bucket, let objectName = objectName else {
+            throw UploadError.internalError(
+              "Missing bucket or object name to start resumable upload")
+          }
+          let location = try await startResumableSession(
+            httpClient: httpClient,
+            bucket: bucket,
+            objectName: objectName,
+            metadata: metadata,
+            options: options
+          )
+          currentUploadId = location
+          activeUploadId = location
+          continuation.yield(
+            UploadStatus(
+              bytesUploaded: 0, totalBytes: totalSize, uploadId: location))
         }
-        continuation.yield(
-          UploadStatus(
-            bytesUploaded: offset, totalBytes: totalSize, uploadId: uploadId))
-      } else {
-        _ = try httpClient.handleObjectResponse(data: uploadData, response: uploadResponse)
+
+        if case .unknown = uploadStatus {
+          let queryResult = try await queryUploadStatus(
+            httpClient: httpClient, uploadId: activeUploadId, options: options)
+          uploadStatus = queryResult.status
+        }
+
+        switch uploadStatus {
+        case .unknown:
+          throw UploadError.internalError("queryUploadStatus returned unknown status")
+        case .done(let object):
+          continuation.yield(
+            UploadStatus(
+              bytesUploaded: totalSize ?? Int64(object.size),
+              totalBytes: totalSize ?? Int64(object.size),
+              uploadId: activeUploadId))
+          return object
+        case .inprogress(let committedBytes):
+          if let total = totalSize, Int64(committedBytes) > total {
+            throw UploadError.localSourceTooSmall(
+              localSize: total, gcsOffset: Int64(committedBytes))
+          }
+          if committedBytes > 0 && options.checksums.md5 == .auto {
+            options.checksums.md5 = nil
+          }
+
+          if checksummedSource == nil {
+            if committedBytes > 0 {
+              throw UploadError.internalError(
+                "Cannot resume non-seekable source at offset \(committedBytes)"
+              )
+            }
+            checksummedSource = ChecksummedSource(source: source, options: options.checksums)
+          } else if committedBytes != lastCommittedBytes {
+            throw UploadError.internalError(
+              "Cannot resume non-seekable source at offset \(committedBytes); expected \(lastCommittedBytes)"
+            )
+          }
+
+          uploadStatus = .unknown
+          let chunkResult = try await sendNextChunk(
+            httpClient: httpClient,
+            checksummedSource: &checksummedSource!,
+            uploadId: activeUploadId,
+            committedBytes: committedBytes,
+            chunkSize: chunkSize,
+            totalSize: totalSize,
+            options: options,
+            continuation: continuation
+          )
+          uploadStatus = chunkResult.status
+          if case .inprogress(let nextBytes) = chunkResult.status {
+            lastCommittedBytes = nextBytes
+          }
+        }
       }
     }
-
-    // Finalize upload with an empty chunk if the stream finished without returning an object
-    let finalTotalSize = totalSize ?? offset
-    let checksum = checksummedSource.finalizeChecksum()
-    let uploadRequest = try await httpClient.buildUploadChunkRequest(
-      uploadId: uploadId, data: Data(), offset: offset, totalSize: finalTotalSize, options: options,
-      checksum: checksum)
-    let (uploadData, uploadResponse) = try await httpClient.data(for: uploadRequest)
-    let object = try httpClient.handleObjectResponse(
-      data: uploadData, response: uploadResponse)
-    continuation.yield(
-      UploadStatus(
-        bytesUploaded: offset, totalBytes: finalTotalSize, uploadId: uploadId))
-    return object
   }
 
-  fileprivate static func continueResumableUpload<S: UploadSource>(
+  fileprivate static func continueResumableSeekableUpload<S: SeekableUploadSource>(
     httpClient: HTTPClient,
     source: inout S,
-    uploadId: String,
-    offset: Int64,
+    bucket: String? = nil,
+    objectName: String? = nil,
+    metadata: UploadMetadata? = nil,
+    uploadId: String?,
+    initialStatus: ResumableUploadStatus,
+    initialCrc32cSeed: UInt32? = nil,
     chunkSize: Int,
     totalSize: Int64?,
     options: UploadOptions,
-    continuation: AsyncStream<UploadStatus>.Continuation
+    continuation: AsyncStream<UploadStatus>.Continuation,
+    retryLoop: _RetryLoop
   ) async throws -> StorageObject {
     var options = options
-    // Explicitly disable calculated MD5 checksums if we are resuming an upload at offset >0
-    // as MD5 requires reading the entire file from the start.
-    if offset > 0 && options.checksums.md5 == .auto {
-      options.checksums.md5 = nil
-    }
-    var checksummedSource = ChecksummedSource(source: source, options: options.checksums)
-    return try await continueStreamingUpload(
-      httpClient: httpClient,
-      checksummedSource: &checksummedSource,
-      uploadId: uploadId,
-      offset: offset,
-      chunkSize: chunkSize,
-      totalSize: totalSize,
-      options: options,
-      continuation: continuation
-    )
-  }
+    var uploadStatus = initialStatus
+    var currentUploadId = uploadId
+    var crc32cSeed = initialCrc32cSeed
+    var checksummedSource: ChecksummedSource<S>? = nil
 
-  fileprivate static func continueResumableUpload<S: SeekableUploadSource>(
-    httpClient: HTTPClient,
-    source: inout S,
-    uploadId: String,
-    offset: Int64,
-    crc32cSeed: UInt32? = nil,
-    chunkSize: Int,
-    totalSize: Int64?,
-    options: UploadOptions,
-    continuation: AsyncStream<UploadStatus>.Continuation
-  ) async throws -> StorageObject {
-    var options = options
-    // Explicitly disable calculated MD5 checksums if we are resuming an upload at offset >0
-    // as MD5 requires reading the entire file from the start.
-    if offset > 0 && options.checksums.md5 == .auto {
-      options.checksums.md5 = nil
+    return try await retryLoop.run { _ in
+      while true {
+        let activeUploadId: String
+        if let id = currentUploadId {
+          activeUploadId = id
+        } else {
+          guard let bucket = bucket, let objectName = objectName else {
+            throw UploadError.internalError(
+              "Missing bucket or object name to start resumable upload")
+          }
+          let location = try await startResumableSession(
+            httpClient: httpClient,
+            bucket: bucket,
+            objectName: objectName,
+            metadata: metadata,
+            options: options
+          )
+          currentUploadId = location
+          activeUploadId = location
+          continuation.yield(
+            UploadStatus(
+              bytesUploaded: 0, totalBytes: totalSize, uploadId: location))
+        }
+
+        if case .unknown = uploadStatus {
+          let queryResult = try await queryUploadStatus(
+            httpClient: httpClient, uploadId: activeUploadId, options: options)
+          uploadStatus = queryResult.status
+          if let seed = queryResult.crc32cSeed {
+            crc32cSeed = seed
+          }
+        }
+
+        switch uploadStatus {
+        case .unknown:
+          throw UploadError.internalError("queryUploadStatus returned unknown status")
+        case .done(let object):
+          continuation.yield(
+            UploadStatus(
+              bytesUploaded: totalSize ?? Int64(object.size),
+              totalBytes: totalSize ?? Int64(object.size),
+              uploadId: activeUploadId))
+          return object
+        case .inprogress(let committedBytes):
+          if let total = totalSize, Int64(committedBytes) > total {
+            throw UploadError.localSourceTooSmall(
+              localSize: total, gcsOffset: Int64(committedBytes))
+          }
+          if committedBytes > 0 && options.checksums.md5 == .auto {
+            options.checksums.md5 = nil
+          }
+
+          if checksummedSource == nil {
+            var cs = ChecksummedSource(source: source, options: options.checksums)
+            if let seed = crc32cSeed {
+              cs.seedCRC32C(seed: seed, bytesHashed: Int64(committedBytes))
+            }
+            if committedBytes > 0 {
+              try await cs.seek(to: Int64(committedBytes))
+            }
+            checksummedSource = cs
+          } else {
+            if let seed = crc32cSeed {
+              checksummedSource!.seedCRC32C(seed: seed, bytesHashed: Int64(committedBytes))
+            }
+            try await checksummedSource!.seek(to: Int64(committedBytes))
+          }
+
+          uploadStatus = .unknown
+          let chunkResult = try await sendNextChunk(
+            httpClient: httpClient,
+            checksummedSource: &checksummedSource!,
+            uploadId: activeUploadId,
+            committedBytes: committedBytes,
+            chunkSize: chunkSize,
+            totalSize: totalSize,
+            options: options,
+            continuation: continuation
+          )
+          uploadStatus = chunkResult.status
+          if let seed = chunkResult.crc32cSeed {
+            crc32cSeed = seed
+          }
+        }
+      }
     }
-    var checksummedSource = ChecksummedSource(source: source, options: options.checksums)
-    if let seed = crc32cSeed {
-      checksummedSource.seedCRC32C(seed: seed, bytesHashed: offset)
-    }
-    if offset > 0 {
-      try await checksummedSource.seek(to: offset)
-    }
-    return try await continueStreamingUpload(
-      httpClient: httpClient,
-      checksummedSource: &checksummedSource,
-      uploadId: uploadId,
-      offset: offset,
-      chunkSize: chunkSize,
-      totalSize: totalSize,
-      options: options,
-      continuation: continuation
-    )
   }
 
   /// Resumes a previously interrupted file upload using a saved upload ID.
@@ -289,49 +561,36 @@ extension StorageClient {
     options: UploadOptions = .default
   ) -> UploadTask {
     let clientOptions = self.options.client
+    let effectiveRetryPolicy =
+      options.retryPolicy ?? self.options.upload.retryPolicy
+      ?? clientOptions.retryPolicy
+    let effectiveBackoffPolicy =
+      options.backoffPolicy ?? self.options.upload.backoffPolicy ?? clientOptions.backoffPolicy
+    let retryLoop = _RetryLoop(
+      retryPolicy: effectiveRetryPolicy,
+      backoffPolicy: effectiveBackoffPolicy,
+      retryThrottler: clientOptions.retryThrottler,
+      idempotent: true
+    )
     return UploadTask.create { continuation in
       let httpClient = try HTTPClient(
         from: clientOptions, withDefaultEndpoint: Self.defaultEndpoint)
       var source = source
       let totalSize = source.totalSize
 
-      // Query GCS for current status - this includes any partially calculated
-      // checksums if available.
-      let queryRequest = try await httpClient.buildQueryResumableUploadRequest(
-        uploadId: uploadId, options: options)
-      let (queryData, queryResponse) = try await httpClient.data(for: queryRequest)
-
-      var status = ResumableUploadQueryStatus(nextOffset: 0, crc32cSeed: nil)
-      if queryResponse.statusCode == 200 || queryResponse.statusCode == 201 {
-        let object = try httpClient.handleObjectResponse(data: queryData, response: queryResponse)
-        continuation.yield(
-          UploadStatus(
-            bytesUploaded: totalSize ?? 0, totalBytes: totalSize,
-            uploadId: uploadId))
-        return object
-      } else if queryResponse.statusCode == 308 {
-        status = try httpClient.parseResumableUploadQueryStatus(from: queryResponse)
-      } else {
-        throw UploadError.unexpectedServerResponse(
-          statusCode: queryResponse.statusCode,
-          message: String(data: queryData, encoding: .utf8) ?? "")
-      }
-
-      continuation.yield(
-        UploadStatus(
-          bytesUploaded: status.nextOffset, totalBytes: totalSize, uploadId: uploadId))
-
-      // Continue the main upload loop
-      return try await Self.continueResumableUpload(
+      return try await Self.continueResumableSeekableUpload(
         httpClient: httpClient,
         source: &source,
+        bucket: nil,
+        objectName: nil,
+        metadata: nil,
         uploadId: uploadId,
-        offset: status.nextOffset,
-        crc32cSeed: status.crc32cSeed,
+        initialStatus: .unknown,
         chunkSize: options.chunkSize,
         totalSize: totalSize,
         options: options,
-        continuation: continuation
+        continuation: continuation,
+        retryLoop: retryLoop
       )
     }
   }

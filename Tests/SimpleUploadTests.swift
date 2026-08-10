@@ -121,16 +121,21 @@ import Testing
         $0.endpoint = registry.endpoint
         $0._testSession = session
         $0.credentials = try! Credentials(configuration: .anonymous)
+        $0.retryPolicy = NeverRetry()
       }
     }
 
     let client = try StorageClient(options)
     let task = client.upload(source, to: bucket, as: objectName)
 
-    let error = await expectError(URLError.self) {
+    let error = await expectError(RequestError.self) {
       try await task.value
     }
-    #expect(error?.code == .cannotConnectToHost)
+    if case .io(let underlying as URLError) = error {
+      #expect(underlying.code == .cannotConnectToHost)
+    } else {
+      Issue.record("Expected RequestError.io(URLError), got \(String(describing: error))")
+    }
   }
 
   /// Tests handling of HTTP error responses (e.g., HTTP 500) during a simple upload.

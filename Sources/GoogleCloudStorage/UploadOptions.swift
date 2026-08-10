@@ -14,6 +14,7 @@
 
 import Crypto
 import Foundation
+import GoogleCloudGax
 import GoogleCloudWkt
 
 /// Errors thrown when validating or creating a `CustomerEncryptionKeyOptions`.
@@ -491,6 +492,12 @@ public struct UploadOptions: Sendable {
 
   /// Predefined ACL to apply to the uploaded object (e.g. `.publicRead`, `.private`).
   public var predefinedAcl: PredefinedAcl?
+
+  /// Overrides the retry policy for this upload.
+  public var retryPolicy: (any RetryPolicy)? = nil
+
+  /// Overrides the backoff policy for this upload.
+  public var backoffPolicy: (any BackoffPolicy)? = nil
 
   /// Legacy validation enum property for backward compatibility.
   public var validation: ChecksumValidation {
