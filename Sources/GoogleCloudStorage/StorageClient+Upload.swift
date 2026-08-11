@@ -24,7 +24,7 @@ import Crypto
 package enum ResumableUploadStatus: Sendable {
   case unknown
   case inprogress(UInt64)
-  case done(StorageObject)
+  case done(Object)
 }
 
 extension StorageClient {
@@ -165,7 +165,7 @@ extension StorageClient {
     totalSize: Int64?,
     continuation: AsyncStream<UploadStatus>.Continuation,
     retryLoop: _RetryLoop
-  ) async throws -> StorageObject {
+  ) async throws -> Object {
     guard let data = try await source.read(maxBytes: Int(totalSize ?? 0)) else {
       throw UploadError.internalError("Failed to read data from source")
     }
@@ -350,7 +350,7 @@ extension StorageClient {
     options: UploadOptions,
     continuation: AsyncStream<UploadStatus>.Continuation,
     retryLoop: _RetryLoop
-  ) async throws -> StorageObject {
+  ) async throws -> Object {
     var options = options
     var uploadStatus = initialStatus
     var currentUploadId = uploadId
@@ -453,7 +453,7 @@ extension StorageClient {
     options: UploadOptions,
     continuation: AsyncStream<UploadStatus>.Continuation,
     retryLoop: _RetryLoop
-  ) async throws -> StorageObject {
+  ) async throws -> Object {
     var options = options
     var uploadStatus = initialStatus
     var currentUploadId = uploadId
@@ -836,7 +836,7 @@ extension HTTPClient {
   }
 
   fileprivate func handleObjectResponse(data: Data, response: HTTPURLResponse) throws
-    -> StorageObject
+    -> Object
   {
     guard (200..<300).contains(response.statusCode) else {
       let message = String(data: data, encoding: .utf8) ?? ""
@@ -844,7 +844,8 @@ extension HTTPClient {
         statusCode: response.statusCode, message: message)
     }
     let decoder = GoogleCloudWkt._ProtoJSONDecoder()
-    return try decoder.decode(StorageObject.self, from: data)
+    let v1Object = try decoder.decode(ObjectV1Response.self, from: data)
+    return v1Object.toObject()
   }
 }
 
