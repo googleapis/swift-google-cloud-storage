@@ -626,8 +626,8 @@ import Testing
       #expect(object.contentType == "text/plain")
       #expect(object.contentLanguage == "en")
       #expect(object.cacheControl == "public, max-age=3600")
-      #expect(object.customMetadata?["environment"] == "integration-test")
-      #expect(object.customMetadata?["author"] == "swift-sdk")
+      #expect(object.metadata["environment"] == "integration-test")
+      #expect(object.metadata["author"] == "swift-sdk")
 
       print("Upload with metadata successful: \(object)")
     }

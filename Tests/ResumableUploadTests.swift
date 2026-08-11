@@ -1863,6 +1863,263 @@ import Testing
     let requests = registry.recordedRequests()
     #expect(requests.count == 1)
   }
+
+  /// Tests that a multi-chunk resumable upload emits exactly one status event per stage without duplicate completion events (#2).
+  @Test func resumableUploadStatusStreamHasNoDuplicateCompletionStatus() async throws {
+    let registry = MockRegistry.create()
+    let bucket = "test-bucket"
+    let objectName = "test-resumable-no-dup-status"
+    let chunkSize = 8 * 1024 * 1024
+    let fileSize = 10 * 1024 * 1024  // 10MB -> 8MB chunk 1 + 2MB chunk 2
+    let data = Data(repeating: 0xAA, count: fileSize)
+    let source = BytesSource(data: data)
+
+    let startUrl = registry.url(
+      "/upload/storage/v1/b/\(bucket)/o?uploadType=resumable&name=\(objectName)")
+    let chunkUrl = registry.url("/upload/storage/v1/b/\(bucket)/o?upload_id=no-dup-status-id")
+
+    registry.register(
+      response: .success(
+        statusCode: 200, data: Data(),
+        headers: ["Location": chunkUrl.absoluteString]),
+      for: startUrl)
+    registry.register(
+      response: .success(
+        statusCode: 308, data: Data(),
+        headers: ["Range": "bytes=0-\(chunkSize - 1)"]),
+      for: chunkUrl)
+    registry.register(
+      response: .success(
+        statusCode: 200, data: makeObjectJSON(name: objectName, bucket: bucket, size: fileSize),
+        headers: nil),
+      for: chunkUrl)
+
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [MockURLProtocol.self]
+    let session = URLSession(configuration: config)
+
+    let options = StorageClientOptions().with {
+      $0.client = .init().with {
+        $0.endpoint = registry.endpoint
+        $0._testSession = session
+        $0.credentials = try! Credentials(configuration: .anonymous)
+      }
+    }
+
+    let client = try StorageClient(options)
+    let task = client.upload(source, to: bucket, as: objectName)
+
+    var statuses: [UploadStatus] = []
+    for await status in task.makeStatusStream() {
+      statuses.append(status)
+    }
+
+    let object = try await task.value
+    #expect(object.name == objectName)
+    #expect(object.bucket == bucket)
+    #expect(statuses.count == 3)
+    #expect(statuses.map(\.bytesUploaded) == [0, Int64(chunkSize), Int64(fileSize)])
+    #expect(statuses.map(\.totalBytes) == [Int64(fileSize), Int64(fileSize), Int64(fileSize)])
+    #expect(statuses.allSatisfy { $0.uploadId == chunkUrl.absoluteString })
+  }
+
+  /// Tests that a single-chunk resumable upload emits initial and final status events without duplicates (#2).
+  @Test func resumableUploadSingleChunkStatusStreamHasNoDuplicateCompletionStatus() async throws {
+    let registry = MockRegistry.create()
+    let bucket = "test-bucket"
+    let objectName = "test-single-chunk-resumable"
+    let fileSize = 10 * 1024 * 1024
+    let data = Data(repeating: 0xBB, count: fileSize)
+    let source = BytesSource(data: data)
+
+    let startUrl = registry.url(
+      "/upload/storage/v1/b/\(bucket)/o?uploadType=resumable&name=\(objectName)")
+    let chunkUrl = registry.url("/upload/storage/v1/b/\(bucket)/o?upload_id=single-chunk-id")
+
+    registry.register(
+      response: .success(
+        statusCode: 200, data: Data(),
+        headers: ["Location": chunkUrl.absoluteString]),
+      for: startUrl)
+    registry.register(
+      response: .success(
+        statusCode: 200, data: makeObjectJSON(name: objectName, bucket: bucket, size: fileSize),
+        headers: nil),
+      for: chunkUrl)
+
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [MockURLProtocol.self]
+    let session = URLSession(configuration: config)
+
+    let options = StorageClientOptions().with {
+      $0.client = .init().with {
+        $0.endpoint = registry.endpoint
+        $0._testSession = session
+        $0.credentials = try! Credentials(configuration: .anonymous)
+      }
+    }
+
+    let uploadOptions = UploadOptions().with {
+      $0.chunkSize = 16 * 1024 * 1024
+    }
+
+    let client = try StorageClient(options)
+    let task = client.upload(source, to: bucket, as: objectName, options: uploadOptions)
+
+    var statuses: [UploadStatus] = []
+    for await status in task.makeStatusStream() {
+      statuses.append(status)
+    }
+
+    let object = try await task.value
+    #expect(object.name == objectName)
+    #expect(object.bucket == bucket)
+    #expect(statuses.count == 2)
+    #expect(statuses.map(\.bytesUploaded) == [0, Int64(fileSize)])
+    #expect(statuses.map(\.totalBytes) == [Int64(fileSize), Int64(fileSize)])
+    #expect(statuses.allSatisfy { $0.uploadId == chunkUrl.absoluteString })
+  }
+
+  /// Tests that `resumeUpload` emits an initial status event with the server's committed byte offset upon querying status (#3).
+  @Test func resumeUploadStatusStreamEmitsInitialCommittedBytes() async throws {
+    let registry = MockRegistry.create()
+    let bucket = "test-bucket"
+    let objectName = "test-resume-initial-status"
+    let fileSize = 10 * 1024 * 1024
+    let committedBytes = 2 * 1024 * 1024  // 2MB already uploaded
+    let data = Data(repeating: 0xCC, count: fileSize)
+    let source = BytesSource(data: data)
+
+    let queryUrl = registry.url(
+      "/upload/storage/v1/b/\(bucket)/o?upload_id=resume-initial-status-id")
+
+    // Status query returns 308 with 2MB already uploaded
+    registry.register(
+      response: .success(
+        statusCode: 308, data: Data(),
+        headers: ["Range": "bytes=0-\(committedBytes - 1)"]),
+      for: queryUrl)
+    // Upload of remaining 8MB completes with 200
+    registry.register(
+      response: .success(
+        statusCode: 200, data: makeObjectJSON(name: objectName, bucket: bucket, size: fileSize),
+        headers: nil),
+      for: queryUrl)
+
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [MockURLProtocol.self]
+    let session = URLSession(configuration: config)
+
+    let options = StorageClientOptions().with {
+      $0.client = .init().with {
+        $0.endpoint = registry.endpoint
+        $0._testSession = session
+        $0.credentials = try! Credentials(configuration: .anonymous)
+      }
+    }
+
+    let client = try StorageClient(options)
+    let task = client.resumeUpload(source, uploadId: queryUrl.absoluteString)
+
+    var statuses: [UploadStatus] = []
+    for await status in task.makeStatusStream() {
+      statuses.append(status)
+    }
+
+    let object = try await task.value
+    #expect(object.name == objectName)
+    #expect(object.bucket == bucket)
+    #expect(statuses.count == 2)
+    #expect(statuses.first?.bytesUploaded == Int64(committedBytes))
+    #expect(statuses.map(\.bytesUploaded) == [Int64(committedBytes), Int64(fileSize)])
+    #expect(statuses.map(\.totalBytes) == [Int64(fileSize), Int64(fileSize)])
+    #expect(statuses.allSatisfy { $0.uploadId == queryUrl.absoluteString })
+  }
+
+  /// Tests that `resumeUpload` across multiple chunks emits initial committed bytes and each chunk progress without duplicates (#2 & #3).
+  @Test func resumeUploadMultiChunkStatusStreamEmitsInitialCommittedBytes() async throws {
+    let registry = MockRegistry.create()
+    let bucket = "test-bucket"
+    let objectName = "test-resume-multi-chunk-status"
+    let chunkSize = 2 * 1024 * 1024  // 2MB chunks
+    let fileSize = 10 * 1024 * 1024  // 10MB total
+    let initialCommitted = 2 * 1024 * 1024  // 2MB already on server
+    let data = Data(repeating: 0xDD, count: fileSize)
+    let source = BytesSource(data: data)
+
+    let queryUrl = registry.url("/upload/storage/v1/b/\(bucket)/o?upload_id=resume-multi-chunk-id")
+
+    // Status query returns 308 (0-2MB uploaded)
+    registry.register(
+      response: .success(
+        statusCode: 308, data: Data(),
+        headers: ["Range": "bytes=0-\(initialCommitted - 1)"]),
+      for: queryUrl)
+    // Chunk 2: 2MB..4MB (308, Range: 0-4MB-1)
+    registry.register(
+      response: .success(
+        statusCode: 308, data: Data(),
+        headers: ["Range": "bytes=0-\(2 * chunkSize - 1)"]),
+      for: queryUrl)
+    // Chunk 3: 4MB..6MB (308, Range: 0-6MB-1)
+    registry.register(
+      response: .success(
+        statusCode: 308, data: Data(),
+        headers: ["Range": "bytes=0-\(3 * chunkSize - 1)"]),
+      for: queryUrl)
+    // Chunk 4: 6MB..8MB (308, Range: 0-8MB-1)
+    registry.register(
+      response: .success(
+        statusCode: 308, data: Data(),
+        headers: ["Range": "bytes=0-\(4 * chunkSize - 1)"]),
+      for: queryUrl)
+    // Chunk 5: 8MB..10MB (200, Done)
+    registry.register(
+      response: .success(
+        statusCode: 200, data: makeObjectJSON(name: objectName, bucket: bucket, size: fileSize),
+        headers: nil),
+      for: queryUrl)
+
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [MockURLProtocol.self]
+    let session = URLSession(configuration: config)
+
+    let options = StorageClientOptions().with {
+      $0.client = .init().with {
+        $0.endpoint = registry.endpoint
+        $0._testSession = session
+        $0.credentials = try! Credentials(configuration: .anonymous)
+      }
+    }
+
+    let uploadOptions = UploadOptions().with {
+      $0.chunkSize = chunkSize
+    }
+
+    let client = try StorageClient(options)
+    let task = client.resumeUpload(
+      source, uploadId: queryUrl.absoluteString, options: uploadOptions)
+
+    var statuses: [UploadStatus] = []
+    for await status in task.makeStatusStream() {
+      statuses.append(status)
+    }
+
+    let object = try await task.value
+    #expect(object.name == objectName)
+    #expect(object.bucket == bucket)
+    #expect(statuses.count == 5)
+    #expect(
+      statuses.map(\.bytesUploaded) == [
+        Int64(initialCommitted),
+        Int64(2 * chunkSize),
+        Int64(3 * chunkSize),
+        Int64(4 * chunkSize),
+        Int64(fileSize),
+      ])
+    #expect(statuses.map(\.totalBytes) == Array(repeating: Int64(fileSize), count: 5))
+    #expect(statuses.allSatisfy { $0.uploadId == queryUrl.absoluteString })
+  }
 }
 
 // MARK: - Test Helper Sources

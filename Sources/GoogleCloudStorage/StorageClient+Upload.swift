@@ -385,6 +385,12 @@ extension StorageClient {
           let queryResult = try await queryUploadStatus(
             httpClient: httpClient, uploadId: activeUploadId, options: options)
           uploadStatus = queryResult.status
+          if case .inprogress(let committedBytes) = uploadStatus {
+            continuation.yield(
+              UploadStatus(
+                bytesUploaded: Int64(committedBytes), totalBytes: totalSize,
+                uploadId: activeUploadId))
+          }
         }
 
         switch uploadStatus {
@@ -430,6 +436,9 @@ extension StorageClient {
             options: options,
             continuation: continuation
           )
+          if case .done(let object) = chunkResult.status {
+            return object
+          }
           uploadStatus = chunkResult.status
           if case .inprogress(let nextBytes) = chunkResult.status {
             lastCommittedBytes = nextBytes
@@ -491,6 +500,12 @@ extension StorageClient {
           if let seed = queryResult.crc32cSeed {
             crc32cSeed = seed
           }
+          if case .inprogress(let committedBytes) = uploadStatus {
+            continuation.yield(
+              UploadStatus(
+                bytesUploaded: Int64(committedBytes), totalBytes: totalSize,
+                uploadId: activeUploadId))
+          }
         }
 
         switch uploadStatus {
@@ -539,6 +554,9 @@ extension StorageClient {
             options: options,
             continuation: continuation
           )
+          if case .done(let object) = chunkResult.status {
+            return object
+          }
           uploadStatus = chunkResult.status
           if let seed = chunkResult.crc32cSeed {
             crc32cSeed = seed
