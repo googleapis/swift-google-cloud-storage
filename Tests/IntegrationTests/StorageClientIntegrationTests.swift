@@ -18,14 +18,14 @@ import Testing
 
 #if IntegrationTests
 
-  @Suite struct StorageClientIntegrationTests {
+  @Suite(
+    .enabled(
+      if: ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil
+        && ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] != nil))
+  struct StorageClientIntegrationTests {
+    let bucketName = ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"]!
+
     @Test func testFileUpload() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-upload-\(UUID().uuidString).txt"
 
       let content = "Hello Google Cloud Storage from Swift!"
@@ -57,12 +57,6 @@ import Testing
     }
 
     @Test func testFileDownload() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-download-\(UUID().uuidString).txt"
       let content = "Hello Google Cloud Storage file download integration test!"
       let data = Data(content.utf8)
@@ -92,99 +86,6 @@ import Testing
     }
 
     @Test(arguments: [
-      (ReadObjectRange.bounded(start: 10, end: 19), "abcdefghij"),
-      (ReadObjectRange.fromOffset(36), "ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
-      (ReadObjectRange.prefix(10), "0123456789"),
-      (ReadObjectRange.suffix(10), "QRSTUVWXYZ"),
-      (ReadObjectRange(5...15), "56789abcdef"),
-      (ReadObjectRange.entire, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
-    ])
-    func testRangedDownload(range: ReadObjectRange, expectedContent: String) async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
-      let objectName = "test-ranged-download-\(UUID().uuidString).txt"
-      let content = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      let data = Data(content.utf8)
-      let totalSize = UInt64(data.count)
-
-      let storage = try StorageClient()
-
-      let uploadTask = storage.upload(data, to: bucketName, as: objectName)
-      let uploadedObject = try await uploadTask.value
-      #expect(uploadedObject.bucket == bucketName)
-      #expect(uploadedObject.name == objectName)
-
-      let options = ReadObjectOptions().with {
-        $0.range = range
-      }
-      let result = try await storage.readObject(
-        from: bucketName, object: objectName, options: options)
-
-      #expect(result.metadata.size == totalSize)
-      #expect(result.metadata.generation == UInt64(uploadedObject.generation))
-
-      var downloadedData = Data()
-      for try await chunk in result.body {
-        downloadedData.append(chunk)
-      }
-      let downloadedString = String(data: downloadedData, encoding: .utf8) ?? ""
-      #expect(downloadedString == expectedContent)
-    }
-
-    @Test func testRangedDownloadZeroPrefix() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
-      let objectName = "test-ranged-zero-prefix-\(UUID().uuidString).txt"
-      let content = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      let data = Data(content.utf8)
-      let totalSize = UInt64(data.count)
-
-      let storage = try StorageClient()
-
-      let uploadTask = storage.upload(data, to: bucketName, as: objectName)
-      let uploadedObject = try await uploadTask.value
-      #expect(uploadedObject.bucket == bucketName)
-      #expect(uploadedObject.name == objectName)
-
-      let options = ReadObjectOptions().with {
-        $0.range = .prefix(0)
-      }
-      let result = try await storage.readObject(
-        from: bucketName, object: objectName, options: options)
-
-      #expect(result.metadata.size == totalSize)
-      #expect(result.metadata.generation == UInt64(uploadedObject.generation))
-
-      var downloadedData = Data()
-      for try await chunk in result.body {
-        downloadedData.append(chunk)
-      }
-      #expect(downloadedData.isEmpty)
-
-      // Verify reading 0 bytes on a non-existent object still executes the request and throws 404
-      do {
-        _ = try await storage.readObject(
-          from: bucketName,
-          object: "non-existent-\(UUID().uuidString).txt",
-          options: options
-        )
-        Issue.record("Expected reading non-existent object to throw 404")
-      } catch DownloadError.unexpectedServerResponse(let statusCode, _) {
-        #expect(statusCode == 404)
-      } catch {
-        Issue.record("Expected DownloadError.unexpectedServerResponse, got \(error)")
-      }
-    }
-
-    @Test(arguments: [
       "folder/subfolder/file.json",
       "file with spaces.txt",
       "file&with&ampersands.txt",
@@ -193,12 +94,6 @@ import Testing
       "folder/subfolder/file with & and ? and #.json",
     ])
     func testUploadAndDownloadSpecialCharacters(pathSuffix: String) async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let uniqueId = UUID().uuidString
       let objectName = "test-special-\(uniqueId)/\(pathSuffix)"
       let content = "Integration test payload for special characters: \(pathSuffix)"
@@ -228,12 +123,6 @@ import Testing
     }
 
     @Test func testLargeFileUpload() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-large-upload-\(UUID().uuidString).bin"
 
       // 10MB file to trigger resumable upload (threshold is 8MB)
@@ -271,12 +160,6 @@ import Testing
     }
 
     @Test func testFailedResumableUploadAndResume() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-failed-resumable-\(UUID().uuidString).bin"
 
       let fileSize = 10 * 1024 * 1024  // 10MB
@@ -357,12 +240,6 @@ import Testing
     }
 
     @Test func testResumedFailedUploadWithChecksumValidation() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-resumed-checksum-\(UUID().uuidString).bin"
 
       let fileSize = 10 * 1024 * 1024  // 10MB payload
@@ -422,12 +299,6 @@ import Testing
     }
 
     @Test func testResumedFailedUploadWithNewSourceInstance() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-resumed-new-source-\(UUID().uuidString).bin"
 
       let fileSize = 10 * 1024 * 1024  // 10MB payload
@@ -484,13 +355,6 @@ import Testing
     }
 
     @Test func testSimpleUploadWithChecksumValidation() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
-
       let storage = try StorageClient()
 
       for validation in [ChecksumValidation.crc32c, ChecksumValidation.md5] {
@@ -515,13 +379,6 @@ import Testing
     }
 
     @Test func testResumableUploadWithChecksumValidation() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
-
       let storage = try StorageClient()
 
       for validation in [ChecksumValidation.crc32c, ChecksumValidation.md5] {
@@ -550,12 +407,6 @@ import Testing
     }
 
     @Test func testMultipleChecksumsUpload() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-multiple-checksums-\(UUID().uuidString).txt"
 
       let content = "Hello Google Cloud Storage with multiple checksums!"
@@ -580,12 +431,6 @@ import Testing
     }
 
     @Test func testBadChecksumUploadRejection() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-bad-checksum-\(UUID().uuidString).bin"
 
       // 10MB file to trigger resumable upload where x-goog-hash is validated by GCS
@@ -616,12 +461,6 @@ import Testing
     }
 
     @Test func testCSEKSimpleUpload() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-csek-simple-\(UUID().uuidString).txt"
 
       let content = "Hello Google Cloud Storage CSEK simple upload!"
@@ -650,12 +489,6 @@ import Testing
     }
 
     @Test func testCSEKResumableUpload() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-csek-resumable-\(UUID().uuidString).bin"
 
       let fileSize = 10 * 1024 * 1024  // 10MB to trigger resumable upload
@@ -685,12 +518,6 @@ import Testing
     }
 
     @Test func testUploadWithMetadata() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-metadata-\(UUID().uuidString).txt"
 
       let content = "Hello Google Cloud Storage metadata upload!"
@@ -726,12 +553,6 @@ import Testing
     }
 
     @Test func testUploadWithObjectContexts() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-contexts-\(UUID().uuidString).txt"
 
       let content = "Hello Google Cloud Storage object contexts upload!"
@@ -762,12 +583,6 @@ import Testing
     }
 
     @Test func testDynamicSourceCompletelyEmptyUpload() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-dynamic-empty-\(UUID().uuidString).bin"
 
       let source = IntegrationDynamicSource(
@@ -785,12 +600,6 @@ import Testing
     }
 
     @Test func testDynamicSourceLastChunkEmptyUpload() async throws {
-      guard ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil else {
-        Issue.record("GOOGLE_CLOUD_PROJECT environment variable not set")
-        return
-      }
-      let bucketName =
-        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] ?? "test-bucket"
       let objectName = "test-dynamic-last-chunk-empty-\(UUID().uuidString).bin"
 
       let chunkSize = 5 * 1024 * 1024  // 5MB chunks
@@ -810,6 +619,117 @@ import Testing
       #expect(object.size == expectedTotalSize)
 
       print("Dynamic source with last chunk empty upload successful: \(object)")
+    }
+  }
+
+  @Suite(
+    .enabled(
+      if: ProcessInfo.processInfo.environment["GOOGLE_CLOUD_PROJECT"] != nil
+        && ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"] != nil))
+  struct StorageClientRangedDownloadIntegrationTests {
+    struct FixtureState: Sendable {
+      let bucketName: String
+      let objectName: String
+      let totalSize: UInt64
+      let uploadedObject: Object
+    }
+
+    let bucketName = ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"]!
+
+    static let sharedFixture = Task<FixtureState, any Error> {
+      let bucket =
+        ProcessInfo.processInfo.environment["GOOGLE_CLOUD_SWIFT_TEST_BUCKET"]!
+      let objName = "test-ranged-download-\(UUID().uuidString).txt"
+      let content = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      let data = Data(content.utf8)
+
+      let storageClient = try StorageClient()
+      let uploadTask = storageClient.upload(data, to: bucket, as: objName)
+      let obj = try await uploadTask.value
+      #expect(obj.bucket == bucket)
+      #expect(obj.name == objName)
+
+      return FixtureState(
+        bucketName: bucket,
+        objectName: objName,
+        totalSize: UInt64(data.count),
+        uploadedObject: obj
+      )
+    }
+
+    @Test(arguments: [
+      (ReadObjectRange.bounded(start: 10, end: 19), "abcdefghij"),
+      (ReadObjectRange.fromOffset(36), "ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+      (ReadObjectRange.prefix(10), "0123456789"),
+      (ReadObjectRange.suffix(10), "QRSTUVWXYZ"),
+      (ReadObjectRange(5...15), "56789abcdef"),
+      (ReadObjectRange.entire, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+    ])
+    func testRangedDownload(range: ReadObjectRange, expectedContent: String) async throws {
+      let fixture = try await Self.sharedFixture.value
+      let storage = try StorageClient()
+      let options = ReadObjectOptions().with {
+        $0.range = range
+      }
+      let result = try await storage.readObject(
+        from: fixture.bucketName, object: fixture.objectName, options: options)
+
+      #expect(result.metadata.size == fixture.totalSize)
+      #expect(result.metadata.generation == UInt64(fixture.uploadedObject.generation))
+
+      var downloadedData = Data()
+      for try await chunk in result.body {
+        downloadedData.append(chunk)
+      }
+      let downloadedString = String(data: downloadedData, encoding: .utf8) ?? ""
+      #expect(downloadedString == expectedContent)
+    }
+
+    @Test func testRangedDownloadZeroCount() async throws {
+      let fixture = try await Self.sharedFixture.value
+      let storage = try StorageClient()
+      let options = ReadObjectOptions().with {
+        $0.range = .prefix(0)
+      }
+      let result = try await storage.readObject(
+        from: fixture.bucketName, object: fixture.objectName, options: options)
+
+      #expect(result.metadata.size == fixture.totalSize)
+      #expect(result.metadata.generation == UInt64(fixture.uploadedObject.generation))
+
+      var downloadedData = Data()
+      for try await chunk in result.body {
+        downloadedData.append(chunk)
+      }
+      #expect(downloadedData.isEmpty)
+    }
+
+    @Test(arguments: [
+      ReadObjectRange.prefix(0),
+      ReadObjectRange.suffix(0),
+      ReadObjectRange.bounded(start: 10, end: 19),
+      ReadObjectRange.fromOffset(36),
+      ReadObjectRange.prefix(10),
+      ReadObjectRange.suffix(10),
+      ReadObjectRange.entire,
+    ])
+    func testRangedDownloadNonExistentObject(range: ReadObjectRange) async throws {
+      let storage = try StorageClient()
+      let options = ReadObjectOptions().with {
+        $0.range = range
+      }
+      do {
+        _ = try await storage.readObject(
+          from: bucketName,
+          object: "non-existent-\(UUID().uuidString).txt",
+          options: options
+        )
+        Issue.record("Expected reading non-existent object to throw 404")
+      } catch DownloadError.unexpectedServerResponse(let statusCode, _) {
+        #expect(statusCode == 404)
+      } catch {
+        Issue.record("Expected DownloadError.unexpectedServerResponse, got \(error)")
+      }
     }
   }
 
