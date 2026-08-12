@@ -19,8 +19,8 @@ public enum DownloadError: Error, Sendable, Equatable {
   /// The downloaded payload checksum did not match the expected checksum.
   case checksumMismatch(expected: String, actual: String, algorithm: String)
 
-  /// The requested byte range specification is invalid or malformed.
-  case invalidRange(String)
+  /// The range header returned by Cloud Storage is invalid or malformed.
+  case invalidRangeHeader(String)
 
   /// Transparent download auto-resumption failed after a network interruption.
   case resumeFailed(bytesReceived: UInt64, message: String)

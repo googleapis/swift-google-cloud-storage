@@ -310,7 +310,7 @@ extension StorageClient {
     } else if uploadResponse.statusCode == 308 {
       let nextOffset: Int64
       if let rangeHeader = uploadResponse.value(forHTTPHeaderField: "Range") {
-        nextOffset = try httpClient.parseNextRangeStart(rangeHeader)
+        nextOffset = Int64(try HttpRange.parseNextRangeStart(rangeHeader))
       } else {
         nextOffset = Int64(committedBytes) + Int64(chunk.count)
       }
@@ -793,7 +793,7 @@ extension HTTPClient {
   {
     var nextOffset: Int64 = 0
     if let rangeHeader = response.value(forHTTPHeaderField: "Range") {
-      nextOffset = try parseNextRangeStart(rangeHeader)
+      nextOffset = Int64(try HttpRange.parseNextRangeStart(rangeHeader))
     }
 
     var crc32cSeed: UInt32? = nil
@@ -816,41 +816,6 @@ extension HTTPClient {
       }
     }
     return nil
-  }
-
-  internal func parseNextRangeStart(_ rangeHeader: String) throws -> Int64 {
-    let range = try parseRangeHeader(rangeHeader)
-    guard let end = range.end else {
-      throw UploadError.invalidRangeHeader(rangeHeader)
-    }
-    return end + 1
-  }
-
-  internal func parseRangeHeader(_ rangeHeader: String) throws -> (start: Int64?, end: Int64?) {
-    guard rangeHeader.hasPrefix("bytes=") else {
-      throw UploadError.invalidRangeHeader(rangeHeader)
-    }
-    let rangeStr = rangeHeader.dropFirst(6)
-    let parts = rangeStr.split(separator: "-", omittingEmptySubsequences: false)
-    guard parts.count == 2 else {
-      throw UploadError.invalidRangeHeader(rangeHeader)
-    }
-
-    let startStr = parts[0]
-    let endStr = parts[1]
-
-    let start = startStr.isEmpty ? nil : Int64(startStr)
-    let end = endStr.isEmpty ? nil : Int64(endStr)
-
-    if start == nil && end == nil {
-      throw UploadError.invalidRangeHeader(rangeHeader)
-    }
-
-    if let s = start, let e = end, s > e {
-      throw UploadError.invalidRangeHeader(rangeHeader)
-    }
-
-    return (start, end)
   }
 
   fileprivate func handleObjectResponse(data: Data, response: HTTPURLResponse) throws

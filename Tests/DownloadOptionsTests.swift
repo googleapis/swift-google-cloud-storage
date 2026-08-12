@@ -123,7 +123,7 @@ import Testing
   @Test func downloadErrorEquality() {
     let err1 = DownloadError.checksumMismatch(expected: "a", actual: "b", algorithm: "crc32c")
     let err2 = DownloadError.checksumMismatch(expected: "a", actual: "b", algorithm: "crc32c")
-    let err3 = DownloadError.invalidRange("bytes=1-0")
+    let err3 = DownloadError.invalidRangeHeader("bytes=1-0")
 
     #expect(err1 == err2)
     #expect(err1 != err3)

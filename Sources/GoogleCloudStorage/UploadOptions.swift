@@ -576,3 +576,60 @@ extension CustomerEncryption {
     }
   }
 }
+
+/// Represents a parsed HTTP `Range` header (e.g. `bytes=0-1999`).
+struct HttpRange: Sendable, Hashable, Equatable {
+  let start: UInt64?
+  let end: UInt64?
+
+  init(start: UInt64? = nil, end: UInt64? = nil) {
+    self.start = start
+    self.end = end
+  }
+
+  /// Parses an HTTP `Range` header and returns the next byte offset (`end + 1`).
+  static func parseNextRangeStart(_ header: String) throws -> UInt64 {
+    let range = try parse(header)
+    guard let end = range.end else {
+      throw UploadError.invalidRangeHeader(header)
+    }
+    return end + 1
+  }
+
+  /// Parses an HTTP `Range` header value (e.g., `"bytes=0-1999"`).
+  static func parse(_ header: String) throws -> HttpRange {
+    let trimmed = header.trimmingCharacters(in: .whitespaces)
+    guard trimmed.hasPrefix("bytes=") else {
+      throw UploadError.invalidRangeHeader(header)
+    }
+    let rangeStr = trimmed.dropFirst("bytes=".count).trimmingCharacters(in: .whitespaces)
+    let parts = rangeStr.split(separator: "-", omittingEmptySubsequences: false)
+    guard parts.count == 2 else {
+      throw UploadError.invalidRangeHeader(header)
+    }
+
+    let startStr = parts[0]
+    let endStr = parts[1]
+
+    let start = startStr.isEmpty ? nil : UInt64(startStr)
+    let end = endStr.isEmpty ? nil : UInt64(endStr)
+
+    if startStr.isEmpty && endStr.isEmpty {
+      throw UploadError.invalidRangeHeader(header)
+    }
+    if !startStr.isEmpty && start == nil {
+      throw UploadError.invalidRangeHeader(header)
+    }
+    if !endStr.isEmpty && end == nil {
+      throw UploadError.invalidRangeHeader(header)
+    }
+    if start == nil && end == nil {
+      throw UploadError.invalidRangeHeader(header)
+    }
+    if let s = start, let e = end, s > e {
+      throw UploadError.invalidRangeHeader(header)
+    }
+
+    return HttpRange(start: start, end: end)
+  }
+}

@@ -18,58 +18,66 @@ import GoogleCloudGax
 import Testing
 
 @Suite struct RangeHeaderTests {
-  @Test func parseRangeHeader() throws {
-    let httpClient = try GoogleCloudGax.HTTPClient(
-      from: .init(), withDefaultEndpoint: "https://example.com")
+  @Test(arguments: [
+    ("bytes=0-1999", HttpRange(start: 0, end: 1999)),
+    ("bytes=2000-", HttpRange(start: 2000, end: nil)),
+    ("bytes=-2000", HttpRange(start: nil, end: 2000)),
+  ])
+  func parseRangeHeader(header: String, expected: HttpRange) throws {
+    let parsed = try HttpRange.parse(header)
+    #expect(parsed == expected)
+  }
 
-    // Valid full range
-    let range1 = try httpClient.parseRangeHeader("bytes=0-1999")
-    #expect(range1.start == 0)
-    #expect(range1.end == 1999)
-
-    // Valid start only
-    let range2 = try httpClient.parseRangeHeader("bytes=2000-")
-    #expect(range2.start == 2000)
-    #expect(range2.end == nil)
-
-    // Valid end only
-    let range3 = try httpClient.parseRangeHeader("bytes=-2000")
-    #expect(range3.start == nil)
-    #expect(range3.end == 2000)
-
-    // Invalid prefix
+  @Test(arguments: [
+    "foo=0-1999",
+    "bytes=abc-def",
+    "bytes=-",
+    "bytes=2000-1000",
+  ])
+  func parseRangeHeaderInvalid(header: String) {
     #expect(throws: UploadError.self) {
-      _ = try httpClient.parseRangeHeader("foo=0-1999")
-    }
-
-    // Invalid format
-    #expect(throws: UploadError.self) {
-      _ = try httpClient.parseRangeHeader("bytes=abc-def")
-    }
-
-    #expect(throws: UploadError.self) {
-      _ = try httpClient.parseRangeHeader("bytes=-")
-    }
-
-    #expect(throws: UploadError.self) {
-      _ = try httpClient.parseRangeHeader("bytes=2000-1000")
+      _ = try HttpRange.parse(header)
     }
   }
 
-  @Test func parseNextRangeStart() throws {
-    let httpClient = try GoogleCloudGax.HTTPClient(
-      from: .init(), withDefaultEndpoint: "https://example.com")
+  @Test(arguments: [
+    ("bytes=0-1999", UInt64(2000)),
+    ("bytes=-2000", UInt64(2001)),
+  ])
+  func parseNextRangeStart(header: String, expectedNextStart: UInt64) throws {
+    let nextStart = try HttpRange.parseNextRangeStart(header)
+    #expect(nextStart == expectedNextStart)
+  }
 
-    #expect(try httpClient.parseNextRangeStart("bytes=0-1999") == 2000)
-
+  @Test(arguments: [
+    "bytes=2000-",
+    "bytes=abc-def",
+  ])
+  func parseNextRangeStartInvalid(header: String) {
     #expect(throws: UploadError.self) {
-      _ = try httpClient.parseNextRangeStart("bytes=2000-")
+      _ = try HttpRange.parseNextRangeStart(header)
     }
+  }
 
-    #expect(try httpClient.parseNextRangeStart("bytes=-2000") == 2001)
+  @Test(arguments: [
+    ("bytes 0-1999/5000", HttpContentRange(start: 0, end: 1999, totalSize: 5000)),
+    ("bytes 100-200/*", HttpContentRange(start: 100, end: 200, totalSize: nil)),
+  ])
+  func parseContentRangeHeader(header: String, expected: HttpContentRange) throws {
+    let parsed = try HttpContentRange.parse(header)
+    #expect(parsed == expected)
+  }
 
-    #expect(throws: UploadError.self) {
-      _ = try httpClient.parseNextRangeStart("bytes=abc-def")
+  @Test(arguments: [
+    "bytes */5000",
+    "invalid",
+    "bytes 200-100/5000",
+    "bytes 0-1999/abc",
+    "foo 0-1999/5000",
+  ])
+  func parseContentRangeHeaderInvalid(header: String) {
+    #expect(throws: DownloadError.self) {
+      _ = try HttpContentRange.parse(header)
     }
   }
 }

@@ -53,6 +53,52 @@ public enum ReadObjectRange: Sendable, Hashable, Equatable {
   }
 }
 
+/// Represents a parsed HTTP `Content-Range` response header.
+struct HttpContentRange: Sendable, Hashable, Equatable {
+  let start: UInt64
+  let end: UInt64
+  let totalSize: UInt64?
+
+  init(start: UInt64, end: UInt64, totalSize: UInt64? = nil) {
+    self.start = start
+    self.end = end
+    self.totalSize = totalSize
+  }
+
+  /// Parses an HTTP `Content-Range` header value (e.g., `"bytes 0-499/1000"`).
+  static func parse(_ header: String) throws -> HttpContentRange {
+    let trimmed = header.trimmingCharacters(in: .whitespaces)
+    guard trimmed.hasPrefix("bytes ") else {
+      throw DownloadError.invalidRangeHeader(header)
+    }
+    let spec = trimmed.dropFirst("bytes ".count).trimmingCharacters(in: .whitespaces)
+    let parts = spec.split(separator: "/")
+    guard parts.count == 2 else {
+      throw DownloadError.invalidRangeHeader(header)
+    }
+    let rangeParts = parts[0].split(separator: "-")
+    guard rangeParts.count == 2,
+      let start = UInt64(rangeParts[0]),
+      let end = UInt64(rangeParts[1])
+    else {
+      throw DownloadError.invalidRangeHeader(header)
+    }
+    guard start <= end else {
+      throw DownloadError.invalidRangeHeader(header)
+    }
+    let totalSizeStr = parts[1]
+    let totalSize: UInt64?
+    if totalSizeStr == "*" {
+      totalSize = nil
+    } else if let total = UInt64(totalSizeStr) {
+      totalSize = total
+    } else {
+      throw DownloadError.invalidRangeHeader(header)
+    }
+    return HttpContentRange(start: start, end: end, totalSize: totalSize)
+  }
+}
+
 /// Configuration options for object download (`readObject`) requests.
 public struct ReadObjectOptions: Sendable {
   /// Object generation (`UInt64?`) to read a specific revision of an object.
@@ -99,13 +145,13 @@ public struct ReadObjectMetadata: Sendable, Hashable, Equatable {
   public var object: String = ""
 
   /// Content size of the object payload in bytes.
-  public var size: Int64 = 0
+  public var size: UInt64 = 0
 
   /// Generation revision number of the object.
-  public var generation: Int64 = 0
+  public var generation: UInt64 = 0
 
   /// Metageneration revision number of the object metadata.
-  public var metageneration: Int64?
+  public var metageneration: UInt64?
 
   /// HTTP ETag representing the object's entity state.
   public var etag: String?

@@ -31,6 +31,13 @@ extension StorageClient {
     object: String,
     options: ReadObjectOptions = .init()
   ) async throws -> ReadObjectResult {
+    // TODO(#219): validate range upon construction
+    if case .bounded(let start, let end) = options.range {
+      guard start <= end else {
+        throw DownloadError.invalidRangeHeader("Range start (\(start)) must be <= end (\(end)).")
+      }
+    }
+
     let request = try await inner.buildReadObjectRequest(
       bucket: bucket, object: object, options: options)
     let (data, response) = try await inner.data(for: request)
@@ -41,11 +48,15 @@ extension StorageClient {
         statusCode: response.statusCode, message: message)
     }
 
-    let metadata = Self.parseReadObjectMetadata(
+    let metadata = try Self.parseReadObjectMetadata(
       from: response, bucket: bucket, object: object)
 
     let stream = AsyncThrowingStream<Data, Error> { continuation in
-      if !data.isEmpty {
+      if case .prefix(0) = options.range {
+        // Requested 0 bytes
+      } else if case .suffix(0) = options.range {
+        // Requested 0 bytes
+      } else if !data.isEmpty {
         continuation.yield(data)
       }
       continuation.finish()
@@ -67,26 +78,31 @@ extension StorageClient {
     from response: HTTPURLResponse,
     bucket: String,
     object: String
-  ) -> ReadObjectMetadata {
+  ) throws -> ReadObjectMetadata {
     var metadata = ReadObjectMetadata()
     metadata.bucket = bucket
     metadata.object = object
 
-    if let sizeStr = response.value(forHTTPHeaderField: "x-goog-stored-content-length")
+    if let contentRangeHeader = response.value(forHTTPHeaderField: "Content-Range") {
+      let contentRange = try HttpContentRange.parse(contentRangeHeader)
+      if let total = contentRange.totalSize {
+        metadata.size = total
+      }
+    } else if let sizeStr = response.value(forHTTPHeaderField: "x-goog-stored-content-length")
       ?? response.value(forHTTPHeaderField: "Content-Length"),
-      let size = Int64(sizeStr)
+      let size = UInt64(sizeStr)
     {
       metadata.size = size
     }
 
     if let genStr = response.value(forHTTPHeaderField: "x-goog-generation"),
-      let gen = Int64(genStr)
+      let gen = UInt64(genStr)
     {
       metadata.generation = gen
     }
 
     if let metaGenStr = response.value(forHTTPHeaderField: "x-goog-metageneration"),
-      let metaGen = Int64(metaGenStr)
+      let metaGen = UInt64(metaGenStr)
     {
       metadata.metageneration = metaGen
     }
@@ -176,6 +192,10 @@ extension HTTPClient {
     var request = try await self.Request(
       percentEncodedPath: "/storage/v1/b/\(encodedBucket)/o/\(encodedObject)", query: queryItems)
     request.httpMethod = "GET"
+
+    if let rangeHeader = options.range.headerValue {
+      request.setValue(rangeHeader, forHTTPHeaderField: "Range")
+    }
 
     request.applyCustomerSuppliedEncryptionHeaders(options.customerEncryptionKey)
 
