@@ -39,6 +39,8 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.28.2"),
     .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.23.0"),
     .package(url: "https://github.com/apple/swift-crypto.git", from: "4.0.0"),
+    .package(url: "https://github.com/apple/swift-nio", from: "2.101.0"),
+    .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.36.0"),
   ],
   targets: [
     .target(
@@ -58,6 +60,9 @@ let package = Package(
         .product(name: "GRPC", package: "grpc-swift"),
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
         .product(name: "Crypto", package: "swift-crypto"),
+        .product(name: "AsyncHTTPClient", package: "async-http-client"),
+        .product(name: "NIOCore", package: "swift-nio"),
+        .product(name: "NIOHTTP1", package: "swift-nio"),
       ],
       path: "Sources/GoogleCloudStorage"
     ),
@@ -66,7 +71,10 @@ let package = Package(
       dependencies: [
         "GoogleCloudStorage",
         "StorageControlProtos",
+        .product(name: "AsyncHTTPClient", package: "async-http-client"),
         .product(name: "GRPC", package: "grpc-swift"),
+        .product(name: "NIOCore", package: "swift-nio"),
+        .product(name: "NIOHTTP1", package: "swift-nio"),
       ],
       path: "Tests",
       exclude: ["IntegrationTests"]
