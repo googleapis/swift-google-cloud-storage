@@ -15,6 +15,7 @@
 import Foundation
 import GoogleCloudGax
 @testable import GoogleCloudStorage
+import NIOCore
 import Testing
 
 #if IntegrationTests
@@ -77,7 +78,7 @@ import Testing
 
       var downloadedData = Data()
       for try await chunk in result.body {
-        downloadedData.append(chunk)
+        downloadedData.append(contentsOf: chunk.readableBytesView)
       }
       #expect(downloadedData == data)
       let downloadedString = String(data: downloadedData, encoding: .utf8)
@@ -146,7 +147,7 @@ import Testing
 
       var downloadedData = Data()
       for try await chunk in result.body {
-        downloadedData.append(chunk)
+        downloadedData.append(contentsOf: chunk.readableBytesView)
       }
       #expect(downloadedData == data)
       let downloadedString = String(data: downloadedData, encoding: .utf8)
@@ -540,7 +541,7 @@ import Testing
 
       var downloadedData = Data()
       for try await chunk in result.body {
-        downloadedData.append(chunk)
+        downloadedData.append(contentsOf: chunk.readableBytesView)
       }
       #expect(downloadedData == data)
       let downloadedString = String(data: downloadedData, encoding: .utf8)
@@ -613,7 +614,7 @@ import Testing
 
       var downloadedData = Data()
       for try await chunk in result.body {
-        downloadedData.append(chunk)
+        downloadedData.append(contentsOf: chunk.readableBytesView)
       }
       #expect(downloadedData == data)
 
@@ -777,7 +778,7 @@ import Testing
 
       var downloadedData = Data()
       for try await chunk in result.body {
-        downloadedData.append(chunk)
+        downloadedData.append(contentsOf: chunk.readableBytesView)
       }
       // GCS serves uncompressed raw content
       #expect(downloadedData == Self.rawGzipData)
@@ -818,7 +819,7 @@ import Testing
 
       var downloadedData = Data()
       for try await chunk in result.body {
-        downloadedData.append(chunk)
+        downloadedData.append(contentsOf: chunk.readableBytesView)
       }
       // Downloader receives the original gzip-compressed file
       #expect(downloadedData == Self.compressedGzipData)
@@ -858,7 +859,7 @@ import Testing
 
       var downloadedData = Data()
       for try await chunk in result.body {
-        downloadedData.append(chunk)
+        downloadedData.append(contentsOf: chunk.readableBytesView)
       }
       // Downloader receives the original gzip-compressed file because of Cache-Control: no-transform
       #expect(downloadedData == Self.compressedGzipData)
@@ -927,7 +928,7 @@ import Testing
 
       var downloadedData = Data()
       for try await chunk in result.body {
-        downloadedData.append(chunk)
+        downloadedData.append(contentsOf: chunk.readableBytesView)
       }
       let downloadedString = String(data: downloadedData, encoding: .utf8) ?? ""
       #expect(downloadedString == expectedContent)
@@ -947,7 +948,7 @@ import Testing
 
       var downloadedData = Data()
       for try await chunk in result.body {
-        downloadedData.append(chunk)
+        downloadedData.append(contentsOf: chunk.readableBytesView)
       }
       #expect(downloadedData.isEmpty)
     }
