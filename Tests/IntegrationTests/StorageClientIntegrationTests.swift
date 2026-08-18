@@ -70,11 +70,12 @@ import Testing
       #expect(uploadedObject.bucket == bucketName)
       #expect(uploadedObject.name == objectName)
 
-      let result = try await storage.readObject(from: bucketName, object: objectName)
-      #expect(result.metadata.bucket == bucketName)
-      #expect(result.metadata.object == objectName)
-      #expect(result.metadata.size == UInt64(data.count))
-      #expect(result.metadata.generation == UInt64(uploadedObject.generation))
+      let result = storage.readObject(from: bucketName, object: objectName)
+      let metadata = try await result.metadata
+      #expect(metadata.bucket == bucketName)
+      #expect(metadata.object == objectName)
+      #expect(metadata.size == UInt64(data.count))
+      #expect(metadata.generation == UInt64(uploadedObject.generation))
 
       var downloadedData = Data()
       for try await chunk in result.body {
@@ -84,7 +85,7 @@ import Testing
       let downloadedString = String(data: downloadedData, encoding: .utf8)
       #expect(downloadedString == content)
 
-      print("File download integration test successful: \(result.metadata)")
+      print("File download integration test successful: \(metadata)")
     }
 
     @Test func testFailedDownloadPrecondition() async throws {
@@ -108,6 +109,7 @@ import Testing
 
       do {
         _ = try await storage.readObject(from: bucketName, object: objectName, options: options)
+          .metadata
         Issue.record("Expected download to fail with 412 Precondition Failed, but it succeeded")
       } catch DownloadError.unexpectedServerResponse(let statusCode, let message) {
         #expect(statusCode == 412)
@@ -139,11 +141,12 @@ import Testing
       #expect(uploadedObject.name == objectName)
       #expect(uploadedObject.size == Int64(data.count))
 
-      let result = try await storage.readObject(from: bucketName, object: objectName)
-      #expect(result.metadata.bucket == bucketName)
-      #expect(result.metadata.object == objectName)
-      #expect(result.metadata.size == UInt64(data.count))
-      #expect(result.metadata.generation == UInt64(uploadedObject.generation))
+      let result = storage.readObject(from: bucketName, object: objectName)
+      let metadata = try await result.metadata
+      #expect(metadata.bucket == bucketName)
+      #expect(metadata.object == objectName)
+      #expect(metadata.size == UInt64(data.count))
+      #expect(metadata.generation == UInt64(uploadedObject.generation))
 
       var downloadedData = Data()
       for try await chunk in result.body {
@@ -520,7 +523,7 @@ import Testing
 
       // 2. Attempt download without CSEK key (GCS rejects with 400 Bad Request)
       do {
-        _ = try await storage.readObject(from: bucketName, object: objectName)
+        _ = try await storage.readObject(from: bucketName, object: objectName).metadata
         Issue.record("Expected download without CSEK key to fail")
       } catch DownloadError.unexpectedServerResponse(let statusCode, _) {
         #expect(statusCode == 400)
@@ -532,12 +535,13 @@ import Testing
       let downloadOptions = ReadObjectOptions().with {
         $0.customerEncryptionKey = csek
       }
-      let result = try await storage.readObject(
+      let result = storage.readObject(
         from: bucketName, object: objectName, options: downloadOptions)
-      #expect(result.metadata.bucket == bucketName)
-      #expect(result.metadata.object == objectName)
-      #expect(result.metadata.size == UInt64(data.count))
-      #expect(result.metadata.generation == UInt64(uploadedObject.generation))
+      let metadata = try await result.metadata
+      #expect(metadata.bucket == bucketName)
+      #expect(metadata.object == objectName)
+      #expect(metadata.size == UInt64(data.count))
+      #expect(metadata.generation == UInt64(uploadedObject.generation))
 
       var downloadedData = Data()
       for try await chunk in result.body {
@@ -547,7 +551,7 @@ import Testing
       let downloadedString = String(data: downloadedData, encoding: .utf8)
       #expect(downloadedString == content)
 
-      print("CSEK upload and download successful: \(result.metadata)")
+      print("CSEK upload and download successful: \(metadata)")
     }
 
     @Test func testCSEKSimpleUpload() async throws {
@@ -608,9 +612,10 @@ import Testing
       let downloadOptions = ReadObjectOptions().with {
         $0.customerEncryptionKey = csek
       }
-      let result = try await storage.readObject(
+      let result = storage.readObject(
         from: bucketName, object: objectName, options: downloadOptions)
-      #expect(result.metadata.size == UInt64(fileSize))
+      let metadata = try await result.metadata
+      #expect(metadata.size == UInt64(fileSize))
 
       var downloadedData = Data()
       for try await chunk in result.body {
@@ -771,10 +776,11 @@ import Testing
       let downloadOptions = ReadObjectOptions().with {
         $0.enableDecompressiveTranscoding = true
       }
-      let result = try await storage.readObject(
+      let result = storage.readObject(
         from: bucketName, object: objectName, options: downloadOptions)
-      #expect(result.metadata.bucket == bucketName)
-      #expect(result.metadata.object == objectName)
+      let metadata = try await result.metadata
+      #expect(metadata.bucket == bucketName)
+      #expect(metadata.object == objectName)
 
       var downloadedData = Data()
       for try await chunk in result.body {
@@ -785,7 +791,7 @@ import Testing
       let downloadedString = String(data: downloadedData, encoding: .utf8)
       #expect(downloadedString == Self.rawGzipContent)
 
-      print("Gzip allow decompressive transcoding integration test successful: \(result.metadata)")
+      print("Gzip allow decompressive transcoding integration test successful: \(metadata)")
     }
 
     @Test func testDownloadGzipPreventTranscodingViaRequestHeader() async throws {
@@ -811,11 +817,12 @@ import Testing
       let downloadOptions = ReadObjectOptions().with {
         $0.enableDecompressiveTranscoding = false
       }
-      let result = try await storage.readObject(
+      let result = storage.readObject(
         from: bucketName, object: objectName, options: downloadOptions)
-      #expect(result.metadata.bucket == bucketName)
-      #expect(result.metadata.object == objectName)
-      #expect(result.metadata.contentEncoding == "gzip")
+      let metadata = try await result.metadata
+      #expect(metadata.bucket == bucketName)
+      #expect(metadata.object == objectName)
+      #expect(metadata.contentEncoding == "gzip")
 
       var downloadedData = Data()
       for try await chunk in result.body {
@@ -823,10 +830,10 @@ import Testing
       }
       // Downloader receives the original gzip-compressed file
       #expect(downloadedData == Self.compressedGzipData)
-      #expect(result.metadata.size == UInt64(Self.compressedGzipData.count))
+      #expect(metadata.size == UInt64(Self.compressedGzipData.count))
 
       print(
-        "Gzip prevent transcoding via request header integration test successful: \(result.metadata)"
+        "Gzip prevent transcoding via request header integration test successful: \(metadata)"
       )
     }
 
@@ -852,10 +859,11 @@ import Testing
       #expect(uploadedObject.cacheControl == "no-transform")
 
       // Standard download request without special options
-      let result = try await storage.readObject(from: bucketName, object: objectName)
-      #expect(result.metadata.bucket == bucketName)
-      #expect(result.metadata.object == objectName)
-      #expect(result.metadata.contentEncoding == "gzip")
+      let result = storage.readObject(from: bucketName, object: objectName)
+      let metadata = try await result.metadata
+      #expect(metadata.bucket == bucketName)
+      #expect(metadata.object == objectName)
+      #expect(metadata.contentEncoding == "gzip")
 
       var downloadedData = Data()
       for try await chunk in result.body {
@@ -863,10 +871,10 @@ import Testing
       }
       // Downloader receives the original gzip-compressed file because of Cache-Control: no-transform
       #expect(downloadedData == Self.compressedGzipData)
-      #expect(result.metadata.size == UInt64(Self.compressedGzipData.count))
+      #expect(metadata.size == UInt64(Self.compressedGzipData.count))
 
       print(
-        "Gzip prevent transcoding via Cache-Control no-transform integration test successful: \(result.metadata)"
+        "Gzip prevent transcoding via Cache-Control no-transform integration test successful: \(metadata)"
       )
     }
   }
@@ -920,11 +928,12 @@ import Testing
       let options = ReadObjectOptions().with {
         $0.range = range
       }
-      let result = try await storage.readObject(
+      let result = storage.readObject(
         from: fixture.bucketName, object: fixture.objectName, options: options)
+      let metadata = try await result.metadata
 
-      #expect(result.metadata.size == fixture.totalSize)
-      #expect(result.metadata.generation == UInt64(fixture.uploadedObject.generation))
+      #expect(metadata.size == fixture.totalSize)
+      #expect(metadata.generation == UInt64(fixture.uploadedObject.generation))
 
       var downloadedData = Data()
       for try await chunk in result.body {
@@ -940,11 +949,12 @@ import Testing
       let options = ReadObjectOptions().with {
         $0.range = .prefix(0)
       }
-      let result = try await storage.readObject(
+      let result = storage.readObject(
         from: fixture.bucketName, object: fixture.objectName, options: options)
+      let metadata = try await result.metadata
 
-      #expect(result.metadata.size == fixture.totalSize)
-      #expect(result.metadata.generation == UInt64(fixture.uploadedObject.generation))
+      #expect(metadata.size == fixture.totalSize)
+      #expect(metadata.generation == UInt64(fixture.uploadedObject.generation))
 
       var downloadedData = Data()
       for try await chunk in result.body {
@@ -972,7 +982,7 @@ import Testing
           from: bucketName,
           object: "non-existent-\(UUID().uuidString).txt",
           options: options
-        )
+        ).metadata
         Issue.record("Expected reading non-existent object to throw 404")
       } catch DownloadError.unexpectedServerResponse(let statusCode, _) {
         #expect(statusCode == 404)
