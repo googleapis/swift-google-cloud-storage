@@ -154,6 +154,45 @@ struct HttpContentRange: Sendable, Hashable, Equatable {
 ///   }
 /// }
 /// ```
+///
+/// ### Checksum Validation
+///
+/// Validate data integrity during downloads using CRC32C or MD5 checksums:
+///
+/// ```swift
+/// // Default: Automatic CRC32C validation against server metadata
+/// let options = ReadObjectOptions()
+///
+/// // Validate against a pre-computed Base64-encoded checksum
+/// let options = ReadObjectOptions().with {
+///   $0.checksums = ChecksumOptions(crc32c: "TVUQaA==")
+/// }
+///
+/// // Validate against a 32-bit unsigned integer CRC32C checksum
+/// let options = ReadObjectOptions().with {
+///   $0.checksums = ChecksumOptions(crc32c: 0x4D551068)
+/// }
+///
+/// // Validate using MD5 instead of CRC32C
+/// let options = ReadObjectOptions().with {
+///   $0.checksums = ChecksumOptions(crc32c: nil, md5: .auto)
+/// }
+///
+/// // Validate both CRC32C and MD5
+/// let options = ReadObjectOptions().with {
+///   $0.checksums = ChecksumOptions(crc32c: .auto, md5: .auto)
+/// }
+///
+/// // Disable checksum validation
+/// let options = ReadObjectOptions().with {
+///   $0.checksums = .none
+/// }
+/// ```
+///
+/// > Note: Automatic checksum verification (`.auto`) is skipped for partial (ranged) reads
+/// > and decompressive transcoding because server metadata checksums cover the entire original
+/// > object, not partial or decompressed bytes. Pre-computed expected values (`.value(...)`)
+/// > are always verified.
 public struct ReadObjectOptions: Sendable {
   /// Object generation (`UInt64?`) to read a specific revision of an object.
   public var generation: UInt64?
@@ -170,7 +209,12 @@ public struct ReadObjectOptions: Sendable {
   /// Flag to enable automatic decompressive transcoding by GCS. Defaults to `true`.
   public var enableDecompressiveTranscoding: Bool = true
 
-  /// Checksum options for validating data integrity.
+  /// Checksum options for validating downloaded data integrity.
+  ///
+  /// Defaults to `.default`, which automatically calculates and validates CRC32C
+  /// checksums against the object's server metadata upon reaching EOF.
+  ///
+  /// If a checksum mismatch is detected, `DownloadError.checksumMismatch` is thrown.
   public var checksums: ChecksumOptions = .default
 
   /// Flag to enable transparent auto-resumption on transient network failures. Defaults to `true`.
@@ -241,6 +285,9 @@ public struct ReadObjectMetadata: Sendable, Hashable, Equatable {
 
   /// Content size of the object payload in bytes.
   public var size: UInt64 = 0
+
+  /// Stored content length of the object before decompressive transcoding (if applicable).
+  public var storedContentLength: UInt64?
 
   /// Generation revision number of the object.
   public var generation: UInt64 = 0
@@ -332,6 +379,9 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
   private var bytesReceived: UInt64 = 0
   private var isFinished: Bool = false
   private var isCancelled: Bool = false
+  private var crc32cCalculator: CRC32CCalculator?
+  private var md5Calculator: MD5Calculator?
+  private var hasValidatedChecksums: Bool = false
 
   package init(
     bucket: String,
@@ -345,6 +395,12 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
     self.options = options
     self.httpClient = httpClient
     self.retryLoop = retryLoop
+    if options.checksums.crc32c != nil {
+      self.crc32cCalculator = CRC32CCalculator()
+    }
+    if options.checksums.md5 != nil {
+      self.md5Calculator = MD5Calculator()
+    }
   }
 
   private func ensureInitialFetch() async throws -> ReadObjectMetadata {
@@ -404,8 +460,10 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
           self.streamIterator = it
           if let chunk {
             bytesReceived += UInt64(chunk.readableBytes)
+            updateChecksums(with: chunk)
             return chunk
           } else {
+            try validateChecksumsAtEOF()
             isFinished = true
             return nil
           }
@@ -414,16 +472,23 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
           self.bodyIterator = it
           if let chunk {
             bytesReceived += UInt64(chunk.readableBytes)
+            updateChecksums(with: chunk)
             return chunk
           } else {
+            try validateChecksumsAtEOF()
             isFinished = true
             return nil
           }
         } else {
+          try validateChecksumsAtEOF()
           isFinished = true
           return nil
         }
       } catch {
+        if error is DownloadError {
+          isFinished = true
+          throw error
+        }
         guard options.autoResume else {
           isFinished = true
           throw error
@@ -434,6 +499,72 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
     }
 
     return nil
+  }
+
+  private func updateChecksums(with chunk: NIOCore.ByteBuffer) {
+    guard crc32cCalculator != nil || md5Calculator != nil else { return }
+    chunk.withUnsafeReadableBytes { buffer in
+      crc32cCalculator?.update(buffer)
+      md5Calculator?.update(buffer)
+    }
+  }
+
+  private func validateChecksumsAtEOF() throws {
+    guard !hasValidatedChecksums else { return }
+    hasValidatedChecksums = true
+
+    let currentMetadata = self.metadata ?? ReadObjectMetadata()
+    let isRangedRead = (options.range != .entire)
+    let isDecompressedTranscoding =
+      (currentMetadata.storedContentLength != nil && currentMetadata.contentEncoding == nil)
+
+    if let crcOption = options.checksums.crc32c, let calc = crc32cCalculator {
+      let actual = calc.finalize()
+      switch crcOption {
+      case .auto:
+        if !isRangedRead && !isDecompressedTranscoding, let expected = currentMetadata.crc32c {
+          if actual != expected {
+            throw DownloadError.checksumMismatch(
+              expected: expected,
+              actual: actual,
+              algorithm: calc.algorithmName
+            )
+          }
+        }
+      case .value(let expected):
+        if actual != expected {
+          throw DownloadError.checksumMismatch(
+            expected: expected,
+            actual: actual,
+            algorithm: calc.algorithmName
+          )
+        }
+      }
+    }
+
+    if let md5Option = options.checksums.md5, let calc = md5Calculator {
+      let actual = calc.finalize()
+      switch md5Option {
+      case .auto:
+        if !isRangedRead && !isDecompressedTranscoding, let expected = currentMetadata.md5Hash {
+          if actual != expected {
+            throw DownloadError.checksumMismatch(
+              expected: expected,
+              actual: actual,
+              algorithm: calc.algorithmName
+            )
+          }
+        }
+      case .value(let expected):
+        if actual != expected {
+          throw DownloadError.checksumMismatch(
+            expected: expected,
+            actual: actual,
+            algorithm: calc.algorithmName
+          )
+        }
+      }
+    }
   }
 
   private func resumeDownload(underlyingError: Error) async throws {
