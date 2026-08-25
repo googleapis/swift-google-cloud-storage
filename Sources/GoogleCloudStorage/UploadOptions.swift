@@ -507,8 +507,8 @@ public struct UploadOptions: Sendable {
   /// Predefined ACL to apply to the uploaded object (e.g. `.publicRead`, `.private`).
   public var predefinedAcl: PredefinedAcl?
 
-  /// Overrides the retry policy for this upload.
-  public var retryPolicy: (any RetryPolicy)? = nil
+  /// Overrides the resume policy for this upload.
+  public var resumePolicy: (any ResumePolicy<UploadDetails>)? = nil
 
   /// Overrides the backoff policy for this upload.
   public var backoffPolicy: (any BackoffPolicy)? = nil

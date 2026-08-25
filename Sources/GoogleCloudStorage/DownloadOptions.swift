@@ -114,7 +114,6 @@ struct HttpContentRange: Sendable, Hashable, Equatable {
 /// ```swift
 /// let options = ReadObjectOptions().with {
 ///   $0.range = .bounded(start: 0, end: 1024)
-///   $0.autoResume = true
 /// }
 /// ```
 ///
@@ -209,19 +208,16 @@ public struct ReadObjectOptions: Sendable {
   /// Flag to enable automatic decompressive transcoding by GCS. Defaults to `true`.
   public var enableDecompressiveTranscoding: Bool = true
 
-  /// Checksum options for validating downloaded data integrity.
+  /// Configures client-side checksum validation for the downloaded object payload.
   ///
-  /// Defaults to `.default`, which automatically calculates and validates CRC32C
+  /// By default, `.default` enables auto-validation which automatically verifies CRC32C and/or MD5
   /// checksums against the object's server metadata upon reaching EOF.
   ///
   /// If a checksum mismatch is detected, `DownloadError.checksumMismatch` is thrown.
   public var checksums: ChecksumOptions = .default
 
-  /// Flag to enable transparent auto-resumption on transient network failures. Defaults to `true`.
-  public var autoResume: Bool = true
-
-  /// Overrides the retry policy for this download.
-  public var retryPolicy: (any RetryPolicy)? = nil
+  /// Overrides the resume policy for this download.
+  public var resumePolicy: (any ResumePolicy<DownloadDetails>)? = nil
 
   /// Overrides the backoff policy for this download.
   public var backoffPolicy: (any BackoffPolicy)? = nil
@@ -368,7 +364,7 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
   let object: String
   let options: ReadObjectOptions
   let httpClient: GoogleCloudGax._HTTPClient
-  let retryLoop: _RetryLoop
+  let resumeLoop: _ResumeLoop<DownloadDetails>
 
   private let lock = NSLock()
   private var isInitialFetched: Bool = false
@@ -377,6 +373,7 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
   private var bodyIterator: _HTTPResponseBody.AsyncIterator?
   private var streamIterator: AsyncThrowingStream<NIOCore.ByteBuffer, Error>.AsyncIterator?
   private var bytesReceived: UInt64 = 0
+  private var resumeState: ResumeState<DownloadDetails>
   private var isFinished: Bool = false
   private var isCancelled: Bool = false
   private var crc32cCalculator: CRC32CCalculator?
@@ -388,13 +385,14 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
     object: String,
     options: ReadObjectOptions,
     httpClient: GoogleCloudGax._HTTPClient,
-    retryLoop: _RetryLoop
+    resumeLoop: _ResumeLoop<DownloadDetails>
   ) {
     self.bucket = bucket
     self.object = object
     self.options = options
     self.httpClient = httpClient
-    self.retryLoop = retryLoop
+    self.resumeLoop = resumeLoop
+    self.resumeState = ResumeState(details: DownloadDetails())
     if options.checksums.crc32c != nil {
       self.crc32cCalculator = CRC32CCalculator()
     }
@@ -404,20 +402,18 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
   }
 
   private func ensureInitialFetch() async throws -> ReadObjectMetadata {
-    if isCancelled {
-      throw CancellationError()
-    }
-    let task = lock.withLock {
-      if let existingTask = initialFetchTask {
-        return existingTask
+    let task = lock.withLock { () -> Task<ReadObjectMetadata, Error> in
+      if let existing = self.initialFetchTask {
+        return existing
       }
-      let newTask = Task { () -> ReadObjectMetadata in
+      let newTask = Task { () throws -> ReadObjectMetadata in
         let (response, metadata) = try await Self.fetchInitial(
           httpClient: self.httpClient,
           bucket: self.bucket,
           object: self.object,
           options: self.options,
-          retryLoop: self.retryLoop
+          resumeLoop: self.resumeLoop,
+          resumeState: self.resumeState
         )
         self.lock.withLock {
           self.metadata = metadata
@@ -460,6 +456,8 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
           self.streamIterator = it
           if let chunk {
             bytesReceived += UInt64(chunk.readableBytes)
+            resumeState.details.bytesDownloaded = bytesReceived
+            resumeLoop.onProgress(state: &resumeState)
             updateChecksums(with: chunk)
             return chunk
           } else {
@@ -472,6 +470,8 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
           self.bodyIterator = it
           if let chunk {
             bytesReceived += UInt64(chunk.readableBytes)
+            resumeState.details.bytesDownloaded = bytesReceived
+            resumeLoop.onProgress(state: &resumeState)
             updateChecksums(with: chunk)
             return chunk
           } else {
@@ -489,12 +489,22 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
           isFinished = true
           throw error
         }
-        guard options.autoResume else {
+
+        let reqError = (error as? RequestError) ?? .io(error)
+        do {
+          try await resumeLoop.handleError(state: &resumeState, error: reqError)
+        } catch let err as RequestError {
           isFinished = true
-          throw error
+          if case .http(let details) = err {
+            let message = String(data: details.payload, encoding: .utf8) ?? ""
+            throw DownloadError.unexpectedServerResponse(
+              statusCode: details.http_status_code, message: message)
+          }
+          throw DownloadError.resumeFailed(
+            bytesReceived: bytesReceived, message: err.localizedDescription)
         }
 
-        try await resumeDownload(underlyingError: error)
+        try await resumeDownload(underlyingError: reqError)
       }
     }
 
@@ -591,13 +601,16 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
     let object = self.object
 
     do {
-      let response = try await retryLoop.run { _ in
+      let response = try await resumeLoop.run(state: &resumeState) { _ in
         let request = try await httpClient.buildReadObjectRequest(
           bucket: bucket, object: object, options: resumeOptions)
         let resp: _HTTPClientResponse
         do {
           resp = try await request.execute()
         } catch {
+          if let reqError = error as? RequestError {
+            throw reqError
+          }
           throw RequestError.io(error)
         }
         let statusCode = Int(resp.status.code)
@@ -642,7 +655,8 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
     bucket: String,
     object: String,
     options: ReadObjectOptions,
-    retryLoop: _RetryLoop
+    resumeLoop: _ResumeLoop<DownloadDetails>,
+    resumeState: ResumeState<DownloadDetails>
   ) async throws -> (_HTTPClientResponse, ReadObjectMetadata) {
     if case .bounded(let start, let end) = options.range {
       guard start <= end else {
@@ -650,13 +664,16 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
       }
     }
     do {
-      return try await retryLoop.run { _ in
+      return try await resumeLoop.run(state: resumeState) { _ in
         let request = try await httpClient.buildReadObjectRequest(
           bucket: bucket, object: object, options: options)
         let response: _HTTPClientResponse
         do {
           response = try await request.execute()
         } catch {
+          if let reqError = error as? RequestError {
+            throw reqError
+          }
           throw RequestError.io(error)
         }
         let statusCode = Int(response.status.code)

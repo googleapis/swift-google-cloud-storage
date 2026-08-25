@@ -32,7 +32,7 @@ import Testing
   private func makeClient(
     registry: MockRegistry,
     clientRetryPolicy: (any RetryPolicy)? = nil,
-    uploadRetryPolicy: (any RetryPolicy)? = nil,
+    uploadResumePolicy: (any ResumePolicy<UploadDetails>)? = nil,
     uploadThreshold: Int? = nil
   ) throws -> StorageClient {
     let options = StorageClientOptions().with {
@@ -43,8 +43,8 @@ import Testing
           $0.retryPolicy = clientRetryPolicy
         }
       }
-      if let uploadRetryPolicy {
-        $0.upload.retryPolicy = uploadRetryPolicy
+      if let uploadResumePolicy {
+        $0.upload.resumePolicy = uploadResumePolicy
       }
       if let uploadThreshold {
         $0.upload.resumableUploadThreshold = uploadThreshold
@@ -58,24 +58,12 @@ import Testing
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
     let objectName = "test-object"
-    let data = Data(repeating: 1, count: 10 * 1024 * 1024)  // 10MiB
+    let data = Data(repeating: 1, count: 10 * 1024 * 1024)
     let source = BytesSource(data: data)
 
     let startUrl = registry.url(
       "/upload/storage/v1/b/\(bucket)/o?uploadType=resumable&name=\(objectName)")
-    let chunkUrl = registry.url("/upload/storage/v1/b/\(bucket)/o?upload_id=test-id")
-
-    let objectJSON = """
-      {
-        "name": "\(objectName)",
-        "bucket": "\(bucket)",
-        "generation": "1",
-        "metageneration": "1",
-        "size": "\(data.count)",
-        "contentType": "application/octet-stream",
-        "storageClass": "STANDARD"
-      }
-      """
+    let chunkUrl = registry.url("/upload/storage/v1/b/\(bucket)/o?upload_id=test-upload-id-123")
 
     registry.register(
       response: .success(
@@ -84,8 +72,8 @@ import Testing
       for: startUrl)
     registry.register(
       response: .success(
-        statusCode: 200, data: Data(objectJSON.utf8),
-        headers: nil),
+        statusCode: 200, data: Data("{\"name\":\"\(objectName)\"}".utf8),
+        headers: ["Content-Type": "application/json"]),
       for: chunkUrl)
 
     let client = try makeClient(registry: registry)
@@ -93,7 +81,37 @@ import Testing
     let object = try await task.value
 
     #expect(object.name == objectName)
-    #expect(object.bucket == bucket)
+    let requests = registry.recordedRequests()
+    #expect(requests.count == 2)
+  }
+
+  /// Tests error propagation when network failure (URLError) occurs while initiating a resumable upload session.
+  @Test func resumableUploadNetworkFailure() async throws {
+    let registry = MockRegistry.create()
+    let bucket = "test-bucket"
+    let objectName = "test-object"
+    let data = Data(repeating: 1, count: 10 * 1024 * 1024)
+    let source = BytesSource(data: data)
+
+    let startUrl = registry.url(
+      "/upload/storage/v1/b/\(bucket)/o?uploadType=resumable&name=\(objectName)")
+
+    registry.register(
+      response: .failure(URLError(.cannotConnectToHost)),
+      for: startUrl)
+
+    let client = try makeClient(
+      registry: registry, uploadResumePolicy: NeverResume<UploadDetails>())
+    let task = client.upload(source, to: bucket, as: objectName)
+
+    let error = await expectError(RequestError.self) {
+      _ = try await task.value
+    }
+    if case .io(let underlying as URLError) = error {
+      #expect(underlying.code == URLError.cannotConnectToHost)
+    } else {
+      Issue.record("Expected RequestError.io(URLError), got \(String(describing: error))")
+    }
   }
 
   /// Tests error propagation when `UploadSource.read` fails during a resumable chunk upload.
@@ -138,7 +156,7 @@ import Testing
       response: .failure(URLError(.cannotConnectToHost)),
       for: startUrl)
 
-    let client = try makeClient(registry: registry, clientRetryPolicy: NeverRetry())
+    let client = try makeClient(registry: registry, uploadResumePolicy: NeverResume())
     let task = client.upload(source, to: bucket, as: objectName)
 
     let error = await expectError(RequestError.self) {
@@ -1843,11 +1861,11 @@ import Testing
     #expect(requests[4].value(forHTTPHeaderField: "Content-Range") == "bytes 0-8388607/8388608")
   }
 
-  /// Tests that configuring `retryPolicy` on `UploadOptions` overrides client-level retry policy.
-  @Test func resumableUploadWithCustomUploadOptionsRetryPolicyOverridesClient() async throws {
+  /// Tests that configuring `resumePolicy` on `UploadOptions` overrides client-level retry policy.
+  @Test func resumableUploadWithCustomUploadOptionsResumePolicyOverridesClient() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
-    let objectName = "retry-policy-override"
+    let objectName = "resume-policy-override"
     let data = Data(repeating: 0xDD, count: 8 * 1024 * 1024)
     let source = BytesSource(data: data)
 
@@ -1862,9 +1880,9 @@ import Testing
       for: startUrl)
 
     let client = try makeClient(registry: registry)
-    // UploadOptions specifies NeverRetry, so it should fail immediately on the 503 without retrying
+    // UploadOptions specifies NeverResume, so it should fail immediately on the 503 without retrying
     let uploadOptions = UploadOptions().with {
-      $0.retryPolicy = NeverRetry()
+      $0.resumePolicy = NeverResume()
     }
     let task = client.upload(source, to: bucket, as: objectName, options: uploadOptions)
 
@@ -1876,11 +1894,11 @@ import Testing
     #expect(requests.count == 1)
   }
 
-  /// Tests that configuring `retryPolicy` on `StorageClientOptions.upload` overrides default retry policy.
-  @Test func resumableUploadWithClientUploadOptionsRetryPolicyOverridesDefault() async throws {
+  /// Tests that configuring `resumePolicy` on `StorageClientOptions.upload` overrides default retry policy.
+  @Test func resumableUploadWithClientUploadOptionsResumePolicyOverridesDefault() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
-    let objectName = "client-upload-retry-override"
+    let objectName = "client-upload-resume-override"
     let data = Data(repeating: 0xDD, count: 8 * 1024 * 1024)
     let source = BytesSource(data: data)
 
@@ -1894,7 +1912,8 @@ import Testing
         headers: [:]),
       for: startUrl)
 
-    let client = try makeClient(registry: registry, uploadRetryPolicy: NeverRetry())
+    let client = try makeClient(
+      registry: registry, uploadResumePolicy: NeverResume<UploadDetails>())
     let task = client.upload(source, to: bucket, as: objectName)
 
     let error = await expectError(RequestError.self) {

@@ -45,16 +45,14 @@ extension StorageClient {
     options: UploadOptions = .default
   ) -> UploadTask {
     let clientOptions = self.options.client
-    let effectiveRetryPolicy =
-      options.retryPolicy ?? self.options.upload.retryPolicy
-      ?? clientOptions.retryPolicy
     let effectiveBackoffPolicy =
       options.backoffPolicy ?? self.options.upload.backoffPolicy ?? clientOptions.backoffPolicy
-    let retryLoop = _RetryLoop(
-      retryPolicy: effectiveRetryPolicy,
-      backoffPolicy: effectiveBackoffPolicy,
-      retryThrottler: clientOptions.retryThrottler,
-      idempotent: true
+    let effectiveResumePolicy =
+      options.resumePolicy ?? self.options.upload.resumePolicy
+      ?? StorageResumePolicy<UploadDetails>().stopOnConsecutiveErrors()
+    let resumeLoop = _ResumeLoop(
+      resumePolicy: effectiveResumePolicy,
+      backoffPolicy: effectiveBackoffPolicy
     )
     let effectiveThreshold = Int64(
       options.resumableUploadThreshold ?? self.options.upload.resumableUploadThreshold
@@ -77,7 +75,7 @@ extension StorageClient {
           options: options,
           totalSize: totalSize,
           continuation: continuation,
-          retryLoop: retryLoop
+          resumeLoop: resumeLoop
         )
       } else {
         return try await Self.continueStreamingUpload(
@@ -92,7 +90,7 @@ extension StorageClient {
           totalSize: totalSize,
           options: options,
           continuation: continuation,
-          retryLoop: retryLoop
+          resumeLoop: resumeLoop
         )
       }
     }
@@ -113,16 +111,17 @@ extension StorageClient {
     options: UploadOptions = .default
   ) -> UploadTask {
     let clientOptions = self.options.client
-    let effectiveRetryPolicy =
-      options.retryPolicy ?? self.options.upload.retryPolicy
-      ?? clientOptions.retryPolicy
     let effectiveBackoffPolicy =
       options.backoffPolicy ?? self.options.upload.backoffPolicy ?? clientOptions.backoffPolicy
-    let retryLoop = _RetryLoop(
-      retryPolicy: effectiveRetryPolicy,
-      backoffPolicy: effectiveBackoffPolicy,
-      retryThrottler: clientOptions.retryThrottler,
-      idempotent: true
+    let effectiveResumePolicy: any ResumePolicy<UploadDetails>
+    if let explicitResume = options.resumePolicy ?? self.options.upload.resumePolicy {
+      effectiveResumePolicy = explicitResume
+    } else {
+      effectiveResumePolicy = StorageResumePolicy().stopOnConsecutiveErrors()
+    }
+    let resumeLoop = _ResumeLoop(
+      resumePolicy: effectiveResumePolicy,
+      backoffPolicy: effectiveBackoffPolicy
     )
     let effectiveThreshold = Int64(
       options.resumableUploadThreshold ?? self.options.upload.resumableUploadThreshold
@@ -145,7 +144,7 @@ extension StorageClient {
           options: options,
           totalSize: totalSize,
           continuation: continuation,
-          retryLoop: retryLoop
+          resumeLoop: resumeLoop
         )
       } else {
         return try await Self.continueResumableSeekableUpload(
@@ -160,7 +159,7 @@ extension StorageClient {
           totalSize: totalSize,
           options: options,
           continuation: continuation,
-          retryLoop: retryLoop
+          resumeLoop: resumeLoop
         )
       }
     }
@@ -175,7 +174,7 @@ extension StorageClient {
     options: UploadOptions,
     totalSize: Int64?,
     continuation: AsyncStream<UploadStatus>.Continuation,
-    retryLoop: _RetryLoop
+    resumeLoop: _ResumeLoop<UploadDetails>
   ) async throws -> Object {
     guard let data = try await source.read(maxBytes: Int(totalSize ?? 0)) else {
       throw UploadError.internalError("Failed to read data from source")
@@ -191,11 +190,15 @@ extension StorageClient {
       checksum: checksum
     )
 
-    return try await retryLoop.run { _ in
+    let resumeState = ResumeState(details: UploadDetails(bytesUploaded: 0, totalBytes: totalSize))
+    return try await resumeLoop.run(state: resumeState) { _ in
       let response: _HTTPClientResponse
       do {
         response = try await request.execute()
       } catch {
+        if let reqError = error as? RequestError {
+          throw reqError
+        }
         throw RequestError.io(error)
       }
       if response.isError() {
@@ -223,6 +226,9 @@ extension StorageClient {
     do {
       startResponse = try await startRequest.execute()
     } catch {
+      if let reqError = error as? RequestError {
+        throw reqError
+      }
       throw RequestError.io(error)
     }
     let statusCode = Int(startResponse.status.code)
@@ -251,6 +257,9 @@ extension StorageClient {
     do {
       queryResponse = try await queryRequest.execute()
     } catch {
+      if let reqError = error as? RequestError {
+        throw reqError
+      }
       throw RequestError.io(error)
     }
 
@@ -312,6 +321,9 @@ extension StorageClient {
     do {
       uploadResponse = try await uploadRequest.execute()
     } catch {
+      if let reqError = error as? RequestError {
+        throw reqError
+      }
       throw RequestError.io(error)
     }
 
@@ -368,84 +380,108 @@ extension StorageClient {
     totalSize: Int64?,
     options: UploadOptions,
     continuation: AsyncStream<UploadStatus>.Continuation,
-    retryLoop: _RetryLoop
+    resumeLoop: _ResumeLoop<UploadDetails>
   ) async throws -> Object {
     var options = options
     var uploadStatus = initialStatus
     var currentUploadId = uploadId
     var checksummedSource: ChecksummedSource<S>? = nil
     var lastCommittedBytes: UInt64 = 0
+    let initialBytes: UInt64
+    if case .inprogress(let b) = initialStatus {
+      initialBytes = b
+    } else {
+      initialBytes = 0
+    }
+    var resumeState = ResumeState(
+      details: UploadDetails(
+        bytesUploaded: initialBytes,
+        totalBytes: totalSize
+      )
+    )
 
-    return try await retryLoop.run { _ in
-      while true {
-        let activeUploadId: String
-        if let id = currentUploadId {
-          activeUploadId = id
-        } else {
-          guard let bucket = bucket, let objectName = objectName else {
-            throw UploadError.internalError(
-              "Missing bucket or object name to start resumable upload")
-          }
-          let location = try await startResumableSession(
+    while true {
+      let activeUploadId: String
+      if let id = currentUploadId {
+        activeUploadId = id
+      } else {
+        guard let bucket = bucket, let objectName = objectName else {
+          throw UploadError.internalError(
+            "Missing bucket or object name to start resumable upload")
+        }
+        let location = try await resumeLoop.run(state: &resumeState) { _ in
+          try await startResumableSession(
             httpClient: httpClient,
             bucket: bucket,
             objectName: objectName,
             metadata: metadata,
             options: options
           )
-          currentUploadId = location
-          activeUploadId = location
-          continuation.yield(
-            UploadStatus(
-              bytesUploaded: 0, totalBytes: totalSize, uploadId: location))
         }
+        currentUploadId = location
+        activeUploadId = location
+        continuation.yield(
+          UploadStatus(
+            bytesUploaded: 0, totalBytes: totalSize, uploadId: location))
+      }
 
-        if case .unknown = uploadStatus {
+      if case .unknown = uploadStatus {
+        do {
           let queryResult = try await queryUploadStatus(
             httpClient: httpClient, uploadId: activeUploadId, options: options)
           uploadStatus = queryResult.status
           if case .inprogress(let committedBytes) = uploadStatus {
+            if committedBytes > resumeState.details.bytesUploaded {
+              resumeState.details.bytesUploaded = committedBytes
+              resumeLoop.onProgress(state: &resumeState)
+            }
             continuation.yield(
               UploadStatus(
                 bytesUploaded: Int64(committedBytes), totalBytes: totalSize,
                 uploadId: activeUploadId))
           }
+        } catch {
+          try await resumeLoop.handleError(state: &resumeState, error: error)
+          continue
+        }
+      }
+
+      switch uploadStatus {
+      case .unknown:
+        throw UploadError.internalError("queryUploadStatus returned unknown status")
+      case .done(let object):
+        continuation.yield(
+          UploadStatus(
+            bytesUploaded: totalSize ?? Int64(object.size),
+            totalBytes: totalSize ?? Int64(object.size),
+            uploadId: activeUploadId))
+        return object
+      case .inprogress(let committedBytes):
+        if let total = totalSize, Int64(committedBytes) > total {
+          throw UploadError.localSourceTooSmall(
+            localSize: total, gcsOffset: Int64(committedBytes))
+        }
+        if committedBytes > 0 && options.checksums.md5 == .auto {
+          options.checksums.md5 = nil
         }
 
-        switch uploadStatus {
-        case .unknown:
-          throw UploadError.internalError("queryUploadStatus returned unknown status")
-        case .done(let object):
-          continuation.yield(
-            UploadStatus(
-              bytesUploaded: totalSize ?? Int64(object.size),
-              totalBytes: totalSize ?? Int64(object.size),
-              uploadId: activeUploadId))
-          return object
-        case .inprogress(let committedBytes):
-          if let total = totalSize, Int64(committedBytes) > total {
-            throw UploadError.localSourceTooSmall(
-              localSize: total, gcsOffset: Int64(committedBytes))
-          }
-          if committedBytes > 0 && options.checksums.md5 == .auto {
-            options.checksums.md5 = nil
-          }
-
-          if checksummedSource == nil {
-            if committedBytes > 0 {
-              throw UploadError.internalError(
-                "Cannot resume non-seekable source at offset \(committedBytes)"
-              )
-            }
-            checksummedSource = ChecksummedSource(source: source, options: options.checksums)
-          } else if committedBytes != lastCommittedBytes {
+        if checksummedSource == nil {
+          if committedBytes > 0 {
             throw UploadError.internalError(
-              "Cannot resume non-seekable source at offset \(committedBytes); expected \(lastCommittedBytes)"
+              "Cannot resume non-seekable source at offset \(committedBytes)"
             )
           }
+          checksummedSource = ChecksummedSource(source: source, options: options.checksums)
+        } else if committedBytes != lastCommittedBytes {
+          throw UploadError.internalError(
+            "Cannot resume non-seekable source at offset \(committedBytes); expected \(lastCommittedBytes)"
+          )
+        }
 
-          uploadStatus = .unknown
-          let chunkResult = try await sendNextChunk(
+        uploadStatus = .unknown
+        let chunkResult: (status: ResumableUploadStatus, crc32cSeed: UInt32?)
+        do {
+          chunkResult = try await sendNextChunk(
             httpClient: httpClient,
             checksummedSource: &checksummedSource!,
             uploadId: activeUploadId,
@@ -455,13 +491,21 @@ extension StorageClient {
             options: options,
             continuation: continuation
           )
-          if case .done(let object) = chunkResult.status {
-            return object
+        } catch {
+          try await resumeLoop.handleError(state: &resumeState, error: error)
+          continue
+        }
+
+        if case .done(let object) = chunkResult.status {
+          return object
+        }
+        uploadStatus = chunkResult.status
+        if case .inprogress(let nextBytes) = chunkResult.status {
+          if nextBytes > resumeState.details.bytesUploaded {
+            resumeState.details.bytesUploaded = nextBytes
+            resumeLoop.onProgress(state: &resumeState)
           }
-          uploadStatus = chunkResult.status
-          if case .inprogress(let nextBytes) = chunkResult.status {
-            lastCommittedBytes = nextBytes
-          }
+          lastCommittedBytes = nextBytes
         }
       }
     }
@@ -480,39 +524,53 @@ extension StorageClient {
     totalSize: Int64?,
     options: UploadOptions,
     continuation: AsyncStream<UploadStatus>.Continuation,
-    retryLoop: _RetryLoop
+    resumeLoop: _ResumeLoop<UploadDetails>
   ) async throws -> Object {
     var options = options
     var uploadStatus = initialStatus
     var currentUploadId = uploadId
     var crc32cSeed = initialCrc32cSeed
     var checksummedSource: ChecksummedSource<S>? = nil
+    let initialBytes: UInt64
+    if case .inprogress(let b) = initialStatus {
+      initialBytes = b
+    } else {
+      initialBytes = 0
+    }
+    var resumeState = ResumeState(
+      details: UploadDetails(
+        bytesUploaded: initialBytes,
+        totalBytes: totalSize
+      )
+    )
 
-    return try await retryLoop.run { _ in
-      while true {
-        let activeUploadId: String
-        if let id = currentUploadId {
-          activeUploadId = id
-        } else {
-          guard let bucket = bucket, let objectName = objectName else {
-            throw UploadError.internalError(
-              "Missing bucket or object name to start resumable upload")
-          }
-          let location = try await startResumableSession(
+    while true {
+      let activeUploadId: String
+      if let id = currentUploadId {
+        activeUploadId = id
+      } else {
+        guard let bucket = bucket, let objectName = objectName else {
+          throw UploadError.internalError(
+            "Missing bucket or object name to start resumable upload")
+        }
+        let location = try await resumeLoop.run(state: &resumeState) { _ in
+          try await startResumableSession(
             httpClient: httpClient,
             bucket: bucket,
             objectName: objectName,
             metadata: metadata,
             options: options
           )
-          currentUploadId = location
-          activeUploadId = location
-          continuation.yield(
-            UploadStatus(
-              bytesUploaded: 0, totalBytes: totalSize, uploadId: location))
         }
+        currentUploadId = location
+        activeUploadId = location
+        continuation.yield(
+          UploadStatus(
+            bytesUploaded: 0, totalBytes: totalSize, uploadId: location))
+      }
 
-        if case .unknown = uploadStatus {
+      if case .unknown = uploadStatus {
+        do {
           let queryResult = try await queryUploadStatus(
             httpClient: httpClient, uploadId: activeUploadId, options: options)
           uploadStatus = queryResult.status
@@ -520,50 +578,60 @@ extension StorageClient {
             crc32cSeed = seed
           }
           if case .inprogress(let committedBytes) = uploadStatus {
+            if committedBytes > resumeState.details.bytesUploaded {
+              resumeState.details.bytesUploaded = committedBytes
+              resumeLoop.onProgress(state: &resumeState)
+            }
             continuation.yield(
               UploadStatus(
                 bytesUploaded: Int64(committedBytes), totalBytes: totalSize,
                 uploadId: activeUploadId))
           }
+        } catch {
+          try await resumeLoop.handleError(state: &resumeState, error: error)
+          continue
+        }
+      }
+
+      switch uploadStatus {
+      case .unknown:
+        throw UploadError.internalError("queryUploadStatus returned unknown status")
+      case .done(let object):
+        continuation.yield(
+          UploadStatus(
+            bytesUploaded: totalSize ?? Int64(object.size),
+            totalBytes: totalSize ?? Int64(object.size),
+            uploadId: activeUploadId))
+        return object
+      case .inprogress(let committedBytes):
+        if let total = totalSize, Int64(committedBytes) > total {
+          throw UploadError.localSourceTooSmall(
+            localSize: total, gcsOffset: Int64(committedBytes))
+        }
+        if committedBytes > 0 && options.checksums.md5 == .auto {
+          options.checksums.md5 = nil
         }
 
-        switch uploadStatus {
-        case .unknown:
-          throw UploadError.internalError("queryUploadStatus returned unknown status")
-        case .done(let object):
-          continuation.yield(
-            UploadStatus(
-              bytesUploaded: totalSize ?? Int64(object.size),
-              totalBytes: totalSize ?? Int64(object.size),
-              uploadId: activeUploadId))
-          return object
-        case .inprogress(let committedBytes):
-          if let total = totalSize, Int64(committedBytes) > total {
-            throw UploadError.localSourceTooSmall(
-              localSize: total, gcsOffset: Int64(committedBytes))
+        if checksummedSource == nil {
+          var cs = ChecksummedSource(source: source, options: options.checksums)
+          if let seed = crc32cSeed {
+            cs.seedCRC32C(seed: seed, bytesHashed: Int64(committedBytes))
           }
-          if committedBytes > 0 && options.checksums.md5 == .auto {
-            options.checksums.md5 = nil
+          if committedBytes > 0 {
+            try await cs.seek(to: Int64(committedBytes))
           }
+          checksummedSource = cs
+        } else {
+          if let seed = crc32cSeed {
+            checksummedSource!.seedCRC32C(seed: seed, bytesHashed: Int64(committedBytes))
+          }
+          try await checksummedSource!.seek(to: Int64(committedBytes))
+        }
 
-          if checksummedSource == nil {
-            var cs = ChecksummedSource(source: source, options: options.checksums)
-            if let seed = crc32cSeed {
-              cs.seedCRC32C(seed: seed, bytesHashed: Int64(committedBytes))
-            }
-            if committedBytes > 0 {
-              try await cs.seek(to: Int64(committedBytes))
-            }
-            checksummedSource = cs
-          } else {
-            if let seed = crc32cSeed {
-              checksummedSource!.seedCRC32C(seed: seed, bytesHashed: Int64(committedBytes))
-            }
-            try await checksummedSource!.seek(to: Int64(committedBytes))
-          }
-
-          uploadStatus = .unknown
-          let chunkResult = try await sendNextChunk(
+        uploadStatus = .unknown
+        let chunkResult: (status: ResumableUploadStatus, crc32cSeed: UInt32?)
+        do {
+          chunkResult = try await sendNextChunk(
             httpClient: httpClient,
             checksummedSource: &checksummedSource!,
             uploadId: activeUploadId,
@@ -573,13 +641,23 @@ extension StorageClient {
             options: options,
             continuation: continuation
           )
-          if case .done(let object) = chunkResult.status {
-            return object
+        } catch {
+          try await resumeLoop.handleError(state: &resumeState, error: error)
+          continue
+        }
+
+        if case .done(let object) = chunkResult.status {
+          return object
+        }
+        uploadStatus = chunkResult.status
+        if case .inprogress(let nextBytes) = chunkResult.status {
+          if nextBytes > resumeState.details.bytesUploaded {
+            resumeState.details.bytesUploaded = nextBytes
+            resumeLoop.onProgress(state: &resumeState)
           }
-          uploadStatus = chunkResult.status
-          if let seed = chunkResult.crc32cSeed {
-            crc32cSeed = seed
-          }
+        }
+        if let seed = chunkResult.crc32cSeed {
+          crc32cSeed = seed
         }
       }
     }
@@ -598,16 +676,17 @@ extension StorageClient {
     options: UploadOptions = .default
   ) -> UploadTask {
     let clientOptions = self.options.client
-    let effectiveRetryPolicy =
-      options.retryPolicy ?? self.options.upload.retryPolicy
-      ?? clientOptions.retryPolicy
     let effectiveBackoffPolicy =
       options.backoffPolicy ?? self.options.upload.backoffPolicy ?? clientOptions.backoffPolicy
-    let retryLoop = _RetryLoop(
-      retryPolicy: effectiveRetryPolicy,
-      backoffPolicy: effectiveBackoffPolicy,
-      retryThrottler: clientOptions.retryThrottler,
-      idempotent: true
+    let effectiveResumePolicy: any ResumePolicy<UploadDetails>
+    if let explicitResume = options.resumePolicy ?? self.options.upload.resumePolicy {
+      effectiveResumePolicy = explicitResume
+    } else {
+      effectiveResumePolicy = StorageResumePolicy().stopOnConsecutiveErrors()
+    }
+    let resumeLoop = _ResumeLoop(
+      resumePolicy: effectiveResumePolicy,
+      backoffPolicy: effectiveBackoffPolicy
     )
     let httpClient = self.inner
     return UploadTask.create { continuation in
@@ -626,7 +705,7 @@ extension StorageClient {
         totalSize: totalSize,
         options: options,
         continuation: continuation,
-        retryLoop: retryLoop
+        resumeLoop: resumeLoop
       )
     }
   }

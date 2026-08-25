@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import Foundation
+import GoogleCloudGax
 @testable import GoogleCloudStorage
 import Testing
 
@@ -30,7 +31,7 @@ import Testing
     #expect(options.checksums == .default)
     #expect(options.metadata == nil)
     #expect(options.predefinedAcl == nil)
-    #expect(options.retryPolicy == nil)
+    #expect(options.resumePolicy == nil)
     #expect(options.backoffPolicy == nil)
   }
 
@@ -52,6 +53,7 @@ import Testing
       $0.checksums = .none
       $0.metadata = metadata
       $0.predefinedAcl = .publicRead
+      $0.resumePolicy = NeverResume<UploadDetails>()
     }
 
     #expect(options.resumableUploadThreshold == 4 * 1024 * 1024)
@@ -62,5 +64,6 @@ import Testing
     #expect(options.checksums == .none)
     #expect(options.metadata?.contentType == "application/json")
     #expect(options.predefinedAcl == .publicRead)
+    #expect(options.resumePolicy != nil)
   }
 }

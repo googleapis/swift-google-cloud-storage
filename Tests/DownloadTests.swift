@@ -825,10 +825,10 @@ import Testing
     #expect(requests.count == 2)
   }
 
-  @Test func downloadObjectTransientFailureWithNeverRetryFails() async throws {
+  @Test func downloadObjectTransientFailureWithNeverResumeFails() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
-    let objectName = "test-never-retry.txt"
+    let objectName = "test-never-resume.txt"
 
     let downloadUrl = registry.url("/storage/v1/b/\(bucket)/o/\(objectName)?alt=media")
 
@@ -837,7 +837,10 @@ import Testing
       for: downloadUrl
     )
 
-    let client = try makeClient(registry: registry, retryPolicy: NeverRetry())
+    let client = try makeClient(
+      registry: registry,
+      downloadOptions: ReadObjectOptions().with { $0.resumePolicy = NeverResume<DownloadDetails>() }
+    )
 
     let err = await expectError(DownloadError.self) {
       try await client.readObject(from: bucket, object: objectName).metadata
@@ -848,10 +851,10 @@ import Testing
     #expect(requests.count == 1)
   }
 
-  @Test func downloadObjectWithCustomReadObjectOptionsRetryPolicyOverridesClient() async throws {
+  @Test func downloadObjectWithCustomReadObjectOptionsResumePolicyOverridesClient() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
-    let objectName = "test-override-retry.txt"
+    let objectName = "test-override-resume.txt"
 
     let downloadUrl = registry.url("/storage/v1/b/\(bucket)/o/\(objectName)?alt=media")
 
@@ -862,7 +865,7 @@ import Testing
 
     let client = try makeClient(registry: registry)
     let options = ReadObjectOptions().with {
-      $0.retryPolicy = NeverRetry()
+      $0.resumePolicy = NeverResume<DownloadDetails>()
     }
 
     let err = await expectError(DownloadError.self) {
@@ -874,7 +877,7 @@ import Testing
     #expect(requests.count == 1)
   }
 
-  @Test func downloadObjectWithClientDownloadOptionsRetryPolicyOverridesDefault() async throws {
+  @Test func downloadObjectWithClientDownloadOptionsResumePolicyOverridesDefault() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
     let objectName = "test-client-override.txt"
@@ -888,7 +891,7 @@ import Testing
 
     let client = try makeClient(
       registry: registry,
-      downloadOptions: ReadObjectOptions().with { $0.retryPolicy = NeverRetry() }
+      downloadOptions: ReadObjectOptions().with { $0.resumePolicy = NeverResume<DownloadDetails>() }
     )
 
     let err = await expectError(DownloadError.self) {
@@ -1090,8 +1093,7 @@ import Testing
     #expect(requests[1].value(forHTTPHeaderField: "Range") == "bytes=20-29")
   }
 
-  @Test func downloadObjectStreamingWithAutoResumeDisabledThrowsOnStreamInterruption() async throws
-  {
+  @Test func downloadObjectStreamingWithNeverResumeThrowsOnStreamInterruption() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
     let objectName = "no-resume.bin"
@@ -1114,18 +1116,18 @@ import Testing
 
     let client = try makeClient(registry: registry)
     let options = ReadObjectOptions().with {
-      $0.autoResume = false
+      $0.resumePolicy = NeverResume<DownloadDetails>()
     }
 
     let result = client.readObject(from: bucket, object: objectName, options: options)
 
     do {
       for try await _ in result.body {}
-      Issue.record("Expected error to be thrown when autoResume is false")
-    } catch is MockNetworkError {
-      // Expected
+      Issue.record("Expected error to be thrown when resumePolicy is NeverResume")
+    } catch DownloadError.resumeFailed(let bytesReceived, _) {
+      #expect(bytesReceived == UInt64(chunk1.count))
     } catch {
-      Issue.record("Expected MockNetworkError, but got \(error)")
+      Issue.record("Expected DownloadError.resumeFailed, but got \(error)")
     }
 
     let requests = registry.recordedRequests()

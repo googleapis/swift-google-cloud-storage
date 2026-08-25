@@ -31,6 +31,7 @@ import Testing
   private func makeClient(
     registry: MockRegistry,
     retryPolicy: (any RetryPolicy)? = nil,
+    uploadResumePolicy: (any ResumePolicy<UploadDetails>)? = nil,
     uploadThreshold: Int? = nil
   ) throws -> StorageClient {
     let options = StorageClientOptions().with {
@@ -40,6 +41,9 @@ import Testing
         if let retryPolicy {
           $0.retryPolicy = retryPolicy
         }
+      }
+      if let uploadResumePolicy {
+        $0.upload.resumePolicy = uploadResumePolicy
       }
       if let uploadThreshold {
         $0.upload.resumableUploadThreshold = uploadThreshold
@@ -61,8 +65,8 @@ import Testing
 
     registry.register(
       response: .success(
-        statusCode: 200, data: makeObjectJSON(name: objectName, bucket: bucket, size: data.count),
-        headers: nil),
+        statusCode: 200, data: Data("{\"name\":\"\(objectName)\"}".utf8),
+        headers: ["Content-Type": "application/json"]),
       for: simpleUploadUrl)
 
     let client = try makeClient(registry: registry)
@@ -70,7 +74,8 @@ import Testing
     let object = try await task.value
 
     #expect(object.name == objectName)
-    #expect(object.bucket == bucket)
+    let requests = registry.recordedRequests()
+    #expect(requests.count == 1)
   }
 
   /// Tests error propagation when the underlying `UploadSource` fails to read source data during a simple upload.
@@ -90,8 +95,8 @@ import Testing
     }
   }
 
-  /// Tests error propagation when a transport/network error occurs during a simple upload.
-  @Test func simpleUploadNetworkError() async throws {
+  /// Tests handling of network failure (URLError) during a simple upload.
+  @Test func simpleUploadNetworkFailure() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
     let objectName = "test-object"
@@ -105,14 +110,15 @@ import Testing
       response: .failure(URLError(.cannotConnectToHost)),
       for: simpleUploadUrl)
 
-    let client = try makeClient(registry: registry, retryPolicy: NeverRetry())
+    let client = try makeClient(
+      registry: registry, uploadResumePolicy: NeverResume<UploadDetails>())
     let task = client.upload(source, to: bucket, as: objectName)
 
     let error = await expectError(RequestError.self) {
       try await task.value
     }
     if case .io(let underlying as URLError) = error {
-      #expect(underlying.code == .cannotConnectToHost)
+      #expect(underlying.code == URLError.cannotConnectToHost)
     } else {
       Issue.record("Expected RequestError.io(URLError), got \(String(describing: error))")
     }
@@ -287,11 +293,11 @@ import Testing
     #expect(requests.count == 2)
   }
 
-  /// Tests that a 503 error with NeverRetry policy throws immediately without retrying.
-  @Test func simpleUploadTransientFailureWithNeverRetryFails() async throws {
+  /// Tests that a 503 error with NeverResume policy throws immediately without retrying.
+  @Test func simpleUploadTransientFailureWithNeverResumeFails() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
-    let objectName = "test-simple-never-retry"
+    let objectName = "test-simple-never-resume"
     let data = Data(repeating: 0x42, count: 1024)
     let source = BytesSource(data: data)
 
@@ -304,7 +310,8 @@ import Testing
         headers: nil),
       for: simpleUploadUrl)
 
-    let client = try makeClient(registry: registry, retryPolicy: NeverRetry())
+    let client = try makeClient(
+      registry: registry, uploadResumePolicy: NeverResume<UploadDetails>())
     let task = client.upload(source, to: bucket, as: objectName)
 
     let error = await expectError(RequestError.self) {
@@ -315,11 +322,11 @@ import Testing
     #expect(requests.count == 1)
   }
 
-  /// Tests that configuring retryPolicy on UploadOptions overrides client-level retry policy for simple uploads.
-  @Test func simpleUploadWithCustomUploadOptionsRetryPolicyOverridesClient() async throws {
+  /// Tests that configuring resumePolicy on UploadOptions overrides client-level retry policy for simple uploads.
+  @Test func simpleUploadWithCustomUploadOptionsResumePolicyOverridesClient() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
-    let objectName = "test-simple-override-retry"
+    let objectName = "test-simple-override-resume"
     let data = Data(repeating: 0x42, count: 1024)
     let source = BytesSource(data: data)
 
@@ -334,7 +341,7 @@ import Testing
 
     let client = try makeClient(registry: registry)
     let uploadOptions = UploadOptions().with {
-      $0.retryPolicy = NeverRetry()
+      $0.resumePolicy = NeverResume()
     }
     let task = client.upload(source, to: bucket, as: objectName, options: uploadOptions)
 
