@@ -21,6 +21,7 @@ import GoogleCloudGax
 @_spi(GoogleCloudInternal) import struct GoogleCloudGax._CRC32C
 import Crypto
 @_spi(GoogleCloudInternal) import GoogleCloudGax
+import NIOCore
 import NIOHTTP1
 
 package enum ResumableUploadStatus: Sendable {
@@ -169,32 +170,36 @@ extension StorageClient {
     totalSize: Int64?,
     resumeLoop: _ResumeLoop<UploadDetails>
   ) async throws -> Object {
-    var data = Data()
+    var buffer = NIOCore.ByteBuffer()
     if let total = totalSize {
       if total < 0 {
         throw UploadError.internalError("Invalid source total size: \(total)")
       }
-      while data.count < Int(total) {
-        let remaining = Int(total) - data.count
+      buffer.reserveCapacity(Int(total))
+      while buffer.readableBytes < Int(total) {
+        let remaining = Int(total) - buffer.readableBytes
         guard let chunk = try await source.read(maxBytes: remaining), !chunk.isEmpty else {
           break
         }
-        data.append(chunk)
+        var nio = chunk.byteBuffer
+        buffer.writeBuffer(&nio)
       }
-      if data.count < Int(total) {
+      if buffer.readableBytes < Int(total) {
         throw UploadError.internalError("Failed to read data from source")
       }
     } else {
       while let chunk = try await source.read(maxBytes: 1024 * 1024), !chunk.isEmpty {
-        data.append(chunk)
+        var nio = chunk.byteBuffer
+        buffer.writeBuffer(&nio)
       }
     }
-    let checksum = try computeSimpleChecksum(data, options: options.checksums)
+    let byteBuffer = ByteBuffer(buffer)
+    let checksum = try computeSimpleChecksum(byteBuffer, options: options.checksums)
     let request = try await buildSimpleUploadRequest(
       httpClient: httpClient,
       bucket: bucket,
       objectName: objectName,
-      data: data,
+      data: byteBuffer,
       metadata: metadata,
       options: options,
       checksum: checksum
@@ -296,7 +301,7 @@ extension StorageClient {
     options: UploadOptions
   ) async throws -> (status: ResumableUploadStatus, crc32cSeed: UInt32?) {
     let chunkInfo = try await checksummedSource.readChunk(maxBytes: chunkSize)
-    let chunk: Data
+    let chunk: ByteBuffer
     let effectiveTotalSize: Int64?
     let checksum: String?
 
@@ -307,7 +312,7 @@ extension StorageClient {
       effectiveTotalSize =
         (isLast && totalSize == nil) ? (Int64(committedBytes) + Int64(chunk.count)) : totalSize
     } else {
-      chunk = Data()
+      chunk = ByteBuffer()
       effectiveTotalSize = totalSize ?? Int64(committedBytes)
       checksum = checksummedSource.finalizeChecksum()
     }
@@ -708,7 +713,7 @@ extension StorageClient {
     httpClient: GoogleCloudGax._HTTPClient,
     bucket: String,
     objectName: String,
-    data: Data,
+    data: ByteBuffer,
     metadata: UploadMetadata?,
     options: UploadOptions,
     checksum: String? = nil
@@ -740,22 +745,25 @@ extension StorageClient {
     let boundary = "Boundary-\(UUID().uuidString)"
     request.setHeader(name: "Content-Type", value: "multipart/related; boundary=\(boundary)")
 
-    var body = Data()
-    body.append(Data("--\(boundary)\r\n".utf8))
-    body.append(Data("Content-Type: application/json; charset=UTF-8\r\n\r\n".utf8))
     let metadataJson = try JSONEncoder().encode(metadata ?? UploadMetadata())
-    body.append(metadataJson)
-    body.append(Data("\r\n".utf8))
-
-    body.append(Data("--\(boundary)\r\n".utf8))
     let dataPartContentType = metadata?.contentType ?? "application/octet-stream"
-    body.append(Data("Content-Type: \(dataPartContentType)\r\n\r\n".utf8))
-    body.append(data)
-    body.append(Data("\r\n".utf8))
 
-    body.append(Data("--\(boundary)--\r\n".utf8))
+    let preamble = "--\(boundary)\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"
+    let middle = "\r\n--\(boundary)\r\nContent-Type: \(dataPartContentType)\r\n\r\n"
+    let epilogue = "\r\n--\(boundary)--\r\n"
 
-    request.setBody(data: body)
+    let totalCapacity =
+      preamble.utf8.count + metadataJson.count + middle.utf8.count + data.count
+      + epilogue.utf8.count
+    var buffer = ByteBufferAllocator().buffer(capacity: totalCapacity)
+
+    buffer.writeString(preamble)
+    _ = metadataJson.withUnsafeBytes { buffer.writeBytes($0) }
+    buffer.writeString(middle)
+    _ = data.withUnsafeBytes { buffer.writeBytes($0) }
+    buffer.writeString(epilogue)
+
+    request.setBody(buffer: buffer)
     return request
   }
 
@@ -788,7 +796,9 @@ extension StorageClient {
     request.applyCustomerSuppliedEncryptionHeaders(options.customerEncryptionKey)
 
     let metadataJson = try JSONEncoder().encode(metadata ?? UploadMetadata())
-    request.setBody(data: metadataJson)
+    var buffer = ByteBufferAllocator().buffer(capacity: metadataJson.count)
+    _ = metadataJson.withUnsafeBytes { buffer.writeBytes($0) }
+    request.setBody(buffer: buffer)
     return request
   }
 
@@ -811,7 +821,7 @@ extension StorageClient {
   fileprivate static func buildUploadChunkRequest(
     httpClient: GoogleCloudGax._HTTPClient,
     uploadId: String,
-    data: Data,
+    data: ByteBuffer,
     offset: Int64,
     totalSize: Int64?,
     options: UploadOptions,
@@ -834,7 +844,9 @@ extension StorageClient {
       let end = offset + Int64(data.count) - 1
       request.setHeader(name: "Content-Range", value: "bytes \(offset)-\(end)/\(totalStr)")
     }
-    request.setBody(data: data)
+    var buffer = ByteBufferAllocator().buffer(capacity: data.count)
+    _ = data.withUnsafeBytes { buffer.writeBytes($0) }
+    request.setBody(buffer: buffer)
     return request
   }
 
@@ -881,7 +893,7 @@ extension StorageClient {
     return v1Object.toObject()
   }
 
-  fileprivate static func computeSimpleChecksum(_ data: Data, options: ChecksumOptions) throws
+  fileprivate static func computeSimpleChecksum(_ data: ByteBuffer, options: ChecksumOptions) throws
     -> String?
   {
     var calculators = options.makeUploadCalculators()
