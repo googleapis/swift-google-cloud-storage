@@ -13,11 +13,52 @@
 // limitations under the License.
 
 import Foundation
+import NIOCore
+// We expect the API is stable, see https://github.com/apple/swift-nio/issues/3052 for details
+import _NIOFileSystem
+
+private final class FileHandleBox: @unchecked Sendable {
+  let handle: ReadFileHandle
+
+  init(handle: ReadFileHandle) {
+    self.handle = handle
+  }
+
+  deinit {
+    if let descriptor = try? handle.detachUnsafeFileDescriptor() {
+      try? descriptor.close()
+    }
+  }
+
+  static func open(fileURL: URL) async throws -> FileHandleBox {
+    let handle = try await FileSystem.shared.openFile(
+      forReadingAt: FilePath(fileURL.path)
+    )
+    return FileHandleBox(handle: handle)
+  }
+
+  func read(maxBytes: Int, offset: UInt64) async throws -> NIOCore.ByteBuffer? {
+    guard let off = Int64(exactly: offset) else {
+      throw UploadError.internalError("Offset exceeds maximum file offset: \(offset)")
+    }
+    let buffer = try await handle.readChunk(
+      fromAbsoluteOffset: off,
+      length: .bytes(Int64(maxBytes))
+    )
+    guard buffer.readableBytes > 0 else { return nil }
+    return buffer
+  }
+
+  func close() async throws {
+    try await handle.close()
+  }
+}
 
 /// An upload source that reads from a local file.
 public struct FileSource: SeekableUploadSource {
   public let fileURL: URL
   private var offset: UInt64 = 0
+  private var handleBox: FileHandleBox?
 
   public var totalSize: UInt64? {
     do {
@@ -33,16 +74,32 @@ public struct FileSource: SeekableUploadSource {
   }
 
   public mutating func read(maxBytes: Int) async throws -> ByteBuffer? {
-    let handle = try FileHandle(forReadingFrom: fileURL)
-    defer {
-      try? handle.close()
-    }
-    try handle.seek(toOffset: offset)
-    guard let data = try handle.read(upToCount: maxBytes), !data.isEmpty else {
+    guard maxBytes > 0 else { return nil }
+    if let size = totalSize, offset >= size {
+      if let box = handleBox {
+        try? await box.close()
+        handleBox = nil
+      }
       return nil
     }
-    offset += UInt64(data.count)
-    return ByteBuffer(data)
+
+    let box: FileHandleBox
+    if let existing = handleBox {
+      box = existing
+    } else {
+      let newBox = try await FileHandleBox.open(fileURL: fileURL)
+      self.handleBox = newBox
+      box = newBox
+    }
+
+    guard let nioBuffer = try await box.read(maxBytes: maxBytes, offset: offset) else {
+      try? await box.close()
+      handleBox = nil
+      return nil
+    }
+
+    offset += UInt64(nioBuffer.readableBytes)
+    return ByteBuffer(nioBuffer)
   }
 
   public mutating func seek(to offset: UInt64) async throws {
