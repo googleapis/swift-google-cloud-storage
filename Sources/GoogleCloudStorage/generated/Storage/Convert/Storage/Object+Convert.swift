@@ -15,11 +15,11 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 internal import StorageProtos
 internal import SwiftProtobuf
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
-internal import GoogleCloudWKTConvert
+@_spi(GoogleCloudInternal) import GoogleWKT
+internal import GoogleWKTConvert
 
 extension Object {
   internal typealias ProtoType = StorageProtos.Google_Storage_V2_Object
@@ -165,7 +165,7 @@ extension Object.Retention.Mode {
       return StorageProtos.Google_Storage_V2_Object.Retention.Mode(rawValue: val)
         ?? .UNRECOGNIZED(val)
     case .unknownStringValue(let str):
-      throw GoogleCloudGax.ProtobufConversionError.noIntegerValue(
+      throw GoogleGax.ProtobufConversionError.noIntegerValue(
         enumType: "Object.Retention.Mode", stringValue: str)
     }
   }

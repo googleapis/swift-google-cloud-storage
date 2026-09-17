@@ -15,11 +15,11 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// Message returned in the metadata field of the Operation resource for
 /// UpdateRapidCache operation.
-public struct UpdateRapidCacheMetadata: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct UpdateRapidCacheMetadata: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Generic metadata for the long running operation.
@@ -35,7 +35,7 @@ public struct UpdateRapidCacheMetadata: Codable, Equatable, GoogleCloudWKT._AnyP
   /// Rapid Cache entry's TTL between 1h and 7days. A cache-level config that
   /// is applied to all new cache entries on admission. If `ttl` is pending
   /// update, this field equals to the new value specified in the Update request.
-  public var ttl: GoogleCloudWKT.Duration? = nil
+  public var ttl: GoogleWKT.Duration? = nil
 
   /// Optional. Rapid Cache entry Admission Policy in kebab-case (e.g.,
   /// "admit-on-first-miss"). If `admission_policy` is pending
@@ -49,7 +49,7 @@ public struct UpdateRapidCacheMetadata: Codable, Equatable, GoogleCloudWKT._AnyP
   /// Optional. The type of cache. Either rapid cache or rapid cache ultra.
   public var cacheType: Swift.String? = nil
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `UpdateRapidCacheMetadata`.
   public init() {}
@@ -98,14 +98,14 @@ public struct UpdateRapidCacheMetadata: Codable, Equatable, GoogleCloudWKT._AnyP
       CommonLongRunningOperationMetadata.self, forKey: .commonMetadata)
     self.rapidCacheId = try container.decodeIfPresent(Swift.String.self, forKey: .rapidCacheId)
     self.zone = try container.decodeIfPresent(Swift.String.self, forKey: .zone)
-    self.ttl = try container.decodeIfPresent(GoogleCloudWKT.Duration.self, forKey: .ttl)
+    self.ttl = try container.decodeIfPresent(GoogleWKT.Duration.self, forKey: .ttl)
     self.admissionPolicy = try container.decodeIfPresent(
       Swift.String.self, forKey: .admissionPolicy)
     self.ingestOnWrite = try container.decodeIfPresent(Swift.Bool.self, forKey: .ingestOnWrite)
     self.cacheType = try container.decodeIfPresent(Swift.String.self, forKey: .cacheType)
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -126,10 +126,10 @@ public struct UpdateRapidCacheMetadata: Codable, Equatable, GoogleCloudWKT._AnyP
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.UpdateRapidCacheMetadata"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

@@ -15,12 +15,12 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 internal import StorageControlProtos
 internal import SwiftProtobuf
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
 @_spi(GoogleCloudInternal) import GoogleIAMV1
-internal import GoogleCloudWKTConvert
+@_spi(GoogleCloudInternal) import GoogleWKT
+internal import GoogleWKTConvert
 
 extension GoogleIAMV1.GetIamPolicyRequest {
   internal typealias ProtoType = StorageControlProtos.Google_Iam_V1_GetIamPolicyRequest

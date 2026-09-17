@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudGax
+@_spi(GoogleCloudInternal) import GoogleGax
 import NIOCore
 
 /// Holds the prepared MultipartUploadStream and optional calculated checksum header.

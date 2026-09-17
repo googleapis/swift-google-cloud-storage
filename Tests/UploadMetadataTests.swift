@@ -14,8 +14,8 @@
 
 import Foundation
 import GoogleAuth
-@_spi(GoogleCloudInternal) import GoogleCloudGax
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleGax
+@_spi(GoogleCloudInternal) import GoogleWKT
 @_spi(GoogleCloudInternal) @testable import GoogleCloudStorage
 import Testing
 
@@ -31,7 +31,7 @@ import Testing
   }
 
   @Test func uploadMetadataEncodingAndDecoding() throws {
-    let customTime = try GoogleCloudWKT.Timestamp(seconds: 1_700_000_000, nanos: 0)
+    let customTime = try GoogleWKT.Timestamp(seconds: 1_700_000_000, nanos: 0)
     let aclEntry = ObjectAccessControl().with {
       $0.entity = "user-test@example.com"
       $0.role = "READER"
@@ -262,7 +262,7 @@ import Testing
       return
     }
 
-    let decoder = GoogleCloudWKT._ProtoJSONDecoder()
+    let decoder = GoogleWKT._ProtoJSONDecoder()
     let object = try decoder.decode(Object.self, from: data)
 
     #expect(object.bucket == "my-bucket")
@@ -290,8 +290,8 @@ import Testing
   }
 
   @Test func uploadMetadataWithObjectContextsEncodingAndDecoding() throws {
-    let createTime = try GoogleCloudWKT.Timestamp(seconds: 1_700_000_000, nanos: 0)
-    let updateTime = try GoogleCloudWKT.Timestamp(seconds: 1_700_000_100, nanos: 0)
+    let createTime = try GoogleWKT.Timestamp(seconds: 1_700_000_000, nanos: 0)
+    let updateTime = try GoogleWKT.Timestamp(seconds: 1_700_000_100, nanos: 0)
 
     let contexts = ObjectContexts(custom: [
       "customer_id": ObjectCustomContextPayload(

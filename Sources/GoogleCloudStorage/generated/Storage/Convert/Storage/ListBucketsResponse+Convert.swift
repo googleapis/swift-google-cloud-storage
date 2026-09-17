@@ -15,11 +15,11 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 internal import StorageProtos
 internal import SwiftProtobuf
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
-internal import GoogleCloudWKTConvert
+@_spi(GoogleCloudInternal) import GoogleWKT
+internal import GoogleWKTConvert
 
 extension ListBucketsResponse {
   internal typealias ProtoType = StorageProtos.Google_Storage_V2_ListBucketsResponse

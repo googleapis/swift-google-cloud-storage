@@ -15,13 +15,13 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 internal import StorageControlProtos
 internal import SwiftProtobuf
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
 @_spi(GoogleCloudInternal) import GoogleIAMV1
 @_spi(GoogleCloudInternal) import GoogleType
-internal import GoogleCloudWKTConvert
+@_spi(GoogleCloudInternal) import GoogleWKT
+internal import GoogleWKTConvert
 
 extension GoogleIAMV1.BindingDelta {
   internal typealias ProtoType = StorageControlProtos.Google_Iam_V1_BindingDelta
@@ -73,7 +73,7 @@ extension GoogleIAMV1.BindingDelta.Action {
       return StorageControlProtos.Google_Iam_V1_BindingDelta.Action(rawValue: val)
         ?? .UNRECOGNIZED(val)
     case .unknownStringValue(let str):
-      throw GoogleCloudGax.ProtobufConversionError.noIntegerValue(
+      throw GoogleGax.ProtobufConversionError.noIntegerValue(
         enumType: "GoogleIAMV1.BindingDelta.Action", stringValue: str)
     }
   }

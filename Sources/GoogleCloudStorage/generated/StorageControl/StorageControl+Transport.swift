@@ -16,38 +16,38 @@
 
 import Foundation
 import GoogleAuth
-@_spi(GoogleCloudInternal) import GoogleCloudGax
-@_spi(GoogleCloudInternal) import GoogleCloudGaxGRPC
-import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleGax
+@_spi(GoogleCloudInternal) import GoogleGaxGRPC
 import GoogleIAMV1
 import GoogleLongRunning
 import GoogleRpc
+import GoogleWKT
 internal import StorageControlProtos
-internal import GoogleCloudWKTConvert
+internal import GoogleWKTConvert
 internal import SwiftProtobuf
 
 extension Clients {
   final class StorageControlTransport: StorageControlStub {
-    let inner: GoogleCloudGaxGRPC._GRPCClient
+    let inner: GoogleGaxGRPC._GRPCClient
 
-    public init(_ options: GoogleCloudGax.ClientOptions = .init()) throws {
-      self.inner = try GoogleCloudGaxGRPC._GRPCClient(
+    public init(_ options: GoogleGax.ClientOptions = .init()) throws {
+      self.inner = try GoogleGaxGRPC._GRPCClient(
         from: options,
         withDefaultEndpoint: "https://storage.googleapis.com"
       )
     }
 
-    public init(_ inner: GoogleCloudGaxGRPC._GRPCClient) {
+    public init(_ inner: GoogleGaxGRPC._GRPCClient) {
       self.inner = inner
     }
 
     public func createFolder(
-      request: CreateFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> Folder {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -69,12 +69,12 @@ extension Clients {
     }
 
     public func deleteFolder(
-      request: DeleteFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteFolderRequest, options: GoogleGax.RequestOptions
     ) async throws {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -96,12 +96,12 @@ extension Clients {
     }
 
     public func getFolder(
-      request: GetFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: GetFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> Folder {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -125,12 +125,12 @@ extension Clients {
     }
 
     public func listFolders(
-      request: ListFoldersRequest, options: GoogleCloudGax.RequestOptions
+      request: ListFoldersRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListFoldersResponse {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -152,12 +152,12 @@ extension Clients {
     }
 
     public func renameFolder(
-      request: RenameFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: RenameFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -181,12 +181,12 @@ extension Clients {
     }
 
     public func deleteFolderRecursive(
-      request: DeleteFolderRecursiveRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteFolderRecursiveRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -210,12 +210,12 @@ extension Clients {
     }
 
     public func getStorageLayout(
-      request: GetStorageLayoutRequest, options: GoogleCloudGax.RequestOptions
+      request: GetStorageLayoutRequest, options: GoogleGax.RequestOptions
     ) async throws -> StorageLayout {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -239,12 +239,12 @@ extension Clients {
     }
 
     public func createManagedFolder(
-      request: CreateManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateManagedFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> ManagedFolder {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -266,12 +266,12 @@ extension Clients {
     }
 
     public func deleteManagedFolder(
-      request: DeleteManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteManagedFolderRequest, options: GoogleGax.RequestOptions
     ) async throws {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -293,12 +293,12 @@ extension Clients {
     }
 
     public func getManagedFolder(
-      request: GetManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: GetManagedFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> ManagedFolder {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -322,12 +322,12 @@ extension Clients {
     }
 
     public func listManagedFolders(
-      request: ListManagedFoldersRequest, options: GoogleCloudGax.RequestOptions
+      request: ListManagedFoldersRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListManagedFoldersResponse {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -349,12 +349,12 @@ extension Clients {
     }
 
     public func updateManagedFolder(
-      request: UpdateManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateManagedFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> ManagedFolder {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.managedFolder?.name,
             prefix: [],
             matching: [
@@ -378,12 +378,12 @@ extension Clients {
     }
 
     public func createAnywhereCache(
-      request: CreateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -405,12 +405,12 @@ extension Clients {
     }
 
     public func updateAnywhereCache(
-      request: UpdateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.anywhereCache?.name,
             prefix: [],
             matching: [
@@ -434,12 +434,12 @@ extension Clients {
     }
 
     public func disableAnywhereCache(
-      request: DisableAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: DisableAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> AnywhereCache {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -463,12 +463,12 @@ extension Clients {
     }
 
     public func pauseAnywhereCache(
-      request: PauseAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: PauseAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> AnywhereCache {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -492,12 +492,12 @@ extension Clients {
     }
 
     public func resumeAnywhereCache(
-      request: ResumeAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: ResumeAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> AnywhereCache {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -521,12 +521,12 @@ extension Clients {
     }
 
     public func getAnywhereCache(
-      request: GetAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: GetAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> AnywhereCache {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -550,12 +550,12 @@ extension Clients {
     }
 
     public func listAnywhereCaches(
-      request: ListAnywhereCachesRequest, options: GoogleCloudGax.RequestOptions
+      request: ListAnywhereCachesRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListAnywhereCachesResponse {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -577,12 +577,12 @@ extension Clients {
     }
 
     public func createRapidCache(
-      request: CreateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateRapidCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -604,12 +604,12 @@ extension Clients {
     }
 
     public func updateRapidCache(
-      request: UpdateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateRapidCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.rapidCache?.name,
             prefix: [],
             matching: [
@@ -633,12 +633,12 @@ extension Clients {
     }
 
     public func disableRapidCache(
-      request: DisableRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: DisableRapidCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -662,12 +662,12 @@ extension Clients {
     }
 
     public func getRapidCache(
-      request: GetRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: GetRapidCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> RapidCache {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -691,12 +691,12 @@ extension Clients {
     }
 
     public func listRapidCaches(
-      request: ListRapidCachesRequest, options: GoogleCloudGax.RequestOptions
+      request: ListRapidCachesRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListRapidCachesResponse {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -718,12 +718,12 @@ extension Clients {
     }
 
     public func getProjectIntelligenceConfig(
-      request: GetProjectIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: GetProjectIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "name",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [.multiWildcard],
@@ -745,12 +745,12 @@ extension Clients {
     }
 
     public func updateProjectIntelligenceConfig(
-      request: UpdateProjectIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateProjectIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "intelligence_config.name",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.intelligenceConfig?.name,
             prefix: [],
             matching: [.multiWildcard],
@@ -772,12 +772,12 @@ extension Clients {
     }
 
     public func getFolderIntelligenceConfig(
-      request: GetFolderIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: GetFolderIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "name",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [.multiWildcard],
@@ -799,12 +799,12 @@ extension Clients {
     }
 
     public func updateFolderIntelligenceConfig(
-      request: UpdateFolderIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateFolderIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "intelligence_config.name",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.intelligenceConfig?.name,
             prefix: [],
             matching: [.multiWildcard],
@@ -826,12 +826,12 @@ extension Clients {
     }
 
     public func getOrganizationIntelligenceConfig(
-      request: GetOrganizationIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: GetOrganizationIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "name",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [.multiWildcard],
@@ -853,12 +853,12 @@ extension Clients {
     }
 
     public func updateOrganizationIntelligenceConfig(
-      request: UpdateOrganizationIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateOrganizationIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "intelligence_config.name",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.intelligenceConfig?.name,
             prefix: [],
             matching: [.multiWildcard],
@@ -880,12 +880,12 @@ extension Clients {
     }
 
     public func getIamPolicy(
-      request: GoogleIAMV1.GetIamPolicyRequest, options: GoogleCloudGax.RequestOptions
+      request: GoogleIAMV1.GetIamPolicyRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleIAMV1.Policy {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.resource,
             prefix: [],
             matching: [
@@ -893,7 +893,7 @@ extension Clients {
             ],
             suffix: [.trailingMultiWildcard]
           )
-            ?? GoogleCloudGaxGRPC._RoutingMatcher.value(
+            ?? GoogleGaxGRPC._RoutingMatcher.value(
               request.resource,
               prefix: [],
               matching: [.multiWildcard],
@@ -914,12 +914,12 @@ extension Clients {
     }
 
     public func setIamPolicy(
-      request: GoogleIAMV1.SetIamPolicyRequest, options: GoogleCloudGax.RequestOptions
+      request: GoogleIAMV1.SetIamPolicyRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleIAMV1.Policy {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.resource,
             prefix: [],
             matching: [
@@ -927,7 +927,7 @@ extension Clients {
             ],
             suffix: [.trailingMultiWildcard]
           )
-            ?? GoogleCloudGaxGRPC._RoutingMatcher.value(
+            ?? GoogleGaxGRPC._RoutingMatcher.value(
               request.resource,
               prefix: [],
               matching: [.multiWildcard],
@@ -948,19 +948,19 @@ extension Clients {
     }
 
     public func testIamPermissions(
-      request: GoogleIAMV1.TestIamPermissionsRequest, options: GoogleCloudGax.RequestOptions
+      request: GoogleIAMV1.TestIamPermissionsRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleIAMV1.TestIamPermissionsResponse {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.resource,
             prefix: [],
             matching: [
               .literal("projects/"), .singleWildcard, .literal("/buckets/"), .singleWildcard,
             ],
             suffix: [.literal("/managedFolders"), .trailingMultiWildcard]
-          ) ?? GoogleCloudGaxGRPC._RoutingMatcher.value(
+          ) ?? GoogleGaxGRPC._RoutingMatcher.value(
             request.resource,
             prefix: [],
             matching: [
@@ -968,7 +968,7 @@ extension Clients {
             ],
             suffix: [.literal("/objects"), .trailingMultiWildcard]
           )
-            ?? GoogleCloudGaxGRPC._RoutingMatcher.value(
+            ?? GoogleGaxGRPC._RoutingMatcher.value(
               request.resource,
               prefix: [],
               matching: [.multiWildcard],
@@ -990,12 +990,12 @@ extension Clients {
     }
 
     public func getIntelligenceFinding(
-      request: GetIntelligenceFindingRequest, options: GoogleCloudGax.RequestOptions
+      request: GetIntelligenceFindingRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceFinding {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "name",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [.multiWildcard],
@@ -1017,12 +1017,12 @@ extension Clients {
     }
 
     public func listIntelligenceFindings(
-      request: ListIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+      request: ListIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListIntelligenceFindingsResponse {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "parent",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -1045,12 +1045,12 @@ extension Clients {
     }
 
     public func summarizeIntelligenceFindings(
-      request: SummarizeIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+      request: SummarizeIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
     ) async throws -> SummarizeIntelligenceFindingsResponse {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "parent",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -1073,12 +1073,12 @@ extension Clients {
     }
 
     public func getIntelligenceFindingRevision(
-      request: GetIntelligenceFindingRevisionRequest, options: GoogleCloudGax.RequestOptions
+      request: GetIntelligenceFindingRevisionRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceFindingRevision {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "name",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [.multiWildcard],
@@ -1101,12 +1101,12 @@ extension Clients {
     }
 
     public func listIntelligenceFindingRevisions(
-      request: ListIntelligenceFindingRevisionsRequest, options: GoogleCloudGax.RequestOptions
+      request: ListIntelligenceFindingRevisionsRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListIntelligenceFindingRevisionsResponse {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "parent",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.parent,
             prefix: [],
             matching: [.multiWildcard],
@@ -1129,12 +1129,12 @@ extension Clients {
     }
 
     public func viewObjectFullContext(
-      request: ViewObjectFullContextRequest, options: GoogleCloudGax.RequestOptions
+      request: ViewObjectFullContextRequest, options: GoogleGax.RequestOptions
     ) async throws -> ObjectFullContext {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "bucket",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [
@@ -1158,12 +1158,12 @@ extension Clients {
     }
 
     public func getOperation(
-      request: GoogleLongRunning.GetOperationRequest, options: GoogleCloudGax.RequestOptions
+      request: GoogleLongRunning.GetOperationRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
-      let routingParams = GoogleCloudGaxGRPC._RoutingMatcher.format([
+      let routingParams = GoogleGaxGRPC._RoutingMatcher.format([
         (
           "name",
-          GoogleCloudGaxGRPC._RoutingMatcher.value(
+          GoogleGaxGRPC._RoutingMatcher.value(
             request.name,
             prefix: [],
             matching: [.multiWildcard],

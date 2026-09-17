@@ -15,65 +15,65 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudWKT
-import GoogleCloudGax
+import GoogleWKT
+import GoogleGax
 
 extension Clients {
   protocol StorageStub: Sendable {
     func deleteBucket(
-      request: DeleteBucketRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteBucketRequest, options: GoogleGax.RequestOptions
     ) async throws
 
     func getBucket(
-      request: GetBucketRequest, options: GoogleCloudGax.RequestOptions
+      request: GetBucketRequest, options: GoogleGax.RequestOptions
     ) async throws -> Bucket
 
     func createBucket(
-      request: CreateBucketRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateBucketRequest, options: GoogleGax.RequestOptions
     ) async throws -> Bucket
 
     func listBuckets(
-      request: ListBucketsRequest, options: GoogleCloudGax.RequestOptions
+      request: ListBucketsRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListBucketsResponse
 
     func lockBucketRetentionPolicy(
-      request: LockBucketRetentionPolicyRequest, options: GoogleCloudGax.RequestOptions
+      request: LockBucketRetentionPolicyRequest, options: GoogleGax.RequestOptions
     ) async throws -> Bucket
 
     func updateBucket(
-      request: UpdateBucketRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateBucketRequest, options: GoogleGax.RequestOptions
     ) async throws -> Bucket
 
     func composeObject(
-      request: ComposeObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: ComposeObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object
 
     func deleteObject(
-      request: DeleteObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteObjectRequest, options: GoogleGax.RequestOptions
     ) async throws
 
     func restoreObject(
-      request: RestoreObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: RestoreObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object
 
     func getObject(
-      request: GetObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: GetObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object
 
     func updateObject(
-      request: UpdateObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object
 
     func listObjects(
-      request: ListObjectsRequest, options: GoogleCloudGax.RequestOptions
+      request: ListObjectsRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListObjectsResponse
 
     func rewriteObject(
-      request: RewriteObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: RewriteObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> RewriteResponse
 
     func moveObject(
-      request: MoveObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: MoveObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object
   }
 }

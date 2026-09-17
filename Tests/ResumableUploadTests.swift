@@ -15,8 +15,8 @@
 import Crypto
 import Foundation
 import GoogleAuth
-@_spi(GoogleCloudInternal) import GoogleCloudGax
-@_spi(GoogleCloudInternal) import struct GoogleCloudGax._CRC32C
+@_spi(GoogleCloudInternal) import GoogleGax
+@_spi(GoogleCloudInternal) import struct GoogleGax._CRC32C
 @_spi(GoogleCloudInternal) @testable import GoogleCloudStorage
 import Testing
 

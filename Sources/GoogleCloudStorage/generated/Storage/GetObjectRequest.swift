@@ -15,12 +15,12 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// Request message for [GetObject][google.storage.v2.Storage.GetObject].
 ///
 /// [google.storage.v2.Storage.GetObject]: <doc:StorageControlClient/getObject(request:options:)>
-public struct GetObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct GetObjectRequest: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Required. Name of the bucket in which the object resides.
@@ -63,7 +63,7 @@ public struct GetObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   /// If no mask is specified, it defaults to all fields except `metadata.
   /// acl` and `metadata.owner`.
   /// `*` might be used to mean "all fields".
-  public var readMask: GoogleCloudWKT.FieldMask? = nil
+  public var readMask: GoogleWKT.FieldMask? = nil
 
   /// Optional. Restore token used to differentiate soft-deleted objects with the
   /// same name and generation. Only applicable for hierarchical namespace
@@ -72,7 +72,7 @@ public struct GetObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   /// objects with the same `name` and `generation`.
   public var restoreToken: Swift.String = Swift.String()
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `GetObjectRequest`.
   public init() {}
@@ -145,13 +145,13 @@ public struct GetObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
       Swift.Int64.self, forKey: .ifMetagenerationNotMatch)
     self.commonObjectRequestParams = try container.decodeIfPresent(
       CommonObjectRequestParams.self, forKey: .commonObjectRequestParams)
-    self.readMask = try container.decodeIfPresent(GoogleCloudWKT.FieldMask.self, forKey: .readMask)
+    self.readMask = try container.decodeIfPresent(GoogleWKT.FieldMask.self, forKey: .readMask)
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .restoreToken) {
       self.restoreToken = value
     }
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -177,10 +177,10 @@ public struct GetObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.v2.GetObjectRequest"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

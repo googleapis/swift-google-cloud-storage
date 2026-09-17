@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudGax
+@_spi(GoogleCloudInternal) import GoogleGax
 import NIOCore
 
 /// Specifies a byte range for ranged reads.
@@ -420,7 +420,7 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
   let bucket: String
   let object: String
   let options: ReadObjectOptions
-  let httpClient: GoogleCloudGax._HTTPClient
+  let httpClient: GoogleGax._HTTPClient
   let resumeLoop: _ResumeLoop<DownloadDetails>
 
   private let lock = NSLock()
@@ -441,7 +441,7 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
     bucket: String,
     object: String,
     options: ReadObjectOptions,
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     resumeLoop: _ResumeLoop<DownloadDetails>
   ) {
     self.bucket = bucket
@@ -718,7 +718,7 @@ package final class ReadObjectCoordinator: @unchecked Sendable {
   }
 
   fileprivate static func fetchInitial(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     bucket: String,
     object: String,
     options: ReadObjectOptions,

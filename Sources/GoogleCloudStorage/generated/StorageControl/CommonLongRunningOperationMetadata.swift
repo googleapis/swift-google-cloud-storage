@@ -15,22 +15,22 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// The message contains metadata that is common to all Storage Control
 /// long-running operations, present in its `google.longrunning.Operation`
 /// messages, and accessible via `metadata.common_metadata`.
-public struct CommonLongRunningOperationMetadata: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct CommonLongRunningOperationMetadata: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Output only. The time the operation was created.
-  public var createTime: GoogleCloudWKT.Timestamp? = nil
+  public var createTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. The time the operation finished running.
-  public var endTime: GoogleCloudWKT.Timestamp? = nil
+  public var endTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. The time the operation was last modified.
-  public var updateTime: GoogleCloudWKT.Timestamp? = nil
+  public var updateTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. The type of operation invoked.
   public var type: Swift.String = Swift.String()
@@ -42,7 +42,7 @@ public struct CommonLongRunningOperationMetadata: Codable, Equatable, GoogleClou
   /// 100]. The value -1 means the progress is unknown.
   public var progressPercent: Swift.Int32 = Swift.Int32()
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `CommonLongRunningOperationMetadata`.
   public init() {}
@@ -85,11 +85,9 @@ public struct CommonLongRunningOperationMetadata: Codable, Equatable, GoogleClou
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    self.createTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .createTime)
-    self.endTime = try container.decodeIfPresent(GoogleCloudWKT.Timestamp.self, forKey: .endTime)
-    self.updateTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .updateTime)
+    self.createTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .createTime)
+    self.endTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .endTime)
+    self.updateTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .updateTime)
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .type) {
       self.type = value
     }
@@ -101,7 +99,7 @@ public struct CommonLongRunningOperationMetadata: Codable, Equatable, GoogleClou
     }
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -121,10 +119,10 @@ public struct CommonLongRunningOperationMetadata: Codable, Equatable, GoogleClou
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.CommonLongRunningOperationMetadata"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

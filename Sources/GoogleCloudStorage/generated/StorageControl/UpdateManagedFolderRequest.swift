@@ -15,10 +15,10 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// Request message for UpdateManagedFolder.
-public struct UpdateManagedFolderRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct UpdateManagedFolderRequest: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Required. Properties of the managed folder being updated. Currently, this
@@ -34,7 +34,7 @@ public struct UpdateManagedFolderRequest: Codable, Equatable, GoogleCloudWKT._An
   /// `rapid_cache_config.policies.<key>`, but patching is not supported for
   /// a field within `RapidCachePolicy.policies.<key>`, like
   /// rapid_cache_config.policies.[key].ingest_on_write.
-  public var updateMask: GoogleCloudWKT.FieldMask? = nil
+  public var updateMask: GoogleWKT.FieldMask? = nil
 
   /// Optional. The operation succeeds conditional on the managed folder's
   /// current metageneration matching the value here specified.
@@ -48,7 +48,7 @@ public struct UpdateManagedFolderRequest: Codable, Equatable, GoogleCloudWKT._An
   /// format, but other formats are still accepted.
   public var requestId: Swift.String = Swift.String()
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `UpdateManagedFolderRequest`.
   public init() {}
@@ -90,8 +90,7 @@ public struct UpdateManagedFolderRequest: Codable, Equatable, GoogleCloudWKT._An
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.managedFolder = try container.decodeIfPresent(ManagedFolder.self, forKey: .managedFolder)
-    self.updateMask = try container.decodeIfPresent(
-      GoogleCloudWKT.FieldMask.self, forKey: .updateMask)
+    self.updateMask = try container.decodeIfPresent(GoogleWKT.FieldMask.self, forKey: .updateMask)
     self.ifMetagenerationMatch = try container.decodeIfPresent(
       Swift.Int64.self, forKey: .ifMetagenerationMatch)
     self.ifMetagenerationNotMatch = try container.decodeIfPresent(
@@ -101,7 +100,7 @@ public struct UpdateManagedFolderRequest: Codable, Equatable, GoogleCloudWKT._An
     }
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -120,10 +119,10 @@ public struct UpdateManagedFolderRequest: Codable, Equatable, GoogleCloudWKT._An
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.UpdateManagedFolderRequest"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

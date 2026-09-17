@@ -16,11 +16,11 @@ import Foundation
 #if canImport(FoundationNetworking)
   import FoundationNetworking
 #endif
-import GoogleCloudGax
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
-@_spi(GoogleCloudInternal) import struct GoogleCloudGax._CRC32C
+import GoogleGax
+@_spi(GoogleCloudInternal) import GoogleWKT
+@_spi(GoogleCloudInternal) import struct GoogleGax._CRC32C
 import Crypto
-@_spi(GoogleCloudInternal) import GoogleCloudGax
+@_spi(GoogleCloudInternal) import GoogleGax
 import NIOCore
 import NIOHTTP1
 
@@ -146,7 +146,7 @@ extension StorageClient {
   }
 
   fileprivate static func performSimpleUpload<S: UploadSource>(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     source: inout S,
     bucket: String,
     objectName: String,
@@ -227,7 +227,7 @@ extension StorageClient {
   }
 
   fileprivate static func startResumableSession(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     bucket: String,
     objectName: String,
     metadata: UploadMetadata?,
@@ -264,7 +264,7 @@ extension StorageClient {
   }
 
   fileprivate static func queryUploadStatus(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     uploadId: String,
     options: UploadOptions
   ) async throws -> (status: ResumableUploadStatus, crc32cSeed: UInt32?) {
@@ -301,7 +301,7 @@ extension StorageClient {
   }
 
   fileprivate static func sendChunk(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     uploadId: String,
     data: ByteBuffer,
     offset: UInt64,
@@ -369,7 +369,7 @@ extension StorageClient {
   }
 
   fileprivate static func sendNextChunk<S: UploadSource>(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     checksummedSource: inout ChecksummedSource<S>,
     uploadId: String,
     committedBytes: UInt64,
@@ -417,7 +417,7 @@ extension StorageClient {
   }
 
   fileprivate static func continueStreamingUpload<S: UploadSource>(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     source: inout S,
     bucket: String? = nil,
     objectName: String? = nil,
@@ -640,7 +640,7 @@ extension StorageClient {
   }
 
   fileprivate static func continueResumableSeekableUpload<S: SeekableUploadSource>(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     source: inout S,
     bucket: String? = nil,
     objectName: String? = nil,
@@ -876,12 +876,12 @@ struct ResumableUploadQueryStatus: Sendable {
 
 extension StorageClient {
   fileprivate static func buildStartResumableUploadRequest(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     bucket: String,
     objectName: String,
     metadata: UploadMetadata?,
     options: UploadOptions
-  ) async throws -> GoogleCloudGax._HTTPClientRequest {
+  ) async throws -> GoogleGax._HTTPClientRequest {
     var queryItems = [URLQueryItem(name: "uploadType", value: "resumable")]
     queryItems.append(URLQueryItem(name: "name", value: objectName))
 
@@ -912,10 +912,10 @@ extension StorageClient {
   }
 
   fileprivate static func buildQueryResumableUploadRequest(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     uploadId: String,
     options: UploadOptions? = nil
-  ) async throws -> GoogleCloudGax._HTTPClientRequest {
+  ) async throws -> GoogleGax._HTTPClientRequest {
     var request = try await httpClient.newRequest(
       uri: uploadId, options: options?.requestOptions ?? .init())
     request.setMethod(.PUT)
@@ -929,14 +929,14 @@ extension StorageClient {
   }
 
   fileprivate static func buildUploadChunkRequest(
-    httpClient: GoogleCloudGax._HTTPClient,
+    httpClient: GoogleGax._HTTPClient,
     uploadId: String,
     data: ByteBuffer,
     offset: UInt64,
     totalSize: UInt64?,
     options: UploadOptions,
     checksum: String? = nil
-  ) async throws -> GoogleCloudGax._HTTPClientRequest {
+  ) async throws -> GoogleGax._HTTPClientRequest {
     var request = try await httpClient.newRequest(uri: uploadId, options: options.requestOptions)
     request.setMethod(.PUT)
     request.setHeader(name: "Content-Type", value: "application/octet-stream")
@@ -988,7 +988,7 @@ extension StorageClient {
     return nil
   }
 
-  fileprivate static func handleObjectResponse(response: GoogleCloudGax._HTTPClientResponse)
+  fileprivate static func handleObjectResponse(response: GoogleGax._HTTPClientResponse)
     async throws
     -> Object
   {
@@ -996,7 +996,7 @@ extension StorageClient {
       throw await response.decodeError()
     }
     let data = try await response.data()
-    let decoder = GoogleCloudWKT._ProtoJSONDecoder()
+    let decoder = GoogleWKT._ProtoJSONDecoder()
     let v1Object = try decoder.decode(ObjectV1Response.self, from: data)
     return v1Object.toObject()
   }

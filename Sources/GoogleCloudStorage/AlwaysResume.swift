@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 
 /// A ``ResumePolicy`` that attempts to resume on all errors without imposing limits
 /// on consecutive or total attempts.

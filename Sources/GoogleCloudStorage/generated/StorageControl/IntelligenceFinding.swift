@@ -15,13 +15,13 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
 import GoogleRpc
 import GoogleType
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// The `IntelligenceFinding` resource that represents a security, performance,
 /// or cost-related finding about a project or bucket.
-public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct IntelligenceFinding: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Identifier. The resource name of `IntelligenceFinding`.
@@ -42,10 +42,10 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
   public var severity: FindingSeverity = FindingSeverity()
 
   /// Output only. The time at which the finding was created.
-  public var createTime: GoogleCloudWKT.Timestamp? = nil
+  public var createTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. The time at which the finding was last updated.
-  public var updateTime: GoogleCloudWKT.Timestamp? = nil
+  public var updateTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. The fully qualified resource name of the resource that this
   /// `IntelligenceFinding` applies to. eg:
@@ -67,7 +67,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
   /// The specific details of the `IntelligenceFinding`.
   public var intelligenceFindingDetails: OneOf_IntelligenceFindingDetails? = nil
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `IntelligenceFinding`.
   public init() {}
@@ -142,10 +142,8 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     if let value = try container.decodeIfPresent(FindingSeverity.self, forKey: .severity) {
       self.severity = value
     }
-    self.createTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .createTime)
-    self.updateTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .updateTime)
+    self.createTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .createTime)
+    self.updateTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .updateTime)
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .targetResource) {
       self.targetResource = value
     }
@@ -191,7 +189,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     self.intelligenceFindingDetails = intelligenceFindingDetails
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -229,7 +227,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
   /// or Archive Cloud Storage objects.
   /// This corresponds to the `COLD_AND_ARCHIVAL_STORAGE_OPERATIONS_SPIKE`
   /// finding type.
-  public struct ColdlineAndArchivalStorageOperationsSpike: Codable, Equatable, GoogleCloudWKT
+  public struct ColdlineAndArchivalStorageOperationsSpike: Codable, Equatable, GoogleWKT
       ._AnyPackable,
     Sendable
   {
@@ -244,7 +242,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     public var topBuckets:
       [IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike.BucketContribution] = []
 
-    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
     /// Initialize a new instance of `ColdlineAndArchivalStorageOperationsSpike`.
     public init() {}
@@ -296,7 +294,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       }
       for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
         self._unknownFields.json[key.stringValue] = try container.decode(
-          GoogleCloudWKT.Value.self, forKey: key)
+          GoogleWKT.Value.self, forKey: key)
       }
     }
 
@@ -311,7 +309,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     }
 
     /// Represents the operation spike details for a bucket.
-    public struct BucketContribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+    public struct BucketContribution: Codable, Equatable, GoogleWKT._AnyPackable,
       Sendable
     {
       /// Output only. The name of the bucket.
@@ -327,7 +325,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       /// `IntelligenceFinding`.
       public var details: OneOf_Details? = nil
 
-      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
       /// Initialize a new instance of `BucketContribution`.
       public init() {}
@@ -403,7 +401,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         self.details = details
         for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
           self._unknownFields.json[key.stringValue] = try container.decode(
-            GoogleCloudWKT.Value.self, forKey: key)
+            GoogleWKT.Value.self, forKey: key)
         }
       }
 
@@ -428,7 +426,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
 
       /// Represents the contribution of the bucket towards the
       /// `IntelligenceFinding`.
-      public struct Contribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+      public struct Contribution: Codable, Equatable, GoogleWKT._AnyPackable,
         Sendable
       {
         /// Output only. A list of the top object prefixes driving the increase
@@ -437,8 +435,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           [IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike.BucketContribution
             .Contribution.PrefixContribution] = []
 
-        @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields =
-          .init()
+        @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
         /// Initialize a new instance of `Contribution`.
         public init() {}
@@ -481,7 +478,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           }
           for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
             self._unknownFields.json[key.stringValue] = try container.decode(
-              GoogleCloudWKT.Value.self, forKey: key)
+              GoogleWKT.Value.self, forKey: key)
           }
         }
 
@@ -494,7 +491,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         }
 
         /// Represents the operation spike details for an object prefix.
-        public struct PrefixContribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+        public struct PrefixContribution: Codable, Equatable, GoogleWKT._AnyPackable,
           Sendable
         {
           /// Output only. The object prefix.
@@ -508,8 +505,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           /// Output only. The total count of operations for the object prefix.
           public var totalOperationsCount: Swift.Int64 = Swift.Int64()
 
-          @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields =
-            .init()
+          @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
           /// Initialize a new instance of `PrefixContribution`.
           public init() {}
@@ -561,7 +557,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
             }
             for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
               self._unknownFields.json[key.stringValue] = try container.decode(
-                GoogleCloudWKT.Value.self, forKey: key)
+                GoogleWKT.Value.self, forKey: key)
             }
           }
 
@@ -579,11 +575,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
             return
               "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike.BucketContribution.Contribution.PrefixContribution"
           }
-          public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-            self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+          public init(fromAny any: GoogleWKT.`Any`) throws {
+            self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
           }
-          public func _pack() throws -> GoogleCloudWKT.Struct {
-            return try GoogleCloudWKT._slowAnySerialize(message: self)
+          public func _pack() throws -> GoogleWKT.Struct {
+            return try GoogleWKT._slowAnySerialize(message: self)
           }
         }
 
@@ -591,11 +587,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           return
             "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike.BucketContribution.Contribution"
         }
-        public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-          self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+        public init(fromAny any: GoogleWKT.`Any`) throws {
+          self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
         }
-        public func _pack() throws -> GoogleCloudWKT.Struct {
-          return try GoogleCloudWKT._slowAnySerialize(message: self)
+        public func _pack() throws -> GoogleWKT.Struct {
+          return try GoogleWKT._slowAnySerialize(message: self)
         }
       }
 
@@ -615,11 +611,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike.BucketContribution"
       }
-      public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-        self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+      public init(fromAny any: GoogleWKT.`Any`) throws {
+        self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
       }
-      public func _pack() throws -> GoogleCloudWKT.Struct {
-        return try GoogleCloudWKT._slowAnySerialize(message: self)
+      public func _pack() throws -> GoogleWKT.Struct {
+        return try GoogleWKT._slowAnySerialize(message: self)
       }
     }
 
@@ -627,18 +623,18 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       return
         "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ColdlineAndArchivalStorageOperationsSpike"
     }
-    public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-      self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+    public init(fromAny any: GoogleWKT.`Any`) throws {
+      self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
     }
-    public func _pack() throws -> GoogleCloudWKT.Struct {
-      return try GoogleCloudWKT._slowAnySerialize(message: self)
+    public func _pack() throws -> GoogleWKT.Struct {
+      return try GoogleWKT._slowAnySerialize(message: self)
     }
   }
 
   /// Represents a finding about a spike in cross-region egress from Cloud
   /// Storage.
   /// This corresponds to the `CROSS_REGION_EGRESS_SPIKE` finding type.
-  public struct CrossRegionEgressSpike: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+  public struct CrossRegionEgressSpike: Codable, Equatable, GoogleWKT._AnyPackable,
     Sendable
   {
     /// Output only. The total cross-region egress volume in bytes across the
@@ -653,7 +649,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     /// egress.
     public var topBuckets: [IntelligenceFinding.CrossRegionEgressSpike.BucketContribution] = []
 
-    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
     /// Initialize a new instance of `CrossRegionEgressSpike`.
     public init() {}
@@ -703,7 +699,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       }
       for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
         self._unknownFields.json[key.stringValue] = try container.decode(
-          GoogleCloudWKT.Value.self, forKey: key)
+          GoogleWKT.Value.self, forKey: key)
       }
     }
 
@@ -718,7 +714,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     }
 
     /// Represents the cross-region egress spike details for a bucket.
-    public struct BucketContribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+    public struct BucketContribution: Codable, Equatable, GoogleWKT._AnyPackable,
       Sendable
     {
       /// Output only. The name of the bucket.
@@ -736,7 +732,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       /// `IntelligenceFinding`.
       public var details: OneOf_Details? = nil
 
-      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
       /// Initialize a new instance of `BucketContribution`.
       public init() {}
@@ -810,7 +806,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         self.details = details
         for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
           self._unknownFields.json[key.stringValue] = try container.decode(
-            GoogleCloudWKT.Value.self, forKey: key)
+            GoogleWKT.Value.self, forKey: key)
         }
       }
 
@@ -835,7 +831,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
 
       /// Represents the contribution of the bucket towards the
       /// `IntelligenceFinding`.
-      public struct Contribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+      public struct Contribution: Codable, Equatable, GoogleWKT._AnyPackable,
         Sendable
       {
         /// Output only. A list of the top object prefixes driving the increase
@@ -844,8 +840,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           [IntelligenceFinding.CrossRegionEgressSpike.BucketContribution.Contribution
             .PrefixContribution] = []
 
-        @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields =
-          .init()
+        @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
         /// Initialize a new instance of `Contribution`.
         public init() {}
@@ -888,7 +883,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           }
           for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
             self._unknownFields.json[key.stringValue] = try container.decode(
-              GoogleCloudWKT.Value.self, forKey: key)
+              GoogleWKT.Value.self, forKey: key)
           }
         }
 
@@ -902,7 +897,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
 
         /// Represents the cross-region egress spike details for an object
         /// prefix.
-        public struct PrefixContribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+        public struct PrefixContribution: Codable, Equatable, GoogleWKT._AnyPackable,
           Sendable
         {
           /// Output only. The object prefix.
@@ -917,8 +912,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           /// object prefix.
           public var percentageIncrease: Swift.Double = Swift.Double()
 
-          @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields =
-            .init()
+          @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
           /// Initialize a new instance of `PrefixContribution`.
           public init() {}
@@ -970,7 +964,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
             }
             for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
               self._unknownFields.json[key.stringValue] = try container.decode(
-                GoogleCloudWKT.Value.self, forKey: key)
+                GoogleWKT.Value.self, forKey: key)
             }
           }
 
@@ -988,11 +982,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
             return
               "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.CrossRegionEgressSpike.BucketContribution.Contribution.PrefixContribution"
           }
-          public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-            self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+          public init(fromAny any: GoogleWKT.`Any`) throws {
+            self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
           }
-          public func _pack() throws -> GoogleCloudWKT.Struct {
-            return try GoogleCloudWKT._slowAnySerialize(message: self)
+          public func _pack() throws -> GoogleWKT.Struct {
+            return try GoogleWKT._slowAnySerialize(message: self)
           }
         }
 
@@ -1000,11 +994,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           return
             "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.CrossRegionEgressSpike.BucketContribution.Contribution"
         }
-        public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-          self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+        public init(fromAny any: GoogleWKT.`Any`) throws {
+          self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
         }
-        public func _pack() throws -> GoogleCloudWKT.Struct {
-          return try GoogleCloudWKT._slowAnySerialize(message: self)
+        public func _pack() throws -> GoogleWKT.Struct {
+          return try GoogleWKT._slowAnySerialize(message: self)
         }
       }
 
@@ -1023,11 +1017,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.CrossRegionEgressSpike.BucketContribution"
       }
-      public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-        self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+      public init(fromAny any: GoogleWKT.`Any`) throws {
+        self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
       }
-      public func _pack() throws -> GoogleCloudWKT.Struct {
-        return try GoogleCloudWKT._slowAnySerialize(message: self)
+      public func _pack() throws -> GoogleWKT.Struct {
+        return try GoogleWKT._slowAnySerialize(message: self)
       }
     }
 
@@ -1035,18 +1029,18 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       return
         "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.CrossRegionEgressSpike"
     }
-    public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-      self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+    public init(fromAny any: GoogleWKT.`Any`) throws {
+      self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
     }
-    public func _pack() throws -> GoogleCloudWKT.Struct {
-      return try GoogleCloudWKT._slowAnySerialize(message: self)
+    public func _pack() throws -> GoogleWKT.Struct {
+      return try GoogleWKT._slowAnySerialize(message: self)
     }
   }
 
   /// Represents a finding about a spike in throttled requests (429 errors)
   /// within a project.
   /// This corresponds to the `THROTTLED_REQUEST_SPIKE` finding type.
-  public struct ThrottledRequestSpike: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+  public struct ThrottledRequestSpike: Codable, Equatable, GoogleWKT._AnyPackable,
     Sendable
   {
     /// Output only. The count of throttled requests across the project.
@@ -1060,7 +1054,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     /// requests.
     public var topBuckets: [IntelligenceFinding.ThrottledRequestSpike.BucketContribution] = []
 
-    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
     /// Initialize a new instance of `ThrottledRequestSpike`.
     public init() {}
@@ -1110,7 +1104,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       }
       for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
         self._unknownFields.json[key.stringValue] = try container.decode(
-          GoogleCloudWKT.Value.self, forKey: key)
+          GoogleWKT.Value.self, forKey: key)
       }
     }
 
@@ -1125,7 +1119,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     }
 
     /// Represents the throttled requests details for a bucket.
-    public struct BucketContribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+    public struct BucketContribution: Codable, Equatable, GoogleWKT._AnyPackable,
       Sendable
     {
       /// Output only. The name of the bucket.
@@ -1142,7 +1136,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       /// `IntelligenceFinding`.
       public var details: OneOf_Details? = nil
 
-      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
       /// Initialize a new instance of `BucketContribution`.
       public init() {}
@@ -1216,7 +1210,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         self.details = details
         for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
           self._unknownFields.json[key.stringValue] = try container.decode(
-            GoogleCloudWKT.Value.self, forKey: key)
+            GoogleWKT.Value.self, forKey: key)
         }
       }
 
@@ -1241,7 +1235,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
 
       /// Represents the contribution of the bucket towards the
       /// `IntelligenceFinding`.
-      public struct Contribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+      public struct Contribution: Codable, Equatable, GoogleWKT._AnyPackable,
         Sendable
       {
         /// Output only. A list of top object prefixes driving the increase in
@@ -1250,8 +1244,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           [IntelligenceFinding.ThrottledRequestSpike.BucketContribution.Contribution
             .PrefixContribution] = []
 
-        @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields =
-          .init()
+        @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
         /// Initialize a new instance of `Contribution`.
         public init() {}
@@ -1294,7 +1287,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           }
           for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
             self._unknownFields.json[key.stringValue] = try container.decode(
-              GoogleCloudWKT.Value.self, forKey: key)
+              GoogleWKT.Value.self, forKey: key)
           }
         }
 
@@ -1307,7 +1300,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         }
 
         /// Represents throttled requests details for an object prefix.
-        public struct PrefixContribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+        public struct PrefixContribution: Codable, Equatable, GoogleWKT._AnyPackable,
           Sendable
         {
           /// Output only. The object prefix.
@@ -1321,8 +1314,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           /// object prefix.
           public var percentageIncrease: Swift.Double = Swift.Double()
 
-          @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields =
-            .init()
+          @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
           /// Initialize a new instance of `PrefixContribution`.
           public init() {}
@@ -1374,7 +1366,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
             }
             for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
               self._unknownFields.json[key.stringValue] = try container.decode(
-                GoogleCloudWKT.Value.self, forKey: key)
+                GoogleWKT.Value.self, forKey: key)
             }
           }
 
@@ -1392,11 +1384,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
             return
               "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ThrottledRequestSpike.BucketContribution.Contribution.PrefixContribution"
           }
-          public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-            self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+          public init(fromAny any: GoogleWKT.`Any`) throws {
+            self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
           }
-          public func _pack() throws -> GoogleCloudWKT.Struct {
-            return try GoogleCloudWKT._slowAnySerialize(message: self)
+          public func _pack() throws -> GoogleWKT.Struct {
+            return try GoogleWKT._slowAnySerialize(message: self)
           }
         }
 
@@ -1404,11 +1396,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
           return
             "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ThrottledRequestSpike.BucketContribution.Contribution"
         }
-        public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-          self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+        public init(fromAny any: GoogleWKT.`Any`) throws {
+          self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
         }
-        public func _pack() throws -> GoogleCloudWKT.Struct {
-          return try GoogleCloudWKT._slowAnySerialize(message: self)
+        public func _pack() throws -> GoogleWKT.Struct {
+          return try GoogleWKT._slowAnySerialize(message: self)
         }
       }
 
@@ -1427,11 +1419,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ThrottledRequestSpike.BucketContribution"
       }
-      public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-        self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+      public init(fromAny any: GoogleWKT.`Any`) throws {
+        self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
       }
-      public func _pack() throws -> GoogleCloudWKT.Struct {
-        return try GoogleCloudWKT._slowAnySerialize(message: self)
+      public func _pack() throws -> GoogleWKT.Struct {
+        return try GoogleWKT._slowAnySerialize(message: self)
       }
     }
 
@@ -1439,17 +1431,17 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       return
         "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.ThrottledRequestSpike"
     }
-    public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-      self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+    public init(fromAny any: GoogleWKT.`Any`) throws {
+      self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
     }
-    public func _pack() throws -> GoogleCloudWKT.Struct {
-      return try GoogleCloudWKT._slowAnySerialize(message: self)
+    public func _pack() throws -> GoogleWKT.Struct {
+      return try GoogleWKT._slowAnySerialize(message: self)
     }
   }
 
   /// Represents a finding about a storage growth above the expected trend.
   /// This corresponds to the `STORAGE_GROWTH_ABOVE_TREND` finding type.
-  public struct StorageGrowthAboveTrend: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+  public struct StorageGrowthAboveTrend: Codable, Equatable, GoogleWKT._AnyPackable,
     Sendable
   {
     /// Output only. The total storage growth in bytes.
@@ -1462,7 +1454,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     /// growth.
     public var topBuckets: [IntelligenceFinding.StorageGrowthAboveTrend.BucketContribution] = []
 
-    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
     /// Initialize a new instance of `StorageGrowthAboveTrend`.
     public init() {}
@@ -1514,7 +1506,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       }
       for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
         self._unknownFields.json[key.stringValue] = try container.decode(
-          GoogleCloudWKT.Value.self, forKey: key)
+          GoogleWKT.Value.self, forKey: key)
       }
     }
 
@@ -1529,7 +1521,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
     }
 
     /// Represents the storage growth details for a bucket.
-    public struct BucketContribution: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+    public struct BucketContribution: Codable, Equatable, GoogleWKT._AnyPackable,
       Sendable
     {
       /// Output only. The name of the bucket.
@@ -1545,7 +1537,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       /// `IntelligenceFinding`.
       public var details: OneOf_Details? = nil
 
-      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
       /// Initialize a new instance of `BucketContribution`.
       public init() {}
@@ -1613,7 +1605,7 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         self.details = details
         for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
           self._unknownFields.json[key.stringValue] = try container.decode(
-            GoogleCloudWKT.Value.self, forKey: key)
+            GoogleWKT.Value.self, forKey: key)
         }
       }
 
@@ -1646,11 +1638,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
         return
           "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.StorageGrowthAboveTrend.BucketContribution"
       }
-      public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-        self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+      public init(fromAny any: GoogleWKT.`Any`) throws {
+        self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
       }
-      public func _pack() throws -> GoogleCloudWKT.Struct {
-        return try GoogleCloudWKT._slowAnySerialize(message: self)
+      public func _pack() throws -> GoogleWKT.Struct {
+        return try GoogleWKT._slowAnySerialize(message: self)
       }
     }
 
@@ -1658,11 +1650,11 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
       return
         "type.googleapis.com/google.storage.control.v2.IntelligenceFinding.StorageGrowthAboveTrend"
     }
-    public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-      self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+    public init(fromAny any: GoogleWKT.`Any`) throws {
+      self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
     }
-    public func _pack() throws -> GoogleCloudWKT.Struct {
-      return try GoogleCloudWKT._slowAnySerialize(message: self)
+    public func _pack() throws -> GoogleWKT.Struct {
+      return try GoogleWKT._slowAnySerialize(message: self)
     }
   }
 
@@ -1685,10 +1677,10 @@ public struct IntelligenceFinding: Codable, Equatable, GoogleCloudWKT._AnyPackab
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.IntelligenceFinding"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

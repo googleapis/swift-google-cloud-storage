@@ -15,12 +15,12 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// Request message for [ListBuckets][google.storage.v2.Storage.ListBuckets].
 ///
 /// [google.storage.v2.Storage.ListBuckets]: <doc:StorageControlClient/listBuckets(request:options:)>
-public struct ListBucketsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct ListBucketsRequest: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Required. The project whose buckets we are listing.
@@ -43,13 +43,13 @@ public struct ListBucketsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackabl
   /// If no mask is specified, it defaults to all fields except `items.
   /// owner`, `items.acl`, and `items.default_object_acl`.
   /// `*` might be used to mean "all fields".
-  public var readMask: GoogleCloudWKT.FieldMask? = nil
+  public var readMask: GoogleWKT.FieldMask? = nil
 
   /// Optional. Allows listing of buckets, even if there are buckets that are
   /// unreachable.
   public var returnPartialSuccess: Swift.Bool = Swift.Bool()
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `ListBucketsRequest`.
   public init() {}
@@ -104,13 +104,13 @@ public struct ListBucketsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackabl
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .`prefix`) {
       self.`prefix` = value
     }
-    self.readMask = try container.decodeIfPresent(GoogleCloudWKT.FieldMask.self, forKey: .readMask)
+    self.readMask = try container.decodeIfPresent(GoogleWKT.FieldMask.self, forKey: .readMask)
     if let value = try container.decodeIfPresent(Swift.Bool.self, forKey: .returnPartialSuccess) {
       self.returnPartialSuccess = value
     }
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -130,10 +130,10 @@ public struct ListBucketsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackabl
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.v2.ListBucketsRequest"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

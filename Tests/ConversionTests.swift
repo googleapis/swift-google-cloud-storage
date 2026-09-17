@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import GoogleCloudGax
-import GoogleCloudWKT
+import GoogleGax
+import GoogleWKT
 import GoogleType
 import StorageControlProtos
 import Testing
@@ -97,7 +97,7 @@ import Testing
   }
 
   @Test func folderNestedMessageAndWkt() throws {
-    let timestamp = try GoogleCloudWKT.Timestamp(seconds: 12345, nanos: 6789)
+    let timestamp = try GoogleWKT.Timestamp(seconds: 12345, nanos: 6789)
 
     // 1. Nested message and timestamps set
     let renameInfo = PendingRenameInfo().with {
@@ -133,8 +133,8 @@ import Testing
   }
 
   @Test func googleTypeInterval() throws {
-    let startTime = try GoogleCloudWKT.Timestamp(seconds: 12345, nanos: 6789)
-    let endTime = try GoogleCloudWKT.Timestamp(seconds: 18134, nanos: 6789)
+    let startTime = try GoogleWKT.Timestamp(seconds: 12345, nanos: 6789)
+    let endTime = try GoogleWKT.Timestamp(seconds: 18134, nanos: 6789)
 
     let interval = GoogleType.Interval().with {
       $0.startTime = startTime

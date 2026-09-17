@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudGax
+@_spi(GoogleCloudInternal) import GoogleGax
 import NIOHTTP1
 
 extension StorageClient {
@@ -146,12 +146,12 @@ extension StorageClient {
   }
 }
 
-extension GoogleCloudGax._HTTPClient {
+extension GoogleGax._HTTPClient {
   package func buildReadObjectRequest(
     bucket: String,
     object: String,
     options: ReadObjectOptions
-  ) async throws -> GoogleCloudGax._HTTPClientRequest {
+  ) async throws -> GoogleGax._HTTPClientRequest {
     var queryItems = [URLQueryItem(name: "alt", value: "media")]
 
     if let generation = options.generation {
@@ -188,7 +188,7 @@ extension GoogleCloudGax._HTTPClient {
   }
 }
 
-extension GoogleCloudGax._HTTPClientRequest {
+extension GoogleGax._HTTPClientRequest {
   package mutating func applyCustomerSuppliedEncryptionHeaders(
     _ key: CustomerEncryptionKeyOptions?
   ) {

@@ -15,7 +15,7 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 internal import StorageControlProtos
 internal import SwiftProtobuf
 
@@ -52,7 +52,7 @@ extension FindingType {
       return StorageControlProtos.Google_Storage_Control_V2_FindingType(rawValue: val)
         ?? .UNRECOGNIZED(val)
     case .unknownStringValue(let str):
-      throw GoogleCloudGax.ProtobufConversionError.noIntegerValue(
+      throw GoogleGax.ProtobufConversionError.noIntegerValue(
         enumType: "FindingType", stringValue: str)
     }
   }

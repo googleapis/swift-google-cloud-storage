@@ -17,7 +17,7 @@ import AsyncHTTPClient
 import NIOCore
 import NIOHTTP1
 import Testing
-@_spi(GoogleCloudInternal) @testable import GoogleCloudGax
+@_spi(GoogleCloudInternal) @testable import GoogleGax
 @_spi(GoogleCloudInternal) @testable import GoogleCloudStorage
 
 enum MockResponse: Sendable {
@@ -230,8 +230,8 @@ final class MockRegistry: _HTTPClientProtocol, @unchecked Sendable {
     }
 
     guard let mock = mockResponse else {
-      throw GoogleCloudGax.RequestError.http(
-        GoogleCloudGax.HTTPDetails(
+      throw GoogleGax.RequestError.http(
+        GoogleGax.HTTPDetails(
           httpStatusCode: 404,
           headers: [:],
           payload: Data("Mock not found for \(request.url)".utf8)

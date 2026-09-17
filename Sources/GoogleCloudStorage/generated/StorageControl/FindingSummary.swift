@@ -15,10 +15,10 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// A summary of findings generated for an organization, a folder, or a project.
-public struct FindingSummary: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct FindingSummary: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Output only. The type of the finding.
@@ -34,11 +34,11 @@ public struct FindingSummary: Codable, Equatable, GoogleCloudWKT._AnyPackable,
 
   /// Output only. The creation time of the earliest finding that this summary is
   /// based on.
-  public var createTime: GoogleCloudWKT.Timestamp? = nil
+  public var createTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. The time of the most recent update among all the findings that
   /// this summary is based on.
-  public var updateTime: GoogleCloudWKT.Timestamp? = nil
+  public var updateTime: GoogleWKT.Timestamp? = nil
 
   /// Severity of the finding.
   public var severity: FindingSeverity = FindingSeverity()
@@ -46,7 +46,7 @@ public struct FindingSummary: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   /// Output only. List of `SummaryDetails`.
   public var summaryDetails: [FindingSummary.SummaryDetails] = []
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `FindingSummary`.
   public init() {}
@@ -100,10 +100,8 @@ public struct FindingSummary: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .targetResource) {
       self.targetResource = value
     }
-    self.createTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .createTime)
-    self.updateTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .updateTime)
+    self.createTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .createTime)
+    self.updateTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .updateTime)
     if let value = try container.decodeIfPresent(FindingSeverity.self, forKey: .severity) {
       self.severity = value
     }
@@ -114,7 +112,7 @@ public struct FindingSummary: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     }
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -133,7 +131,7 @@ public struct FindingSummary: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   }
 
   /// Details about the `FindingSummary` resource.
-  public struct SummaryDetails: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+  public struct SummaryDetails: Codable, Equatable, GoogleWKT._AnyPackable,
     Sendable
   {
     /// Output only. The type of Cloud resource this summary detail applies to.
@@ -146,7 +144,7 @@ public struct FindingSummary: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     /// The value of the summary.
     public var magnitude: OneOf_Magnitude? = nil
 
-    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
     /// Initialize a new instance of `SummaryDetails`.
     public init() {}
@@ -213,7 +211,7 @@ public struct FindingSummary: Codable, Equatable, GoogleCloudWKT._AnyPackable,
       self.magnitude = magnitude
       for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
         self._unknownFields.json[key.stringValue] = try container.decode(
-          GoogleCloudWKT.Value.self, forKey: key)
+          GoogleWKT.Value.self, forKey: key)
       }
     }
 
@@ -351,21 +349,21 @@ public struct FindingSummary: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     public static var _anyTypeUrl: Swift.String {
       return "type.googleapis.com/google.storage.control.v2.FindingSummary.SummaryDetails"
     }
-    public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-      self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+    public init(fromAny any: GoogleWKT.`Any`) throws {
+      self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
     }
-    public func _pack() throws -> GoogleCloudWKT.Struct {
-      return try GoogleCloudWKT._slowAnySerialize(message: self)
+    public func _pack() throws -> GoogleWKT.Struct {
+      return try GoogleWKT._slowAnySerialize(message: self)
     }
   }
 
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.FindingSummary"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

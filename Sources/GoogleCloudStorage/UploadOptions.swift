@@ -14,8 +14,8 @@
 
 import Crypto
 import Foundation
-import GoogleCloudGax
-import GoogleCloudWKT
+import GoogleGax
+import GoogleWKT
 
 /// Errors thrown when validating or creating a `CustomerEncryptionKeyOptions`.
 public enum CustomerEncryptionKeyError: Error, Sendable, Equatable,
@@ -215,7 +215,7 @@ public enum PredefinedAcl: String, Sendable, Equatable {
 /// Object retention policy configuration for a GCS Object.
 public struct ObjectRetention: Sendable, Codable, Equatable {
   public var mode: String?
-  public var retainUntilTime: GoogleCloudWKT.Timestamp?
+  public var retainUntilTime: GoogleWKT.Timestamp?
 
   public init() {}
 
@@ -244,8 +244,8 @@ public struct ObjectOwner: Sendable, Codable, Equatable {
 extension ObjectCustomContextPayload: ExpressibleByStringLiteral {
   public init(
     value: String? = nil,
-    createTime: GoogleCloudWKT.Timestamp? = nil,
-    updateTime: GoogleCloudWKT.Timestamp? = nil
+    createTime: GoogleWKT.Timestamp? = nil,
+    updateTime: GoogleWKT.Timestamp? = nil
   ) {
     self.init()
     if let value = value { self.value = value }
@@ -299,7 +299,7 @@ public struct UploadMetadata: Sendable, Codable, Equatable {
   public var storageClass: String?
 
   /// Custom time set by user for the object.
-  public var customTime: GoogleCloudWKT.Timestamp?
+  public var customTime: GoogleWKT.Timestamp?
 
   /// Event-based hold status for the object.
   public var eventBasedHold: Bool?

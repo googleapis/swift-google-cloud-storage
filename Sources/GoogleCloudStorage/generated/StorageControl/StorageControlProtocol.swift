@@ -16,11 +16,11 @@
 
 import Foundation
 import GoogleAuth
-import GoogleCloudGax
-import GoogleCloudWKT
+import GoogleGax
 import GoogleIAMV1
 import GoogleLongRunning
 import GoogleRpc
+import GoogleWKT
 
 /// A Swift protocol representing the control-plane and administrative surface for Google Cloud Storage.
 public protocol StorageControlProtocol {
@@ -75,7 +75,7 @@ public protocol StorageControlProtocol {
   ///
   /// Requires `storage.buckets.delete` IAM permission on the bucket.
   func deleteBucket(
-    request: DeleteBucketRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteBucketRequest, options: GoogleGax.RequestOptions
   ) async throws
 
   /// Returns metadata for the specified bucket.
@@ -103,7 +103,7 @@ public protocol StorageControlProtocol {
   /// - To return the IAM policies: `storage.buckets.getIamPolicy`
   /// - To return the bucket IP filtering rules: `storage.buckets.getIpFilter`
   func getBucket(
-    request: GetBucketRequest, options: GoogleCloudGax.RequestOptions
+    request: GetBucketRequest, options: GoogleGax.RequestOptions
   ) async throws -> Bucket
 
   /// Creates a new bucket.
@@ -131,7 +131,7 @@ public protocol StorageControlProtocol {
   /// parameter: `storage.buckets.enableObjectRetention`
   /// - To set the bucket IP filtering rules: `storage.buckets.setIpFilter`
   func createBucket(
-    request: CreateBucketRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateBucketRequest, options: GoogleGax.RequestOptions
   ) async throws -> Bucket
 
   /// Retrieves a list of buckets for a given project, ordered
@@ -159,7 +159,7 @@ public protocol StorageControlProtocol {
   /// - To list the IAM policies: `storage.buckets.getIamPolicy`
   /// - To list the bucket IP filtering rules: `storage.buckets.getIpFilter`
   func listBuckets(
-    request: ListBucketsRequest, options: GoogleCloudGax.RequestOptions
+    request: ListBucketsRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListBucketsResponse
 
   /// Retrieves a list of buckets for a given project, ordered
@@ -189,7 +189,7 @@ public protocol StorageControlProtocol {
   /// - To list the IAM policies: `storage.buckets.getIamPolicy`
   /// - To list the bucket IP filtering rules: `storage.buckets.getIpFilter`
   func listBuckets(
-    byItem: ListBucketsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListBucketsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<Bucket, Swift.Error>
 
   /// Permanently locks the retention
@@ -233,7 +233,7 @@ public protocol StorageControlProtocol {
   ///
   /// Requires `storage.buckets.update` IAM permission on the bucket.
   func lockBucketRetentionPolicy(
-    request: LockBucketRetentionPolicyRequest, options: GoogleCloudGax.RequestOptions
+    request: LockBucketRetentionPolicyRequest, options: GoogleGax.RequestOptions
   ) async throws -> Bucket
 
   /// Updates a bucket. Changes to the bucket are readable immediately after
@@ -265,7 +265,7 @@ public protocol StorageControlProtocol {
   /// - To update public access prevention policies or access control lists
   /// (ACLs): `storage.buckets.setIamPolicy`
   func updateBucket(
-    request: UpdateBucketRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateBucketRequest, options: GoogleGax.RequestOptions
   ) async throws -> Bucket
 
   /// Concatenates a list of existing objects into a new object in the same
@@ -293,7 +293,7 @@ public protocol StorageControlProtocol {
   /// the retention property, the authenticated user must also have the
   /// `storage.objects.setRetention` IAM permission.
   func composeObject(
-    request: ComposeObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: ComposeObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object
 
   /// Deletes an object and its metadata. Deletions are permanent if versioning
@@ -339,7 +339,7 @@ public protocol StorageControlProtocol {
   ///
   /// [google.storage.v2.Storage.RestoreObject]: <doc:StorageControlClient/restoreObject(request:options:)>
   func deleteObject(
-    request: DeleteObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteObjectRequest, options: GoogleGax.RequestOptions
   ) async throws
 
   /// Restores a
@@ -419,7 +419,7 @@ public protocol StorageControlProtocol {
   ///   `true` and the relevant
   ///     bucket has uniform bucket-level access disabled)
   func restoreObject(
-    request: RestoreObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: RestoreObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object
 
   /// Retrieves object metadata.
@@ -439,7 +439,7 @@ public protocol StorageControlProtocol {
   /// To return object ACLs, the authenticated user must also have
   /// the `storage.objects.getIamPolicy` permission.
   func getObject(
-    request: GetObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: GetObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object
 
   /// Updates an object's metadata.
@@ -457,7 +457,7 @@ public protocol StorageControlProtocol {
   ///
   /// Requires `storage.objects.update` IAM permission on the bucket.
   func updateObject(
-    request: UpdateObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object
 
   /// Retrieves a list of objects matching the criteria.
@@ -479,7 +479,7 @@ public protocol StorageControlProtocol {
   /// authenticated user must also
   /// have the `storage.objects.getIamPolicy` permission.
   func listObjects(
-    request: ListObjectsRequest, options: GoogleCloudGax.RequestOptions
+    request: ListObjectsRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListObjectsResponse
 
   /// Retrieves a list of objects matching the criteria.
@@ -503,7 +503,7 @@ public protocol StorageControlProtocol {
   /// authenticated user must also
   /// have the `storage.objects.getIamPolicy` permission.
   func listObjects(
-    byItem: ListObjectsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListObjectsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<Object, Swift.Error>
 
   /// Rewrites a source object to a destination object. Optionally overrides
@@ -513,7 +513,7 @@ public protocol StorageControlProtocol {
   /// Rewrites a source object to a destination object. Optionally overrides
   /// metadata.
   func rewriteObject(
-    request: RewriteObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: RewriteObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> RewriteResponse
 
   /// Moves the source object to the destination object in the same bucket.
@@ -547,7 +547,7 @@ public protocol StorageControlProtocol {
   ///   - `storage.objects.delete` (only required if overwriting an existing
   ///   object)
   func moveObject(
-    request: MoveObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: MoveObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object
 
   /// Creates a new folder. This operation is only applicable to a hierarchical
@@ -557,7 +557,7 @@ public protocol StorageControlProtocol {
   /// Creates a new folder. This operation is only applicable to a hierarchical
   /// namespace enabled bucket.
   func createFolder(
-    request: CreateFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> Folder
 
   /// Permanently deletes an empty folder. This operation is only applicable to a
@@ -567,7 +567,7 @@ public protocol StorageControlProtocol {
   /// Permanently deletes an empty folder. This operation is only applicable to a
   /// hierarchical namespace enabled bucket.
   func deleteFolder(
-    request: DeleteFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteFolderRequest, options: GoogleGax.RequestOptions
   ) async throws
 
   /// Returns metadata for the specified folder. This operation is only
@@ -577,7 +577,7 @@ public protocol StorageControlProtocol {
   /// Returns metadata for the specified folder. This operation is only
   /// applicable to a hierarchical namespace enabled bucket.
   func getFolder(
-    request: GetFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: GetFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> Folder
 
   /// Retrieves a list of folders. This operation is only applicable to a
@@ -587,7 +587,7 @@ public protocol StorageControlProtocol {
   /// Retrieves a list of folders. This operation is only applicable to a
   /// hierarchical namespace enabled bucket.
   func listFolders(
-    request: ListFoldersRequest, options: GoogleCloudGax.RequestOptions
+    request: ListFoldersRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListFoldersResponse
 
   /// Retrieves a list of folders. This operation is only applicable to a
@@ -599,7 +599,7 @@ public protocol StorageControlProtocol {
   /// Retrieves a list of folders. This operation is only applicable to a
   /// hierarchical namespace enabled bucket.
   func listFolders(
-    byItem: ListFoldersRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListFoldersRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<Folder, Swift.Error>
 
   /// Renames a source folder to a destination folder. This operation is only
@@ -613,14 +613,14 @@ public protocol StorageControlProtocol {
   /// source and destination folders are locked until the long running operation
   /// completes.
   func renameFolder(
-    request: RenameFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: RenameFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation
 
   /// Renames a source folder to a destination folder. This operation is only
   /// applicable to a hierarchical namespace enabled bucket. During a rename, the
   /// source and destination folders are locked until the long running operation
   /// completes.
-  func renameFolder(withPolling: RenameFolderRequest) async throws -> any GoogleCloudGax
+  func renameFolder(withPolling: RenameFolderRequest) async throws -> any GoogleGax
     .PollableOperation<Folder>
 
   /// Renames a source folder to a destination folder. This operation is only
@@ -628,8 +628,8 @@ public protocol StorageControlProtocol {
   /// source and destination folders are locked until the long running operation
   /// completes.
   func renameFolder(
-    withPolling: RenameFolderRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<Folder>
+    withPolling: RenameFolderRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<Folder>
 
   /// Deletes a folder recursively. This operation is only applicable to a
   /// hierarchical namespace enabled bucket.
@@ -639,26 +639,26 @@ public protocol StorageControlProtocol {
   /// Deletes a folder recursively. This operation is only applicable to a
   /// hierarchical namespace enabled bucket.
   func deleteFolderRecursive(
-    request: DeleteFolderRecursiveRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteFolderRecursiveRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation
 
   /// Deletes a folder recursively. This operation is only applicable to a
   /// hierarchical namespace enabled bucket.
   func deleteFolderRecursive(withPolling: DeleteFolderRecursiveRequest) async throws
-    -> any GoogleCloudGax.PollableOperation<Swift.Void>
+    -> any GoogleGax.PollableOperation<Swift.Void>
 
   /// Deletes a folder recursively. This operation is only applicable to a
   /// hierarchical namespace enabled bucket.
   func deleteFolderRecursive(
-    withPolling: DeleteFolderRecursiveRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<Swift.Void>
+    withPolling: DeleteFolderRecursiveRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<Swift.Void>
 
   /// Returns the storage layout configuration for a given bucket.
   func getStorageLayout(request: GetStorageLayoutRequest) async throws -> StorageLayout
 
   /// Returns the storage layout configuration for a given bucket.
   func getStorageLayout(
-    request: GetStorageLayoutRequest, options: GoogleCloudGax.RequestOptions
+    request: GetStorageLayoutRequest, options: GoogleGax.RequestOptions
   ) async throws -> StorageLayout
 
   /// Creates a new managed folder.
@@ -666,7 +666,7 @@ public protocol StorageControlProtocol {
 
   /// Creates a new managed folder.
   func createManagedFolder(
-    request: CreateManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateManagedFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> ManagedFolder
 
   /// Permanently deletes an empty managed folder.
@@ -674,7 +674,7 @@ public protocol StorageControlProtocol {
 
   /// Permanently deletes an empty managed folder.
   func deleteManagedFolder(
-    request: DeleteManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteManagedFolderRequest, options: GoogleGax.RequestOptions
   ) async throws
 
   /// Returns metadata for the specified managed folder.
@@ -682,7 +682,7 @@ public protocol StorageControlProtocol {
 
   /// Returns metadata for the specified managed folder.
   func getManagedFolder(
-    request: GetManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: GetManagedFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> ManagedFolder
 
   /// Retrieves a list of managed folders for a given bucket.
@@ -691,7 +691,7 @@ public protocol StorageControlProtocol {
 
   /// Retrieves a list of managed folders for a given bucket.
   func listManagedFolders(
-    request: ListManagedFoldersRequest, options: GoogleCloudGax.RequestOptions
+    request: ListManagedFoldersRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListManagedFoldersResponse
 
   /// Retrieves a list of managed folders for a given bucket.
@@ -701,7 +701,7 @@ public protocol StorageControlProtocol {
 
   /// Retrieves a list of managed folders for a given bucket.
   func listManagedFolders(
-    byItem: ListManagedFoldersRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListManagedFoldersRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<ManagedFolder, Swift.Error>
 
   /// Updates a managed folder. Currently, this RPC only supports updating the
@@ -711,7 +711,7 @@ public protocol StorageControlProtocol {
   /// Updates a managed folder. Currently, this RPC only supports updating the
   /// `rapid_cache_config` field.
   func updateManagedFolder(
-    request: UpdateManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateManagedFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> ManagedFolder
 
   /// Creates an Anywhere Cache instance.
@@ -720,17 +720,17 @@ public protocol StorageControlProtocol {
 
   /// Creates an Anywhere Cache instance.
   func createAnywhereCache(
-    request: CreateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation
 
   /// Creates an Anywhere Cache instance.
-  func createAnywhereCache(withPolling: CreateAnywhereCacheRequest) async throws
-    -> any GoogleCloudGax.PollableOperation<AnywhereCache>
+  func createAnywhereCache(withPolling: CreateAnywhereCacheRequest) async throws -> any GoogleGax
+    .PollableOperation<AnywhereCache>
 
   /// Creates an Anywhere Cache instance.
   func createAnywhereCache(
-    withPolling: CreateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<AnywhereCache>
+    withPolling: CreateAnywhereCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<AnywhereCache>
 
   /// Updates an Anywhere Cache instance. Mutable fields include `ttl` and
   /// `admission_policy`.
@@ -740,19 +740,19 @@ public protocol StorageControlProtocol {
   /// Updates an Anywhere Cache instance. Mutable fields include `ttl` and
   /// `admission_policy`.
   func updateAnywhereCache(
-    request: UpdateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation
 
   /// Updates an Anywhere Cache instance. Mutable fields include `ttl` and
   /// `admission_policy`.
-  func updateAnywhereCache(withPolling: UpdateAnywhereCacheRequest) async throws
-    -> any GoogleCloudGax.PollableOperation<AnywhereCache>
+  func updateAnywhereCache(withPolling: UpdateAnywhereCacheRequest) async throws -> any GoogleGax
+    .PollableOperation<AnywhereCache>
 
   /// Updates an Anywhere Cache instance. Mutable fields include `ttl` and
   /// `admission_policy`.
   func updateAnywhereCache(
-    withPolling: UpdateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<AnywhereCache>
+    withPolling: UpdateAnywhereCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<AnywhereCache>
 
   /// Disables an Anywhere Cache instance. A disabled instance is read-only. The
   /// disablement could be revoked by calling ResumeAnywhereCache. The cache
@@ -765,7 +765,7 @@ public protocol StorageControlProtocol {
   /// instance will be deleted automatically if it remains in the disabled state
   /// for at least one hour.
   func disableAnywhereCache(
-    request: DisableAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: DisableAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> AnywhereCache
 
   /// Pauses an Anywhere Cache instance.
@@ -773,7 +773,7 @@ public protocol StorageControlProtocol {
 
   /// Pauses an Anywhere Cache instance.
   func pauseAnywhereCache(
-    request: PauseAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: PauseAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> AnywhereCache
 
   /// Resumes a disabled or paused Anywhere Cache instance.
@@ -781,7 +781,7 @@ public protocol StorageControlProtocol {
 
   /// Resumes a disabled or paused Anywhere Cache instance.
   func resumeAnywhereCache(
-    request: ResumeAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: ResumeAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> AnywhereCache
 
   /// Gets an Anywhere Cache instance.
@@ -789,7 +789,7 @@ public protocol StorageControlProtocol {
 
   /// Gets an Anywhere Cache instance.
   func getAnywhereCache(
-    request: GetAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: GetAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> AnywhereCache
 
   /// Lists Anywhere Cache instances for a given bucket.
@@ -798,7 +798,7 @@ public protocol StorageControlProtocol {
 
   /// Lists Anywhere Cache instances for a given bucket.
   func listAnywhereCaches(
-    request: ListAnywhereCachesRequest, options: GoogleCloudGax.RequestOptions
+    request: ListAnywhereCachesRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListAnywhereCachesResponse
 
   /// Lists Anywhere Cache instances for a given bucket.
@@ -808,7 +808,7 @@ public protocol StorageControlProtocol {
 
   /// Lists Anywhere Cache instances for a given bucket.
   func listAnywhereCaches(
-    byItem: ListAnywhereCachesRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListAnywhereCachesRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<AnywhereCache, Swift.Error>
 
   /// Creates a Rapid Cache instance.
@@ -817,17 +817,17 @@ public protocol StorageControlProtocol {
 
   /// Creates a Rapid Cache instance.
   func createRapidCache(
-    request: CreateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateRapidCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation
 
   /// Creates a Rapid Cache instance.
-  func createRapidCache(withPolling: CreateRapidCacheRequest) async throws -> any GoogleCloudGax
+  func createRapidCache(withPolling: CreateRapidCacheRequest) async throws -> any GoogleGax
     .PollableOperation<RapidCache>
 
   /// Creates a Rapid Cache instance.
   func createRapidCache(
-    withPolling: CreateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<RapidCache>
+    withPolling: CreateRapidCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<RapidCache>
 
   /// Updates a Rapid Cache instance.
   func updateRapidCache(request: UpdateRapidCacheRequest) async throws
@@ -835,17 +835,17 @@ public protocol StorageControlProtocol {
 
   /// Updates a Rapid Cache instance.
   func updateRapidCache(
-    request: UpdateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateRapidCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation
 
   /// Updates a Rapid Cache instance.
-  func updateRapidCache(withPolling: UpdateRapidCacheRequest) async throws -> any GoogleCloudGax
+  func updateRapidCache(withPolling: UpdateRapidCacheRequest) async throws -> any GoogleGax
     .PollableOperation<RapidCache>
 
   /// Updates a Rapid Cache instance.
   func updateRapidCache(
-    withPolling: UpdateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<RapidCache>
+    withPolling: UpdateRapidCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<RapidCache>
 
   /// Disables a Rapid Cache instance.
   func disableRapidCache(request: DisableRapidCacheRequest) async throws
@@ -853,24 +853,24 @@ public protocol StorageControlProtocol {
 
   /// Disables a Rapid Cache instance.
   func disableRapidCache(
-    request: DisableRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: DisableRapidCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation
 
   /// Disables a Rapid Cache instance.
-  func disableRapidCache(withPolling: DisableRapidCacheRequest) async throws -> any GoogleCloudGax
+  func disableRapidCache(withPolling: DisableRapidCacheRequest) async throws -> any GoogleGax
     .PollableOperation<RapidCache>
 
   /// Disables a Rapid Cache instance.
   func disableRapidCache(
-    withPolling: DisableRapidCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<RapidCache>
+    withPolling: DisableRapidCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<RapidCache>
 
   /// Gets a Rapid Cache instance.
   func getRapidCache(request: GetRapidCacheRequest) async throws -> RapidCache
 
   /// Gets a Rapid Cache instance.
   func getRapidCache(
-    request: GetRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: GetRapidCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> RapidCache
 
   /// Lists Rapid Cache instances for a given bucket.
@@ -878,7 +878,7 @@ public protocol StorageControlProtocol {
 
   /// Lists Rapid Cache instances for a given bucket.
   func listRapidCaches(
-    request: ListRapidCachesRequest, options: GoogleCloudGax.RequestOptions
+    request: ListRapidCachesRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListRapidCachesResponse
 
   /// Lists Rapid Cache instances for a given bucket.
@@ -888,7 +888,7 @@ public protocol StorageControlProtocol {
 
   /// Lists Rapid Cache instances for a given bucket.
   func listRapidCaches(
-    byItem: ListRapidCachesRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListRapidCachesRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<RapidCache, Swift.Error>
 
   /// Returns the Project scoped singleton IntelligenceConfig resource.
@@ -897,7 +897,7 @@ public protocol StorageControlProtocol {
 
   /// Returns the Project scoped singleton IntelligenceConfig resource.
   func getProjectIntelligenceConfig(
-    request: GetProjectIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: GetProjectIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig
 
   /// Updates the Project scoped singleton IntelligenceConfig resource.
@@ -906,7 +906,7 @@ public protocol StorageControlProtocol {
 
   /// Updates the Project scoped singleton IntelligenceConfig resource.
   func updateProjectIntelligenceConfig(
-    request: UpdateProjectIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateProjectIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig
 
   /// Returns the Folder scoped singleton IntelligenceConfig resource.
@@ -915,7 +915,7 @@ public protocol StorageControlProtocol {
 
   /// Returns the Folder scoped singleton IntelligenceConfig resource.
   func getFolderIntelligenceConfig(
-    request: GetFolderIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: GetFolderIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig
 
   /// Updates the Folder scoped singleton IntelligenceConfig resource.
@@ -924,7 +924,7 @@ public protocol StorageControlProtocol {
 
   /// Updates the Folder scoped singleton IntelligenceConfig resource.
   func updateFolderIntelligenceConfig(
-    request: UpdateFolderIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateFolderIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig
 
   /// Returns the Organization scoped singleton IntelligenceConfig resource.
@@ -933,7 +933,7 @@ public protocol StorageControlProtocol {
 
   /// Returns the Organization scoped singleton IntelligenceConfig resource.
   func getOrganizationIntelligenceConfig(
-    request: GetOrganizationIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: GetOrganizationIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig
 
   /// Updates the Organization scoped singleton IntelligenceConfig resource.
@@ -942,7 +942,7 @@ public protocol StorageControlProtocol {
 
   /// Updates the Organization scoped singleton IntelligenceConfig resource.
   func updateOrganizationIntelligenceConfig(
-    request: UpdateOrganizationIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateOrganizationIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig
 
   /// Gets the IAM policy for a specified bucket.
@@ -958,7 +958,7 @@ public protocol StorageControlProtocol {
   /// `projects/_/buckets/{bucket}/managedFolders/{managedFolder}`
   /// for a managed folder.
   func getIamPolicy(
-    request: GoogleIAMV1.GetIamPolicyRequest, options: GoogleCloudGax.RequestOptions
+    request: GoogleIAMV1.GetIamPolicyRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleIAMV1.Policy
 
   /// Updates an IAM policy for the specified bucket.
@@ -974,7 +974,7 @@ public protocol StorageControlProtocol {
   /// `projects/_/buckets/{bucket}/managedFolders/{managedFolder}`
   /// for a managed folder.
   func setIamPolicy(
-    request: GoogleIAMV1.SetIamPolicyRequest, options: GoogleCloudGax.RequestOptions
+    request: GoogleIAMV1.SetIamPolicyRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleIAMV1.Policy
 
   /// Tests a set of permissions on the given bucket, object, or managed folder
@@ -995,7 +995,7 @@ public protocol StorageControlProtocol {
   /// `projects/_/buckets/{bucket}/managedFolders/{managedFolder}`
   /// for a managed folder.
   func testIamPermissions(
-    request: GoogleIAMV1.TestIamPermissionsRequest, options: GoogleCloudGax.RequestOptions
+    request: GoogleIAMV1.TestIamPermissionsRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleIAMV1.TestIamPermissionsResponse
 
   /// Gets the `IntelligenceFinding` for a project.
@@ -1004,7 +1004,7 @@ public protocol StorageControlProtocol {
 
   /// Gets the `IntelligenceFinding` for a project.
   func getIntelligenceFinding(
-    request: GetIntelligenceFindingRequest, options: GoogleCloudGax.RequestOptions
+    request: GetIntelligenceFindingRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceFinding
 
   /// Lists the `IntelligenceFinding` resources for the specified the project.
@@ -1013,7 +1013,7 @@ public protocol StorageControlProtocol {
 
   /// Lists the `IntelligenceFinding` resources for the specified the project.
   func listIntelligenceFindings(
-    request: ListIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+    request: ListIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListIntelligenceFindingsResponse
 
   /// Lists the `IntelligenceFinding` resources for the specified the project.
@@ -1023,7 +1023,7 @@ public protocol StorageControlProtocol {
 
   /// Lists the `IntelligenceFinding` resources for the specified the project.
   func listIntelligenceFindings(
-    byItem: ListIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<IntelligenceFinding, Swift.Error>
 
   /// Summarizes the intelligence findings for the specified scope (organization,
@@ -1034,7 +1034,7 @@ public protocol StorageControlProtocol {
   /// Summarizes the intelligence findings for the specified scope (organization,
   /// folder or project).
   func summarizeIntelligenceFindings(
-    request: SummarizeIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+    request: SummarizeIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
   ) async throws -> SummarizeIntelligenceFindingsResponse
 
   /// Summarizes the intelligence findings for the specified scope (organization,
@@ -1046,7 +1046,7 @@ public protocol StorageControlProtocol {
   /// Summarizes the intelligence findings for the specified scope (organization,
   /// folder or project).
   func summarizeIntelligenceFindings(
-    byItem: SummarizeIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: SummarizeIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<FindingSummary, Swift.Error>
 
   /// Gets the `IntelligenceFindingRevision` resource.
@@ -1055,7 +1055,7 @@ public protocol StorageControlProtocol {
 
   /// Gets the `IntelligenceFindingRevision` resource.
   func getIntelligenceFindingRevision(
-    request: GetIntelligenceFindingRevisionRequest, options: GoogleCloudGax.RequestOptions
+    request: GetIntelligenceFindingRevisionRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceFindingRevision
 
   /// Lists all the revisions of an `IntelligenceFinding` resource.
@@ -1064,7 +1064,7 @@ public protocol StorageControlProtocol {
 
   /// Lists all the revisions of an `IntelligenceFinding` resource.
   func listIntelligenceFindingRevisions(
-    request: ListIntelligenceFindingRevisionsRequest, options: GoogleCloudGax.RequestOptions
+    request: ListIntelligenceFindingRevisionsRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListIntelligenceFindingRevisionsResponse
 
   /// Lists all the revisions of an `IntelligenceFinding` resource.
@@ -1074,7 +1074,7 @@ public protocol StorageControlProtocol {
 
   /// Lists all the revisions of an `IntelligenceFinding` resource.
   func listIntelligenceFindingRevisions(
-    byItem: ListIntelligenceFindingRevisionsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListIntelligenceFindingRevisionsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<IntelligenceFindingRevision, Swift.Error>
 
   /// Retrieves the full content of an object context, including its key, value,
@@ -1103,7 +1103,7 @@ public protocol StorageControlProtocol {
   ///
   /// [google.storage.control.v2.ObjectFullContext]: <doc:ObjectFullContext>
   func viewObjectFullContext(
-    request: ViewObjectFullContextRequest, options: GoogleCloudGax.RequestOptions
+    request: ViewObjectFullContextRequest, options: GoogleGax.RequestOptions
   ) async throws -> ObjectFullContext
 
   /// Provides the [Operations][google.longrunning.Operations] service functionality in this service.
@@ -1116,7 +1116,7 @@ public protocol StorageControlProtocol {
   ///
   /// [google.longrunning.Operations]: https://www.google.com/search?q=Swift+google.longrunning+OperationsClient
   func getOperation(
-    request: GoogleLongRunning.GetOperationRequest, options: GoogleCloudGax.RequestOptions
+    request: GoogleLongRunning.GetOperationRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation
 }
 
@@ -1126,9 +1126,9 @@ extension StorageControlProtocol {
   }
 
   public func deleteBucket(
-    request: DeleteBucketRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteBucketRequest, options: GoogleGax.RequestOptions
   ) async throws {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getBucket(request: GetBucketRequest) async throws -> Bucket {
@@ -1136,9 +1136,9 @@ extension StorageControlProtocol {
   }
 
   public func getBucket(
-    request: GetBucketRequest, options: GoogleCloudGax.RequestOptions
+    request: GetBucketRequest, options: GoogleGax.RequestOptions
   ) async throws -> Bucket {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func createBucket(request: CreateBucketRequest) async throws -> Bucket {
@@ -1146,9 +1146,9 @@ extension StorageControlProtocol {
   }
 
   public func createBucket(
-    request: CreateBucketRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateBucketRequest, options: GoogleGax.RequestOptions
   ) async throws -> Bucket {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listBuckets(request: ListBucketsRequest) async throws -> ListBucketsResponse {
@@ -1156,9 +1156,9 @@ extension StorageControlProtocol {
   }
 
   public func listBuckets(
-    request: ListBucketsRequest, options: GoogleCloudGax.RequestOptions
+    request: ListBucketsRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListBucketsResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listBuckets(
@@ -1168,12 +1168,12 @@ extension StorageControlProtocol {
   }
 
   public func listBuckets(
-    byItem: ListBucketsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListBucketsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<Bucket, Swift.Error> {
     let listRpc = { (token: Swift.String) async throws -> ListBucketsResponse in
-      throw GoogleCloudGax.RequestError.unimplemented
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax.PaginatedResponseSequence(listRpc: listRpc)
+    return GoogleGax.PaginatedResponseSequence(listRpc: listRpc)
   }
 
   public func lockBucketRetentionPolicy(request: LockBucketRetentionPolicyRequest) async throws
@@ -1183,9 +1183,9 @@ extension StorageControlProtocol {
   }
 
   public func lockBucketRetentionPolicy(
-    request: LockBucketRetentionPolicyRequest, options: GoogleCloudGax.RequestOptions
+    request: LockBucketRetentionPolicyRequest, options: GoogleGax.RequestOptions
   ) async throws -> Bucket {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func updateBucket(request: UpdateBucketRequest) async throws -> Bucket {
@@ -1193,9 +1193,9 @@ extension StorageControlProtocol {
   }
 
   public func updateBucket(
-    request: UpdateBucketRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateBucketRequest, options: GoogleGax.RequestOptions
   ) async throws -> Bucket {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func composeObject(request: ComposeObjectRequest) async throws -> Object {
@@ -1203,9 +1203,9 @@ extension StorageControlProtocol {
   }
 
   public func composeObject(
-    request: ComposeObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: ComposeObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func deleteObject(request: DeleteObjectRequest) async throws {
@@ -1213,9 +1213,9 @@ extension StorageControlProtocol {
   }
 
   public func deleteObject(
-    request: DeleteObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteObjectRequest, options: GoogleGax.RequestOptions
   ) async throws {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func restoreObject(request: RestoreObjectRequest) async throws -> Object {
@@ -1223,9 +1223,9 @@ extension StorageControlProtocol {
   }
 
   public func restoreObject(
-    request: RestoreObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: RestoreObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getObject(request: GetObjectRequest) async throws -> Object {
@@ -1233,9 +1233,9 @@ extension StorageControlProtocol {
   }
 
   public func getObject(
-    request: GetObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: GetObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func updateObject(request: UpdateObjectRequest) async throws -> Object {
@@ -1243,9 +1243,9 @@ extension StorageControlProtocol {
   }
 
   public func updateObject(
-    request: UpdateObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listObjects(request: ListObjectsRequest) async throws -> ListObjectsResponse {
@@ -1253,9 +1253,9 @@ extension StorageControlProtocol {
   }
 
   public func listObjects(
-    request: ListObjectsRequest, options: GoogleCloudGax.RequestOptions
+    request: ListObjectsRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListObjectsResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listObjects(
@@ -1265,12 +1265,12 @@ extension StorageControlProtocol {
   }
 
   public func listObjects(
-    byItem: ListObjectsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListObjectsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<Object, Swift.Error> {
     let listRpc = { (token: Swift.String) async throws -> ListObjectsResponse in
-      throw GoogleCloudGax.RequestError.unimplemented
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax.PaginatedResponseSequence(listRpc: listRpc)
+    return GoogleGax.PaginatedResponseSequence(listRpc: listRpc)
   }
 
   public func rewriteObject(request: RewriteObjectRequest) async throws -> RewriteResponse {
@@ -1278,9 +1278,9 @@ extension StorageControlProtocol {
   }
 
   public func rewriteObject(
-    request: RewriteObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: RewriteObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> RewriteResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func moveObject(request: MoveObjectRequest) async throws -> Object {
@@ -1288,9 +1288,9 @@ extension StorageControlProtocol {
   }
 
   public func moveObject(
-    request: MoveObjectRequest, options: GoogleCloudGax.RequestOptions
+    request: MoveObjectRequest, options: GoogleGax.RequestOptions
   ) async throws -> Object {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func createFolder(request: CreateFolderRequest) async throws -> Folder {
@@ -1298,9 +1298,9 @@ extension StorageControlProtocol {
   }
 
   public func createFolder(
-    request: CreateFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> Folder {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func deleteFolder(request: DeleteFolderRequest) async throws {
@@ -1308,9 +1308,9 @@ extension StorageControlProtocol {
   }
 
   public func deleteFolder(
-    request: DeleteFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteFolderRequest, options: GoogleGax.RequestOptions
   ) async throws {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getFolder(request: GetFolderRequest) async throws -> Folder {
@@ -1318,9 +1318,9 @@ extension StorageControlProtocol {
   }
 
   public func getFolder(
-    request: GetFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: GetFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> Folder {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listFolders(request: ListFoldersRequest) async throws -> ListFoldersResponse {
@@ -1328,9 +1328,9 @@ extension StorageControlProtocol {
   }
 
   public func listFolders(
-    request: ListFoldersRequest, options: GoogleCloudGax.RequestOptions
+    request: ListFoldersRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListFoldersResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listFolders(
@@ -1340,12 +1340,12 @@ extension StorageControlProtocol {
   }
 
   public func listFolders(
-    byItem: ListFoldersRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListFoldersRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<Folder, Swift.Error> {
     let listRpc = { (token: Swift.String) async throws -> ListFoldersResponse in
-      throw GoogleCloudGax.RequestError.unimplemented
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax.PaginatedResponseSequence(listRpc: listRpc)
+    return GoogleGax.PaginatedResponseSequence(listRpc: listRpc)
   }
 
   public func renameFolder(request: RenameFolderRequest) async throws -> GoogleLongRunning.Operation
@@ -1354,24 +1354,24 @@ extension StorageControlProtocol {
   }
 
   public func renameFolder(
-    request: RenameFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: RenameFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
-  public func renameFolder(withPolling: RenameFolderRequest) async throws -> any GoogleCloudGax
+  public func renameFolder(withPolling: RenameFolderRequest) async throws -> any GoogleGax
     .PollableOperation<Folder>
   {
     try await self.renameFolder(withPolling: withPolling, options: .init())
   }
 
   public func renameFolder(
-    withPolling: RenameFolderRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<Folder> {
-    let poll = { () async throws -> GoogleCloudGax._PollableOperationImpl<Folder>.State in
-      throw GoogleCloudGax.RequestError.unimplemented
+    withPolling: RenameFolderRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<Folder> {
+    let poll = { () async throws -> GoogleGax._PollableOperationImpl<Folder>.State in
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax._PollableOperationImpl(
+    return GoogleGax._PollableOperationImpl(
       initialState: .init(done: false, result: nil), poll: poll)
   }
 
@@ -1382,24 +1382,24 @@ extension StorageControlProtocol {
   }
 
   public func deleteFolderRecursive(
-    request: DeleteFolderRecursiveRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteFolderRecursiveRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func deleteFolderRecursive(withPolling: DeleteFolderRecursiveRequest) async throws
-    -> any GoogleCloudGax.PollableOperation<Swift.Void>
+    -> any GoogleGax.PollableOperation<Swift.Void>
   {
     try await self.deleteFolderRecursive(withPolling: withPolling, options: .init())
   }
 
   public func deleteFolderRecursive(
-    withPolling: DeleteFolderRecursiveRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<Swift.Void> {
-    let poll = { () async throws -> GoogleCloudGax._PollableOperationImpl<Swift.Void>.State in
-      throw GoogleCloudGax.RequestError.unimplemented
+    withPolling: DeleteFolderRecursiveRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<Swift.Void> {
+    let poll = { () async throws -> GoogleGax._PollableOperationImpl<Swift.Void>.State in
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax._PollableOperationImpl(
+    return GoogleGax._PollableOperationImpl(
       initialState: .init(done: false, result: nil), poll: poll)
   }
 
@@ -1408,9 +1408,9 @@ extension StorageControlProtocol {
   }
 
   public func getStorageLayout(
-    request: GetStorageLayoutRequest, options: GoogleCloudGax.RequestOptions
+    request: GetStorageLayoutRequest, options: GoogleGax.RequestOptions
   ) async throws -> StorageLayout {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func createManagedFolder(request: CreateManagedFolderRequest) async throws -> ManagedFolder
@@ -1419,9 +1419,9 @@ extension StorageControlProtocol {
   }
 
   public func createManagedFolder(
-    request: CreateManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateManagedFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> ManagedFolder {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func deleteManagedFolder(request: DeleteManagedFolderRequest) async throws {
@@ -1429,9 +1429,9 @@ extension StorageControlProtocol {
   }
 
   public func deleteManagedFolder(
-    request: DeleteManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: DeleteManagedFolderRequest, options: GoogleGax.RequestOptions
   ) async throws {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getManagedFolder(request: GetManagedFolderRequest) async throws -> ManagedFolder {
@@ -1439,9 +1439,9 @@ extension StorageControlProtocol {
   }
 
   public func getManagedFolder(
-    request: GetManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: GetManagedFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> ManagedFolder {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listManagedFolders(request: ListManagedFoldersRequest) async throws
@@ -1451,9 +1451,9 @@ extension StorageControlProtocol {
   }
 
   public func listManagedFolders(
-    request: ListManagedFoldersRequest, options: GoogleCloudGax.RequestOptions
+    request: ListManagedFoldersRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListManagedFoldersResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listManagedFolders(
@@ -1463,12 +1463,12 @@ extension StorageControlProtocol {
   }
 
   public func listManagedFolders(
-    byItem: ListManagedFoldersRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListManagedFoldersRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<ManagedFolder, Swift.Error> {
     let listRpc = { (token: Swift.String) async throws -> ListManagedFoldersResponse in
-      throw GoogleCloudGax.RequestError.unimplemented
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax.PaginatedResponseSequence(listRpc: listRpc)
+    return GoogleGax.PaginatedResponseSequence(listRpc: listRpc)
   }
 
   public func updateManagedFolder(request: UpdateManagedFolderRequest) async throws -> ManagedFolder
@@ -1477,9 +1477,9 @@ extension StorageControlProtocol {
   }
 
   public func updateManagedFolder(
-    request: UpdateManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateManagedFolderRequest, options: GoogleGax.RequestOptions
   ) async throws -> ManagedFolder {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func createAnywhereCache(request: CreateAnywhereCacheRequest) async throws
@@ -1489,24 +1489,24 @@ extension StorageControlProtocol {
   }
 
   public func createAnywhereCache(
-    request: CreateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func createAnywhereCache(withPolling: CreateAnywhereCacheRequest) async throws
-    -> any GoogleCloudGax.PollableOperation<AnywhereCache>
+    -> any GoogleGax.PollableOperation<AnywhereCache>
   {
     try await self.createAnywhereCache(withPolling: withPolling, options: .init())
   }
 
   public func createAnywhereCache(
-    withPolling: CreateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<AnywhereCache> {
-    let poll = { () async throws -> GoogleCloudGax._PollableOperationImpl<AnywhereCache>.State in
-      throw GoogleCloudGax.RequestError.unimplemented
+    withPolling: CreateAnywhereCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<AnywhereCache> {
+    let poll = { () async throws -> GoogleGax._PollableOperationImpl<AnywhereCache>.State in
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax._PollableOperationImpl(
+    return GoogleGax._PollableOperationImpl(
       initialState: .init(done: false, result: nil), poll: poll)
   }
 
@@ -1517,24 +1517,24 @@ extension StorageControlProtocol {
   }
 
   public func updateAnywhereCache(
-    request: UpdateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func updateAnywhereCache(withPolling: UpdateAnywhereCacheRequest) async throws
-    -> any GoogleCloudGax.PollableOperation<AnywhereCache>
+    -> any GoogleGax.PollableOperation<AnywhereCache>
   {
     try await self.updateAnywhereCache(withPolling: withPolling, options: .init())
   }
 
   public func updateAnywhereCache(
-    withPolling: UpdateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<AnywhereCache> {
-    let poll = { () async throws -> GoogleCloudGax._PollableOperationImpl<AnywhereCache>.State in
-      throw GoogleCloudGax.RequestError.unimplemented
+    withPolling: UpdateAnywhereCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<AnywhereCache> {
+    let poll = { () async throws -> GoogleGax._PollableOperationImpl<AnywhereCache>.State in
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax._PollableOperationImpl(
+    return GoogleGax._PollableOperationImpl(
       initialState: .init(done: false, result: nil), poll: poll)
   }
 
@@ -1545,9 +1545,9 @@ extension StorageControlProtocol {
   }
 
   public func disableAnywhereCache(
-    request: DisableAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: DisableAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> AnywhereCache {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func pauseAnywhereCache(request: PauseAnywhereCacheRequest) async throws -> AnywhereCache {
@@ -1555,9 +1555,9 @@ extension StorageControlProtocol {
   }
 
   public func pauseAnywhereCache(
-    request: PauseAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: PauseAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> AnywhereCache {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func resumeAnywhereCache(request: ResumeAnywhereCacheRequest) async throws -> AnywhereCache
@@ -1566,9 +1566,9 @@ extension StorageControlProtocol {
   }
 
   public func resumeAnywhereCache(
-    request: ResumeAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: ResumeAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> AnywhereCache {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getAnywhereCache(request: GetAnywhereCacheRequest) async throws -> AnywhereCache {
@@ -1576,9 +1576,9 @@ extension StorageControlProtocol {
   }
 
   public func getAnywhereCache(
-    request: GetAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: GetAnywhereCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> AnywhereCache {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listAnywhereCaches(request: ListAnywhereCachesRequest) async throws
@@ -1588,9 +1588,9 @@ extension StorageControlProtocol {
   }
 
   public func listAnywhereCaches(
-    request: ListAnywhereCachesRequest, options: GoogleCloudGax.RequestOptions
+    request: ListAnywhereCachesRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListAnywhereCachesResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listAnywhereCaches(
@@ -1600,12 +1600,12 @@ extension StorageControlProtocol {
   }
 
   public func listAnywhereCaches(
-    byItem: ListAnywhereCachesRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListAnywhereCachesRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<AnywhereCache, Swift.Error> {
     let listRpc = { (token: Swift.String) async throws -> ListAnywhereCachesResponse in
-      throw GoogleCloudGax.RequestError.unimplemented
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax.PaginatedResponseSequence(listRpc: listRpc)
+    return GoogleGax.PaginatedResponseSequence(listRpc: listRpc)
   }
 
   public func createRapidCache(request: CreateRapidCacheRequest) async throws
@@ -1615,24 +1615,24 @@ extension StorageControlProtocol {
   }
 
   public func createRapidCache(
-    request: CreateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: CreateRapidCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
-  public func createRapidCache(withPolling: CreateRapidCacheRequest) async throws
-    -> any GoogleCloudGax.PollableOperation<RapidCache>
+  public func createRapidCache(withPolling: CreateRapidCacheRequest) async throws -> any GoogleGax
+    .PollableOperation<RapidCache>
   {
     try await self.createRapidCache(withPolling: withPolling, options: .init())
   }
 
   public func createRapidCache(
-    withPolling: CreateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<RapidCache> {
-    let poll = { () async throws -> GoogleCloudGax._PollableOperationImpl<RapidCache>.State in
-      throw GoogleCloudGax.RequestError.unimplemented
+    withPolling: CreateRapidCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<RapidCache> {
+    let poll = { () async throws -> GoogleGax._PollableOperationImpl<RapidCache>.State in
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax._PollableOperationImpl(
+    return GoogleGax._PollableOperationImpl(
       initialState: .init(done: false, result: nil), poll: poll)
   }
 
@@ -1643,24 +1643,24 @@ extension StorageControlProtocol {
   }
 
   public func updateRapidCache(
-    request: UpdateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateRapidCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
-  public func updateRapidCache(withPolling: UpdateRapidCacheRequest) async throws
-    -> any GoogleCloudGax.PollableOperation<RapidCache>
+  public func updateRapidCache(withPolling: UpdateRapidCacheRequest) async throws -> any GoogleGax
+    .PollableOperation<RapidCache>
   {
     try await self.updateRapidCache(withPolling: withPolling, options: .init())
   }
 
   public func updateRapidCache(
-    withPolling: UpdateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<RapidCache> {
-    let poll = { () async throws -> GoogleCloudGax._PollableOperationImpl<RapidCache>.State in
-      throw GoogleCloudGax.RequestError.unimplemented
+    withPolling: UpdateRapidCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<RapidCache> {
+    let poll = { () async throws -> GoogleGax._PollableOperationImpl<RapidCache>.State in
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax._PollableOperationImpl(
+    return GoogleGax._PollableOperationImpl(
       initialState: .init(done: false, result: nil), poll: poll)
   }
 
@@ -1671,24 +1671,24 @@ extension StorageControlProtocol {
   }
 
   public func disableRapidCache(
-    request: DisableRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: DisableRapidCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
-  public func disableRapidCache(withPolling: DisableRapidCacheRequest) async throws
-    -> any GoogleCloudGax.PollableOperation<RapidCache>
+  public func disableRapidCache(withPolling: DisableRapidCacheRequest) async throws -> any GoogleGax
+    .PollableOperation<RapidCache>
   {
     try await self.disableRapidCache(withPolling: withPolling, options: .init())
   }
 
   public func disableRapidCache(
-    withPolling: DisableRapidCacheRequest, options: GoogleCloudGax.RequestOptions
-  ) async throws -> any GoogleCloudGax.PollableOperation<RapidCache> {
-    let poll = { () async throws -> GoogleCloudGax._PollableOperationImpl<RapidCache>.State in
-      throw GoogleCloudGax.RequestError.unimplemented
+    withPolling: DisableRapidCacheRequest, options: GoogleGax.RequestOptions
+  ) async throws -> any GoogleGax.PollableOperation<RapidCache> {
+    let poll = { () async throws -> GoogleGax._PollableOperationImpl<RapidCache>.State in
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax._PollableOperationImpl(
+    return GoogleGax._PollableOperationImpl(
       initialState: .init(done: false, result: nil), poll: poll)
   }
 
@@ -1697,9 +1697,9 @@ extension StorageControlProtocol {
   }
 
   public func getRapidCache(
-    request: GetRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+    request: GetRapidCacheRequest, options: GoogleGax.RequestOptions
   ) async throws -> RapidCache {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listRapidCaches(request: ListRapidCachesRequest) async throws
@@ -1709,9 +1709,9 @@ extension StorageControlProtocol {
   }
 
   public func listRapidCaches(
-    request: ListRapidCachesRequest, options: GoogleCloudGax.RequestOptions
+    request: ListRapidCachesRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListRapidCachesResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listRapidCaches(
@@ -1721,12 +1721,12 @@ extension StorageControlProtocol {
   }
 
   public func listRapidCaches(
-    byItem: ListRapidCachesRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListRapidCachesRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<RapidCache, Swift.Error> {
     let listRpc = { (token: Swift.String) async throws -> ListRapidCachesResponse in
-      throw GoogleCloudGax.RequestError.unimplemented
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax.PaginatedResponseSequence(listRpc: listRpc)
+    return GoogleGax.PaginatedResponseSequence(listRpc: listRpc)
   }
 
   public func getProjectIntelligenceConfig(request: GetProjectIntelligenceConfigRequest)
@@ -1736,9 +1736,9 @@ extension StorageControlProtocol {
   }
 
   public func getProjectIntelligenceConfig(
-    request: GetProjectIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: GetProjectIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func updateProjectIntelligenceConfig(request: UpdateProjectIntelligenceConfigRequest)
@@ -1748,9 +1748,9 @@ extension StorageControlProtocol {
   }
 
   public func updateProjectIntelligenceConfig(
-    request: UpdateProjectIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateProjectIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getFolderIntelligenceConfig(request: GetFolderIntelligenceConfigRequest) async throws
@@ -1760,9 +1760,9 @@ extension StorageControlProtocol {
   }
 
   public func getFolderIntelligenceConfig(
-    request: GetFolderIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: GetFolderIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func updateFolderIntelligenceConfig(request: UpdateFolderIntelligenceConfigRequest)
@@ -1772,9 +1772,9 @@ extension StorageControlProtocol {
   }
 
   public func updateFolderIntelligenceConfig(
-    request: UpdateFolderIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateFolderIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getOrganizationIntelligenceConfig(request: GetOrganizationIntelligenceConfigRequest)
@@ -1784,9 +1784,9 @@ extension StorageControlProtocol {
   }
 
   public func getOrganizationIntelligenceConfig(
-    request: GetOrganizationIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: GetOrganizationIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func updateOrganizationIntelligenceConfig(
@@ -1796,9 +1796,9 @@ extension StorageControlProtocol {
   }
 
   public func updateOrganizationIntelligenceConfig(
-    request: UpdateOrganizationIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+    request: UpdateOrganizationIntelligenceConfigRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceConfig {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getIamPolicy(request: GoogleIAMV1.GetIamPolicyRequest) async throws
@@ -1808,9 +1808,9 @@ extension StorageControlProtocol {
   }
 
   public func getIamPolicy(
-    request: GoogleIAMV1.GetIamPolicyRequest, options: GoogleCloudGax.RequestOptions
+    request: GoogleIAMV1.GetIamPolicyRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleIAMV1.Policy {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func setIamPolicy(request: GoogleIAMV1.SetIamPolicyRequest) async throws
@@ -1820,9 +1820,9 @@ extension StorageControlProtocol {
   }
 
   public func setIamPolicy(
-    request: GoogleIAMV1.SetIamPolicyRequest, options: GoogleCloudGax.RequestOptions
+    request: GoogleIAMV1.SetIamPolicyRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleIAMV1.Policy {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func testIamPermissions(request: GoogleIAMV1.TestIamPermissionsRequest) async throws
@@ -1832,9 +1832,9 @@ extension StorageControlProtocol {
   }
 
   public func testIamPermissions(
-    request: GoogleIAMV1.TestIamPermissionsRequest, options: GoogleCloudGax.RequestOptions
+    request: GoogleIAMV1.TestIamPermissionsRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleIAMV1.TestIamPermissionsResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getIntelligenceFinding(request: GetIntelligenceFindingRequest) async throws
@@ -1844,9 +1844,9 @@ extension StorageControlProtocol {
   }
 
   public func getIntelligenceFinding(
-    request: GetIntelligenceFindingRequest, options: GoogleCloudGax.RequestOptions
+    request: GetIntelligenceFindingRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceFinding {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listIntelligenceFindings(request: ListIntelligenceFindingsRequest) async throws
@@ -1856,9 +1856,9 @@ extension StorageControlProtocol {
   }
 
   public func listIntelligenceFindings(
-    request: ListIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+    request: ListIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListIntelligenceFindingsResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listIntelligenceFindings(
@@ -1868,12 +1868,12 @@ extension StorageControlProtocol {
   }
 
   public func listIntelligenceFindings(
-    byItem: ListIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<IntelligenceFinding, Swift.Error> {
     let listRpc = { (token: Swift.String) async throws -> ListIntelligenceFindingsResponse in
-      throw GoogleCloudGax.RequestError.unimplemented
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax.PaginatedResponseSequence(listRpc: listRpc)
+    return GoogleGax.PaginatedResponseSequence(listRpc: listRpc)
   }
 
   public func summarizeIntelligenceFindings(request: SummarizeIntelligenceFindingsRequest)
@@ -1883,9 +1883,9 @@ extension StorageControlProtocol {
   }
 
   public func summarizeIntelligenceFindings(
-    request: SummarizeIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+    request: SummarizeIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
   ) async throws -> SummarizeIntelligenceFindingsResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func summarizeIntelligenceFindings(
@@ -1895,12 +1895,12 @@ extension StorageControlProtocol {
   }
 
   public func summarizeIntelligenceFindings(
-    byItem: SummarizeIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: SummarizeIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<FindingSummary, Swift.Error> {
     let listRpc = { (token: Swift.String) async throws -> SummarizeIntelligenceFindingsResponse in
-      throw GoogleCloudGax.RequestError.unimplemented
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax.PaginatedResponseSequence(listRpc: listRpc)
+    return GoogleGax.PaginatedResponseSequence(listRpc: listRpc)
   }
 
   public func getIntelligenceFindingRevision(request: GetIntelligenceFindingRevisionRequest)
@@ -1910,9 +1910,9 @@ extension StorageControlProtocol {
   }
 
   public func getIntelligenceFindingRevision(
-    request: GetIntelligenceFindingRevisionRequest, options: GoogleCloudGax.RequestOptions
+    request: GetIntelligenceFindingRevisionRequest, options: GoogleGax.RequestOptions
   ) async throws -> IntelligenceFindingRevision {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listIntelligenceFindingRevisions(request: ListIntelligenceFindingRevisionsRequest)
@@ -1922,9 +1922,9 @@ extension StorageControlProtocol {
   }
 
   public func listIntelligenceFindingRevisions(
-    request: ListIntelligenceFindingRevisionsRequest, options: GoogleCloudGax.RequestOptions
+    request: ListIntelligenceFindingRevisionsRequest, options: GoogleGax.RequestOptions
   ) async throws -> ListIntelligenceFindingRevisionsResponse {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func listIntelligenceFindingRevisions(
@@ -1934,13 +1934,13 @@ extension StorageControlProtocol {
   }
 
   public func listIntelligenceFindingRevisions(
-    byItem: ListIntelligenceFindingRevisionsRequest, options: GoogleCloudGax.RequestOptions
+    byItem: ListIntelligenceFindingRevisionsRequest, options: GoogleGax.RequestOptions
   ) throws -> any AsyncSequence<IntelligenceFindingRevision, Swift.Error> {
     let listRpc = {
       (token: Swift.String) async throws -> ListIntelligenceFindingRevisionsResponse in
-      throw GoogleCloudGax.RequestError.unimplemented
+      throw GoogleGax.RequestError.unimplemented
     }
-    return GoogleCloudGax.PaginatedResponseSequence(listRpc: listRpc)
+    return GoogleGax.PaginatedResponseSequence(listRpc: listRpc)
   }
 
   public func viewObjectFullContext(request: ViewObjectFullContextRequest) async throws
@@ -1950,9 +1950,9 @@ extension StorageControlProtocol {
   }
 
   public func viewObjectFullContext(
-    request: ViewObjectFullContextRequest, options: GoogleCloudGax.RequestOptions
+    request: ViewObjectFullContextRequest, options: GoogleGax.RequestOptions
   ) async throws -> ObjectFullContext {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 
   public func getOperation(request: GoogleLongRunning.GetOperationRequest) async throws
@@ -1962,8 +1962,8 @@ extension StorageControlProtocol {
   }
 
   public func getOperation(
-    request: GoogleLongRunning.GetOperationRequest, options: GoogleCloudGax.RequestOptions
+    request: GoogleLongRunning.GetOperationRequest, options: GoogleGax.RequestOptions
   ) async throws -> GoogleLongRunning.Operation {
-    throw GoogleCloudGax.RequestError.unimplemented
+    throw GoogleGax.RequestError.unimplemented
   }
 }

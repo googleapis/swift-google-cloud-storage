@@ -15,12 +15,12 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// Request message for [GetBucket][google.storage.v2.Storage.GetBucket].
 ///
 /// [google.storage.v2.Storage.GetBucket]: <doc:StorageControlClient/getBucket(request:options:)>
-public struct GetBucketRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct GetBucketRequest: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Required. Name of a bucket.
@@ -37,9 +37,9 @@ public struct GetBucketRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   /// Mask specifying which fields to read.
   /// A `*` field might be used to indicate all fields.
   /// If no mask is specified, it defaults to all fields.
-  public var readMask: GoogleCloudWKT.FieldMask? = nil
+  public var readMask: GoogleWKT.FieldMask? = nil
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `GetBucketRequest`.
   public init() {}
@@ -85,10 +85,10 @@ public struct GetBucketRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
       Swift.Int64.self, forKey: .ifMetagenerationMatch)
     self.ifMetagenerationNotMatch = try container.decodeIfPresent(
       Swift.Int64.self, forKey: .ifMetagenerationNotMatch)
-    self.readMask = try container.decodeIfPresent(GoogleCloudWKT.FieldMask.self, forKey: .readMask)
+    self.readMask = try container.decodeIfPresent(GoogleWKT.FieldMask.self, forKey: .readMask)
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -106,10 +106,10 @@ public struct GetBucketRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.v2.GetBucketRequest"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

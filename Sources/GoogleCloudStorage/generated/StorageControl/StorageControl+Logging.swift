@@ -18,11 +18,11 @@ import Foundation
 #if canImport(FoundationNetworking)
   import FoundationNetworking
 #endif
-import GoogleCloudWKT
 import GoogleIAMV1
 import GoogleLongRunning
 import GoogleRpc
-import GoogleCloudGax
+import GoogleWKT
+import GoogleGax
 import struct Logging.Logger
 
 extension Clients {
@@ -41,9 +41,9 @@ extension Clients {
 
     func _intercept<Input, Output>(
       request: Input,
-      options: GoogleCloudGax.RequestOptions,
+      options: GoogleGax.RequestOptions,
       name: Swift.String,
-      action: (Input, GoogleCloudGax.RequestOptions) async throws -> Output,
+      action: (Input, GoogleGax.RequestOptions) async throws -> Output,
     ) async throws -> Output {
       var logger = logger
       logger[metadataKey: "gcp.experimental.swift.request.id"] = "\(UUID())"
@@ -60,69 +60,68 @@ extension Clients {
     }
 
     public func createFolder(
-      request: CreateFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> Folder {
       try await self._intercept(
         request: request,
         options: options,
         name: "createFolder",
         action: {
-          (r: CreateFolderRequest, o: GoogleCloudGax.RequestOptions) async throws -> Folder
+          (r: CreateFolderRequest, o: GoogleGax.RequestOptions) async throws -> Folder
           in
           return try await self.inner.createFolder(request: r, options: o)
         })
     }
 
     public func deleteFolder(
-      request: DeleteFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteFolderRequest, options: GoogleGax.RequestOptions
     ) async throws {
       try await self._intercept(
         request: request,
         options: options,
         name: "deleteFolder",
-        action: { (r: DeleteFolderRequest, o: GoogleCloudGax.RequestOptions) async throws -> Void in
+        action: { (r: DeleteFolderRequest, o: GoogleGax.RequestOptions) async throws -> Void in
           return try await self.inner.deleteFolder(request: r, options: o)
         })
     }
 
     public func getFolder(
-      request: GetFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: GetFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> Folder {
       try await self._intercept(
         request: request,
         options: options,
         name: "getFolder",
         action: {
-          (r: GetFolderRequest, o: GoogleCloudGax.RequestOptions) async throws -> Folder
+          (r: GetFolderRequest, o: GoogleGax.RequestOptions) async throws -> Folder
           in
           return try await self.inner.getFolder(request: r, options: o)
         })
     }
 
     public func listFolders(
-      request: ListFoldersRequest, options: GoogleCloudGax.RequestOptions
+      request: ListFoldersRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListFoldersResponse {
       try await self._intercept(
         request: request,
         options: options,
         name: "listFolders",
         action: {
-          (r: ListFoldersRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> ListFoldersResponse
+          (r: ListFoldersRequest, o: GoogleGax.RequestOptions) async throws -> ListFoldersResponse
           in
           return try await self.inner.listFolders(request: r, options: o)
         })
     }
 
     public func renameFolder(
-      request: RenameFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: RenameFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
       try await self._intercept(
         request: request,
         options: options,
         name: "renameFolder",
         action: {
-          (r: RenameFolderRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: RenameFolderRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleLongRunning.Operation
           in
           return try await self.inner.renameFolder(request: r, options: o)
@@ -130,14 +129,14 @@ extension Clients {
     }
 
     public func deleteFolderRecursive(
-      request: DeleteFolderRecursiveRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteFolderRecursiveRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
       try await self._intercept(
         request: request,
         options: options,
         name: "deleteFolderRecursive",
         action: {
-          (r: DeleteFolderRecursiveRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: DeleteFolderRecursiveRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleLongRunning.Operation
           in
           return try await self.inner.deleteFolderRecursive(request: r, options: o)
@@ -145,72 +144,69 @@ extension Clients {
     }
 
     public func getStorageLayout(
-      request: GetStorageLayoutRequest, options: GoogleCloudGax.RequestOptions
+      request: GetStorageLayoutRequest, options: GoogleGax.RequestOptions
     ) async throws -> StorageLayout {
       try await self._intercept(
         request: request,
         options: options,
         name: "getStorageLayout",
         action: {
-          (r: GetStorageLayoutRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> StorageLayout
+          (r: GetStorageLayoutRequest, o: GoogleGax.RequestOptions) async throws -> StorageLayout
           in
           return try await self.inner.getStorageLayout(request: r, options: o)
         })
     }
 
     public func createManagedFolder(
-      request: CreateManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateManagedFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> ManagedFolder {
       try await self._intercept(
         request: request,
         options: options,
         name: "createManagedFolder",
         action: {
-          (r: CreateManagedFolderRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> ManagedFolder
+          (r: CreateManagedFolderRequest, o: GoogleGax.RequestOptions) async throws -> ManagedFolder
           in
           return try await self.inner.createManagedFolder(request: r, options: o)
         })
     }
 
     public func deleteManagedFolder(
-      request: DeleteManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteManagedFolderRequest, options: GoogleGax.RequestOptions
     ) async throws {
       try await self._intercept(
         request: request,
         options: options,
         name: "deleteManagedFolder",
         action: {
-          (r: DeleteManagedFolderRequest, o: GoogleCloudGax.RequestOptions) async throws -> Void in
+          (r: DeleteManagedFolderRequest, o: GoogleGax.RequestOptions) async throws -> Void in
           return try await self.inner.deleteManagedFolder(request: r, options: o)
         })
     }
 
     public func getManagedFolder(
-      request: GetManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: GetManagedFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> ManagedFolder {
       try await self._intercept(
         request: request,
         options: options,
         name: "getManagedFolder",
         action: {
-          (r: GetManagedFolderRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> ManagedFolder
+          (r: GetManagedFolderRequest, o: GoogleGax.RequestOptions) async throws -> ManagedFolder
           in
           return try await self.inner.getManagedFolder(request: r, options: o)
         })
     }
 
     public func listManagedFolders(
-      request: ListManagedFoldersRequest, options: GoogleCloudGax.RequestOptions
+      request: ListManagedFoldersRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListManagedFoldersResponse {
       try await self._intercept(
         request: request,
         options: options,
         name: "listManagedFolders",
         action: {
-          (r: ListManagedFoldersRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: ListManagedFoldersRequest, o: GoogleGax.RequestOptions) async throws
             -> ListManagedFoldersResponse
           in
           return try await self.inner.listManagedFolders(request: r, options: o)
@@ -218,29 +214,28 @@ extension Clients {
     }
 
     public func updateManagedFolder(
-      request: UpdateManagedFolderRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateManagedFolderRequest, options: GoogleGax.RequestOptions
     ) async throws -> ManagedFolder {
       try await self._intercept(
         request: request,
         options: options,
         name: "updateManagedFolder",
         action: {
-          (r: UpdateManagedFolderRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> ManagedFolder
+          (r: UpdateManagedFolderRequest, o: GoogleGax.RequestOptions) async throws -> ManagedFolder
           in
           return try await self.inner.updateManagedFolder(request: r, options: o)
         })
     }
 
     public func createAnywhereCache(
-      request: CreateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
       try await self._intercept(
         request: request,
         options: options,
         name: "createAnywhereCache",
         action: {
-          (r: CreateAnywhereCacheRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: CreateAnywhereCacheRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleLongRunning.Operation
           in
           return try await self.inner.createAnywhereCache(request: r, options: o)
@@ -248,14 +243,14 @@ extension Clients {
     }
 
     public func updateAnywhereCache(
-      request: UpdateAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
       try await self._intercept(
         request: request,
         options: options,
         name: "updateAnywhereCache",
         action: {
-          (r: UpdateAnywhereCacheRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: UpdateAnywhereCacheRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleLongRunning.Operation
           in
           return try await self.inner.updateAnywhereCache(request: r, options: o)
@@ -263,14 +258,14 @@ extension Clients {
     }
 
     public func disableAnywhereCache(
-      request: DisableAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: DisableAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> AnywhereCache {
       try await self._intercept(
         request: request,
         options: options,
         name: "disableAnywhereCache",
         action: {
-          (r: DisableAnywhereCacheRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: DisableAnywhereCacheRequest, o: GoogleGax.RequestOptions) async throws
             -> AnywhereCache
           in
           return try await self.inner.disableAnywhereCache(request: r, options: o)
@@ -278,59 +273,56 @@ extension Clients {
     }
 
     public func pauseAnywhereCache(
-      request: PauseAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: PauseAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> AnywhereCache {
       try await self._intercept(
         request: request,
         options: options,
         name: "pauseAnywhereCache",
         action: {
-          (r: PauseAnywhereCacheRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> AnywhereCache
+          (r: PauseAnywhereCacheRequest, o: GoogleGax.RequestOptions) async throws -> AnywhereCache
           in
           return try await self.inner.pauseAnywhereCache(request: r, options: o)
         })
     }
 
     public func resumeAnywhereCache(
-      request: ResumeAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: ResumeAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> AnywhereCache {
       try await self._intercept(
         request: request,
         options: options,
         name: "resumeAnywhereCache",
         action: {
-          (r: ResumeAnywhereCacheRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> AnywhereCache
+          (r: ResumeAnywhereCacheRequest, o: GoogleGax.RequestOptions) async throws -> AnywhereCache
           in
           return try await self.inner.resumeAnywhereCache(request: r, options: o)
         })
     }
 
     public func getAnywhereCache(
-      request: GetAnywhereCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: GetAnywhereCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> AnywhereCache {
       try await self._intercept(
         request: request,
         options: options,
         name: "getAnywhereCache",
         action: {
-          (r: GetAnywhereCacheRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> AnywhereCache
+          (r: GetAnywhereCacheRequest, o: GoogleGax.RequestOptions) async throws -> AnywhereCache
           in
           return try await self.inner.getAnywhereCache(request: r, options: o)
         })
     }
 
     public func listAnywhereCaches(
-      request: ListAnywhereCachesRequest, options: GoogleCloudGax.RequestOptions
+      request: ListAnywhereCachesRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListAnywhereCachesResponse {
       try await self._intercept(
         request: request,
         options: options,
         name: "listAnywhereCaches",
         action: {
-          (r: ListAnywhereCachesRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: ListAnywhereCachesRequest, o: GoogleGax.RequestOptions) async throws
             -> ListAnywhereCachesResponse
           in
           return try await self.inner.listAnywhereCaches(request: r, options: o)
@@ -338,14 +330,14 @@ extension Clients {
     }
 
     public func createRapidCache(
-      request: CreateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateRapidCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
       try await self._intercept(
         request: request,
         options: options,
         name: "createRapidCache",
         action: {
-          (r: CreateRapidCacheRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: CreateRapidCacheRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleLongRunning.Operation
           in
           return try await self.inner.createRapidCache(request: r, options: o)
@@ -353,14 +345,14 @@ extension Clients {
     }
 
     public func updateRapidCache(
-      request: UpdateRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateRapidCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
       try await self._intercept(
         request: request,
         options: options,
         name: "updateRapidCache",
         action: {
-          (r: UpdateRapidCacheRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: UpdateRapidCacheRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleLongRunning.Operation
           in
           return try await self.inner.updateRapidCache(request: r, options: o)
@@ -368,14 +360,14 @@ extension Clients {
     }
 
     public func disableRapidCache(
-      request: DisableRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: DisableRapidCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
       try await self._intercept(
         request: request,
         options: options,
         name: "disableRapidCache",
         action: {
-          (r: DisableRapidCacheRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: DisableRapidCacheRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleLongRunning.Operation
           in
           return try await self.inner.disableRapidCache(request: r, options: o)
@@ -383,28 +375,28 @@ extension Clients {
     }
 
     public func getRapidCache(
-      request: GetRapidCacheRequest, options: GoogleCloudGax.RequestOptions
+      request: GetRapidCacheRequest, options: GoogleGax.RequestOptions
     ) async throws -> RapidCache {
       try await self._intercept(
         request: request,
         options: options,
         name: "getRapidCache",
         action: {
-          (r: GetRapidCacheRequest, o: GoogleCloudGax.RequestOptions) async throws -> RapidCache
+          (r: GetRapidCacheRequest, o: GoogleGax.RequestOptions) async throws -> RapidCache
           in
           return try await self.inner.getRapidCache(request: r, options: o)
         })
     }
 
     public func listRapidCaches(
-      request: ListRapidCachesRequest, options: GoogleCloudGax.RequestOptions
+      request: ListRapidCachesRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListRapidCachesResponse {
       try await self._intercept(
         request: request,
         options: options,
         name: "listRapidCaches",
         action: {
-          (r: ListRapidCachesRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: ListRapidCachesRequest, o: GoogleGax.RequestOptions) async throws
             -> ListRapidCachesResponse
           in
           return try await self.inner.listRapidCaches(request: r, options: o)
@@ -412,14 +404,14 @@ extension Clients {
     }
 
     public func getProjectIntelligenceConfig(
-      request: GetProjectIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: GetProjectIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
       try await self._intercept(
         request: request,
         options: options,
         name: "getProjectIntelligenceConfig",
         action: {
-          (r: GetProjectIntelligenceConfigRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: GetProjectIntelligenceConfigRequest, o: GoogleGax.RequestOptions) async throws
             -> IntelligenceConfig
           in
           return try await self.inner.getProjectIntelligenceConfig(request: r, options: o)
@@ -427,14 +419,14 @@ extension Clients {
     }
 
     public func updateProjectIntelligenceConfig(
-      request: UpdateProjectIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateProjectIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
       try await self._intercept(
         request: request,
         options: options,
         name: "updateProjectIntelligenceConfig",
         action: {
-          (r: UpdateProjectIntelligenceConfigRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: UpdateProjectIntelligenceConfigRequest, o: GoogleGax.RequestOptions) async throws
             -> IntelligenceConfig
           in
           return try await self.inner.updateProjectIntelligenceConfig(request: r, options: o)
@@ -442,14 +434,14 @@ extension Clients {
     }
 
     public func getFolderIntelligenceConfig(
-      request: GetFolderIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: GetFolderIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
       try await self._intercept(
         request: request,
         options: options,
         name: "getFolderIntelligenceConfig",
         action: {
-          (r: GetFolderIntelligenceConfigRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: GetFolderIntelligenceConfigRequest, o: GoogleGax.RequestOptions) async throws
             -> IntelligenceConfig
           in
           return try await self.inner.getFolderIntelligenceConfig(request: r, options: o)
@@ -457,14 +449,14 @@ extension Clients {
     }
 
     public func updateFolderIntelligenceConfig(
-      request: UpdateFolderIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateFolderIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
       try await self._intercept(
         request: request,
         options: options,
         name: "updateFolderIntelligenceConfig",
         action: {
-          (r: UpdateFolderIntelligenceConfigRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: UpdateFolderIntelligenceConfigRequest, o: GoogleGax.RequestOptions) async throws
             -> IntelligenceConfig
           in
           return try await self.inner.updateFolderIntelligenceConfig(request: r, options: o)
@@ -472,44 +464,44 @@ extension Clients {
     }
 
     public func getOrganizationIntelligenceConfig(
-      request: GetOrganizationIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: GetOrganizationIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
       try await self._intercept(
         request: request,
         options: options,
         name: "getOrganizationIntelligenceConfig",
         action: {
-          (r: GetOrganizationIntelligenceConfigRequest, o: GoogleCloudGax.RequestOptions)
-            async throws -> IntelligenceConfig
+          (r: GetOrganizationIntelligenceConfigRequest, o: GoogleGax.RequestOptions) async throws
+            -> IntelligenceConfig
           in
           return try await self.inner.getOrganizationIntelligenceConfig(request: r, options: o)
         })
     }
 
     public func updateOrganizationIntelligenceConfig(
-      request: UpdateOrganizationIntelligenceConfigRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateOrganizationIntelligenceConfigRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceConfig {
       try await self._intercept(
         request: request,
         options: options,
         name: "updateOrganizationIntelligenceConfig",
         action: {
-          (r: UpdateOrganizationIntelligenceConfigRequest, o: GoogleCloudGax.RequestOptions)
-            async throws -> IntelligenceConfig
+          (r: UpdateOrganizationIntelligenceConfigRequest, o: GoogleGax.RequestOptions) async throws
+            -> IntelligenceConfig
           in
           return try await self.inner.updateOrganizationIntelligenceConfig(request: r, options: o)
         })
     }
 
     public func getIamPolicy(
-      request: GoogleIAMV1.GetIamPolicyRequest, options: GoogleCloudGax.RequestOptions
+      request: GoogleIAMV1.GetIamPolicyRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleIAMV1.Policy {
       try await self._intercept(
         request: request,
         options: options,
         name: "getIamPolicy",
         action: {
-          (r: GoogleIAMV1.GetIamPolicyRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: GoogleIAMV1.GetIamPolicyRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleIAMV1.Policy
           in
           return try await self.inner.getIamPolicy(request: r, options: o)
@@ -517,14 +509,14 @@ extension Clients {
     }
 
     public func setIamPolicy(
-      request: GoogleIAMV1.SetIamPolicyRequest, options: GoogleCloudGax.RequestOptions
+      request: GoogleIAMV1.SetIamPolicyRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleIAMV1.Policy {
       try await self._intercept(
         request: request,
         options: options,
         name: "setIamPolicy",
         action: {
-          (r: GoogleIAMV1.SetIamPolicyRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: GoogleIAMV1.SetIamPolicyRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleIAMV1.Policy
           in
           return try await self.inner.setIamPolicy(request: r, options: o)
@@ -532,14 +524,14 @@ extension Clients {
     }
 
     public func testIamPermissions(
-      request: GoogleIAMV1.TestIamPermissionsRequest, options: GoogleCloudGax.RequestOptions
+      request: GoogleIAMV1.TestIamPermissionsRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleIAMV1.TestIamPermissionsResponse {
       try await self._intercept(
         request: request,
         options: options,
         name: "testIamPermissions",
         action: {
-          (r: GoogleIAMV1.TestIamPermissionsRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: GoogleIAMV1.TestIamPermissionsRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleIAMV1.TestIamPermissionsResponse
           in
           return try await self.inner.testIamPermissions(request: r, options: o)
@@ -547,14 +539,14 @@ extension Clients {
     }
 
     public func getIntelligenceFinding(
-      request: GetIntelligenceFindingRequest, options: GoogleCloudGax.RequestOptions
+      request: GetIntelligenceFindingRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceFinding {
       try await self._intercept(
         request: request,
         options: options,
         name: "getIntelligenceFinding",
         action: {
-          (r: GetIntelligenceFindingRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: GetIntelligenceFindingRequest, o: GoogleGax.RequestOptions) async throws
             -> IntelligenceFinding
           in
           return try await self.inner.getIntelligenceFinding(request: r, options: o)
@@ -562,14 +554,14 @@ extension Clients {
     }
 
     public func listIntelligenceFindings(
-      request: ListIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+      request: ListIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListIntelligenceFindingsResponse {
       try await self._intercept(
         request: request,
         options: options,
         name: "listIntelligenceFindings",
         action: {
-          (r: ListIntelligenceFindingsRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: ListIntelligenceFindingsRequest, o: GoogleGax.RequestOptions) async throws
             -> ListIntelligenceFindingsResponse
           in
           return try await self.inner.listIntelligenceFindings(request: r, options: o)
@@ -577,14 +569,14 @@ extension Clients {
     }
 
     public func summarizeIntelligenceFindings(
-      request: SummarizeIntelligenceFindingsRequest, options: GoogleCloudGax.RequestOptions
+      request: SummarizeIntelligenceFindingsRequest, options: GoogleGax.RequestOptions
     ) async throws -> SummarizeIntelligenceFindingsResponse {
       try await self._intercept(
         request: request,
         options: options,
         name: "summarizeIntelligenceFindings",
         action: {
-          (r: SummarizeIntelligenceFindingsRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: SummarizeIntelligenceFindingsRequest, o: GoogleGax.RequestOptions) async throws
             -> SummarizeIntelligenceFindingsResponse
           in
           return try await self.inner.summarizeIntelligenceFindings(request: r, options: o)
@@ -592,14 +584,14 @@ extension Clients {
     }
 
     public func getIntelligenceFindingRevision(
-      request: GetIntelligenceFindingRevisionRequest, options: GoogleCloudGax.RequestOptions
+      request: GetIntelligenceFindingRevisionRequest, options: GoogleGax.RequestOptions
     ) async throws -> IntelligenceFindingRevision {
       try await self._intercept(
         request: request,
         options: options,
         name: "getIntelligenceFindingRevision",
         action: {
-          (r: GetIntelligenceFindingRevisionRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: GetIntelligenceFindingRevisionRequest, o: GoogleGax.RequestOptions) async throws
             -> IntelligenceFindingRevision
           in
           return try await self.inner.getIntelligenceFindingRevision(request: r, options: o)
@@ -607,29 +599,29 @@ extension Clients {
     }
 
     public func listIntelligenceFindingRevisions(
-      request: ListIntelligenceFindingRevisionsRequest, options: GoogleCloudGax.RequestOptions
+      request: ListIntelligenceFindingRevisionsRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListIntelligenceFindingRevisionsResponse {
       try await self._intercept(
         request: request,
         options: options,
         name: "listIntelligenceFindingRevisions",
         action: {
-          (r: ListIntelligenceFindingRevisionsRequest, o: GoogleCloudGax.RequestOptions)
-            async throws -> ListIntelligenceFindingRevisionsResponse
+          (r: ListIntelligenceFindingRevisionsRequest, o: GoogleGax.RequestOptions) async throws
+            -> ListIntelligenceFindingRevisionsResponse
           in
           return try await self.inner.listIntelligenceFindingRevisions(request: r, options: o)
         })
     }
 
     public func viewObjectFullContext(
-      request: ViewObjectFullContextRequest, options: GoogleCloudGax.RequestOptions
+      request: ViewObjectFullContextRequest, options: GoogleGax.RequestOptions
     ) async throws -> ObjectFullContext {
       try await self._intercept(
         request: request,
         options: options,
         name: "viewObjectFullContext",
         action: {
-          (r: ViewObjectFullContextRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: ViewObjectFullContextRequest, o: GoogleGax.RequestOptions) async throws
             -> ObjectFullContext
           in
           return try await self.inner.viewObjectFullContext(request: r, options: o)
@@ -637,14 +629,14 @@ extension Clients {
     }
 
     public func getOperation(
-      request: GoogleLongRunning.GetOperationRequest, options: GoogleCloudGax.RequestOptions
+      request: GoogleLongRunning.GetOperationRequest, options: GoogleGax.RequestOptions
     ) async throws -> GoogleLongRunning.Operation {
       try await self._intercept(
         request: request,
         options: options,
         name: "getOperation",
         action: {
-          (r: GoogleLongRunning.GetOperationRequest, o: GoogleCloudGax.RequestOptions) async throws
+          (r: GoogleLongRunning.GetOperationRequest, o: GoogleGax.RequestOptions) async throws
             -> GoogleLongRunning.Operation
           in
           return try await self.inner.getOperation(request: r, options: o)

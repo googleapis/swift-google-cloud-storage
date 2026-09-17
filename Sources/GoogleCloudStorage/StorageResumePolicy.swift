@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 import GoogleRpc
 
 /// Evaluates whether an error is considered resumable in Google Cloud Storage.

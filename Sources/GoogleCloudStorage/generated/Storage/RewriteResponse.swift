@@ -15,10 +15,10 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// A rewrite response.
-public struct RewriteResponse: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct RewriteResponse: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// The total bytes written so far, which can be used to provide a waiting user
@@ -41,7 +41,7 @@ public struct RewriteResponse: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   /// is present in the response only when copying completes.
   public var resource: Object? = nil
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `RewriteResponse`.
   public init() {}
@@ -97,7 +97,7 @@ public struct RewriteResponse: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     self.resource = try container.decodeIfPresent(Object.self, forKey: .resource)
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -116,10 +116,10 @@ public struct RewriteResponse: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.v2.RewriteResponse"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

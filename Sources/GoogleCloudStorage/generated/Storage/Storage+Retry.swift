@@ -18,26 +18,26 @@ import Foundation
 #if canImport(FoundationNetworking)
   import FoundationNetworking
 #endif
-import GoogleCloudWKT
-@_spi(GoogleCloudInternal) import GoogleCloudGax
+import GoogleWKT
+@_spi(GoogleCloudInternal) import GoogleGax
 
 extension Clients {
   final class StorageRetry: StorageStub {
     let inner: any StorageStub
-    let options: GoogleCloudGax.ClientOptions
+    let options: GoogleGax.ClientOptions
 
-    public init(_ inner: any StorageStub, options: GoogleCloudGax.ClientOptions) {
+    public init(_ inner: any StorageStub, options: GoogleGax.ClientOptions) {
       self.inner = inner
       self.options = options
     }
 
     func _intercept<Input, Output>(
       request: Input,
-      options: GoogleCloudGax.RequestOptions,
+      options: GoogleGax.RequestOptions,
       idempotent: Swift.Bool,
-      action: (Input, GoogleCloudGax.RequestOptions) async throws -> Output,
+      action: (Input, GoogleGax.RequestOptions) async throws -> Output,
     ) async throws -> Output {
-      let loop = GoogleCloudGax._RetryLoop(
+      let loop = GoogleGax._RetryLoop(
         options: options, withDefault: self.options, idempotent: idempotent,
       )
       let attempt = { (attemptTimeout: Swift.Duration?) async throws -> Output in
@@ -49,196 +49,192 @@ extension Clients {
     }
 
     public func deleteBucket(
-      request: DeleteBucketRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteBucketRequest, options: GoogleGax.RequestOptions
     ) async throws {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
-        action: { (r: DeleteBucketRequest, o: GoogleCloudGax.RequestOptions) async throws -> Void in
+        action: { (r: DeleteBucketRequest, o: GoogleGax.RequestOptions) async throws -> Void in
           return try await self.inner.deleteBucket(request: r, options: o)
         })
     }
 
     public func getBucket(
-      request: GetBucketRequest, options: GoogleCloudGax.RequestOptions
+      request: GetBucketRequest, options: GoogleGax.RequestOptions
     ) async throws -> Bucket {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: GetBucketRequest, o: GoogleCloudGax.RequestOptions) async throws -> Bucket
+          (r: GetBucketRequest, o: GoogleGax.RequestOptions) async throws -> Bucket
           in
           return try await self.inner.getBucket(request: r, options: o)
         })
     }
 
     public func createBucket(
-      request: CreateBucketRequest, options: GoogleCloudGax.RequestOptions
+      request: CreateBucketRequest, options: GoogleGax.RequestOptions
     ) async throws -> Bucket {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: CreateBucketRequest, o: GoogleCloudGax.RequestOptions) async throws -> Bucket
+          (r: CreateBucketRequest, o: GoogleGax.RequestOptions) async throws -> Bucket
           in
           return try await self.inner.createBucket(request: r, options: o)
         })
     }
 
     public func listBuckets(
-      request: ListBucketsRequest, options: GoogleCloudGax.RequestOptions
+      request: ListBucketsRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListBucketsResponse {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: ListBucketsRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> ListBucketsResponse
+          (r: ListBucketsRequest, o: GoogleGax.RequestOptions) async throws -> ListBucketsResponse
           in
           return try await self.inner.listBuckets(request: r, options: o)
         })
     }
 
     public func lockBucketRetentionPolicy(
-      request: LockBucketRetentionPolicyRequest, options: GoogleCloudGax.RequestOptions
+      request: LockBucketRetentionPolicyRequest, options: GoogleGax.RequestOptions
     ) async throws -> Bucket {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: LockBucketRetentionPolicyRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> Bucket
+          (r: LockBucketRetentionPolicyRequest, o: GoogleGax.RequestOptions) async throws -> Bucket
           in
           return try await self.inner.lockBucketRetentionPolicy(request: r, options: o)
         })
     }
 
     public func updateBucket(
-      request: UpdateBucketRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateBucketRequest, options: GoogleGax.RequestOptions
     ) async throws -> Bucket {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: UpdateBucketRequest, o: GoogleCloudGax.RequestOptions) async throws -> Bucket
+          (r: UpdateBucketRequest, o: GoogleGax.RequestOptions) async throws -> Bucket
           in
           return try await self.inner.updateBucket(request: r, options: o)
         })
     }
 
     public func composeObject(
-      request: ComposeObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: ComposeObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: ComposeObjectRequest, o: GoogleCloudGax.RequestOptions) async throws -> Object
+          (r: ComposeObjectRequest, o: GoogleGax.RequestOptions) async throws -> Object
           in
           return try await self.inner.composeObject(request: r, options: o)
         })
     }
 
     public func deleteObject(
-      request: DeleteObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: DeleteObjectRequest, options: GoogleGax.RequestOptions
     ) async throws {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
-        action: { (r: DeleteObjectRequest, o: GoogleCloudGax.RequestOptions) async throws -> Void in
+        action: { (r: DeleteObjectRequest, o: GoogleGax.RequestOptions) async throws -> Void in
           return try await self.inner.deleteObject(request: r, options: o)
         })
     }
 
     public func restoreObject(
-      request: RestoreObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: RestoreObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: RestoreObjectRequest, o: GoogleCloudGax.RequestOptions) async throws -> Object
+          (r: RestoreObjectRequest, o: GoogleGax.RequestOptions) async throws -> Object
           in
           return try await self.inner.restoreObject(request: r, options: o)
         })
     }
 
     public func getObject(
-      request: GetObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: GetObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: GetObjectRequest, o: GoogleCloudGax.RequestOptions) async throws -> Object
+          (r: GetObjectRequest, o: GoogleGax.RequestOptions) async throws -> Object
           in
           return try await self.inner.getObject(request: r, options: o)
         })
     }
 
     public func updateObject(
-      request: UpdateObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: UpdateObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: UpdateObjectRequest, o: GoogleCloudGax.RequestOptions) async throws -> Object
+          (r: UpdateObjectRequest, o: GoogleGax.RequestOptions) async throws -> Object
           in
           return try await self.inner.updateObject(request: r, options: o)
         })
     }
 
     public func listObjects(
-      request: ListObjectsRequest, options: GoogleCloudGax.RequestOptions
+      request: ListObjectsRequest, options: GoogleGax.RequestOptions
     ) async throws -> ListObjectsResponse {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: ListObjectsRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> ListObjectsResponse
+          (r: ListObjectsRequest, o: GoogleGax.RequestOptions) async throws -> ListObjectsResponse
           in
           return try await self.inner.listObjects(request: r, options: o)
         })
     }
 
     public func rewriteObject(
-      request: RewriteObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: RewriteObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> RewriteResponse {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: RewriteObjectRequest, o: GoogleCloudGax.RequestOptions) async throws
-            -> RewriteResponse
+          (r: RewriteObjectRequest, o: GoogleGax.RequestOptions) async throws -> RewriteResponse
           in
           return try await self.inner.rewriteObject(request: r, options: o)
         })
     }
 
     public func moveObject(
-      request: MoveObjectRequest, options: GoogleCloudGax.RequestOptions
+      request: MoveObjectRequest, options: GoogleGax.RequestOptions
     ) async throws -> Object {
       try await self._intercept(
         request: request,
         options: options,
         idempotent: false,
         action: {
-          (r: MoveObjectRequest, o: GoogleCloudGax.RequestOptions) async throws -> Object
+          (r: MoveObjectRequest, o: GoogleGax.RequestOptions) async throws -> Object
           in
           return try await self.inner.moveObject(request: r, options: o)
         })

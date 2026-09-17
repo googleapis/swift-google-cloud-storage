@@ -15,12 +15,12 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// Request message for [ListObjects][google.storage.v2.Storage.ListObjects].
 ///
 /// [google.storage.v2.Storage.ListObjects]: <doc:StorageControlClient/listObjects(request:options:)>
-public struct ListObjectsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct ListObjectsRequest: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Required. Name of the bucket in which to look for objects.
@@ -58,7 +58,7 @@ public struct ListObjectsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackabl
   /// If no mask is specified, defaults to all fields except `items.acl` and
   /// `items.owner`.
   /// `*` might be used to mean all fields.
-  public var readMask: GoogleCloudWKT.FieldMask? = nil
+  public var readMask: GoogleWKT.FieldMask? = nil
 
   /// Optional. Filter results to objects whose names are lexicographically equal
   /// to or after `lexicographic_start`. If `lexicographic_end` is also set, the
@@ -93,7 +93,7 @@ public struct ListObjectsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackabl
   /// filter.
   public var filter: Swift.String = Swift.String()
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `ListObjectsRequest`.
   public init() {}
@@ -174,7 +174,7 @@ public struct ListObjectsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackabl
     if let value = try container.decodeIfPresent(Swift.Bool.self, forKey: .versions) {
       self.versions = value
     }
-    self.readMask = try container.decodeIfPresent(GoogleCloudWKT.FieldMask.self, forKey: .readMask)
+    self.readMask = try container.decodeIfPresent(GoogleWKT.FieldMask.self, forKey: .readMask)
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .lexicographicStart) {
       self.lexicographicStart = value
     }
@@ -196,7 +196,7 @@ public struct ListObjectsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackabl
     }
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -224,10 +224,10 @@ public struct ListObjectsRequest: Codable, Equatable, GoogleCloudWKT._AnyPackabl
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.v2.ListObjectsRequest"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

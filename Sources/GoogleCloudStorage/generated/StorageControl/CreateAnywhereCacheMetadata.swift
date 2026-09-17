@@ -15,11 +15,11 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// Message returned in the metadata field of the Operation resource for
 /// CreateAnywhereCache operations.
-public struct CreateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct CreateAnywhereCacheMetadata: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Generic metadata for the long running operation.
@@ -35,7 +35,7 @@ public struct CreateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWKT._A
   /// Anywhere Cache entry's TTL. A cache-level config that is applied to all new
   /// cache entries on admission. Default ttl value (24hrs) is applied if not
   /// specified in the create request.
-  public var ttl: GoogleCloudWKT.Duration? = nil
+  public var ttl: GoogleWKT.Duration? = nil
 
   /// Anywhere Cache entry Admission Policy in kebab-case (e.g.,
   /// "admit-on-first-miss"). Default admission policy (admit-on-first-miss) is
@@ -46,7 +46,7 @@ public struct CreateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWKT._A
   /// Defaults to false.
   public var ingestOnWrite: Swift.Bool? = nil
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `CreateAnywhereCacheMetadata`.
   public init() {}
@@ -94,13 +94,13 @@ public struct CreateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWKT._A
     self.anywhereCacheId = try container.decodeIfPresent(
       Swift.String.self, forKey: .anywhereCacheId)
     self.zone = try container.decodeIfPresent(Swift.String.self, forKey: .zone)
-    self.ttl = try container.decodeIfPresent(GoogleCloudWKT.Duration.self, forKey: .ttl)
+    self.ttl = try container.decodeIfPresent(GoogleWKT.Duration.self, forKey: .ttl)
     self.admissionPolicy = try container.decodeIfPresent(
       Swift.String.self, forKey: .admissionPolicy)
     self.ingestOnWrite = try container.decodeIfPresent(Swift.Bool.self, forKey: .ingestOnWrite)
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -120,10 +120,10 @@ public struct CreateAnywhereCacheMetadata: Codable, Equatable, GoogleCloudWKT._A
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.CreateAnywhereCacheMetadata"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

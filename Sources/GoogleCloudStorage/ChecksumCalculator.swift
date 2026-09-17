@@ -15,7 +15,7 @@
 import Crypto
 import Foundation
 import NIOCore
-@_spi(GoogleCloudInternal) import struct GoogleCloudGax._CRC32C
+@_spi(GoogleCloudInternal) import struct GoogleGax._CRC32C
 
 /// A protocol for incremental checksum computation.
 protocol ChecksumCalculator: Sendable {

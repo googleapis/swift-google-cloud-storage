@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import GoogleCloudGax
+import GoogleGax
 
 /// Evaluates whether an error is considered retryable in Google Cloud Storage.
 ///

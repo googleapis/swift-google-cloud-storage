@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import GoogleCloudGax
+import GoogleGax
 
 /// Configuration options for ``StorageClient``.
 public struct StorageClientOptions: Sendable {
   /// Common options used by all Google Swift SDK clients.
-  public var client: GoogleCloudGax.ClientOptions
+  public var client: GoogleGax.ClientOptions
 
   /// Default configuration inherited by data-plane operations (e.g., Uploads).
   public var upload: UploadOptions
@@ -26,7 +26,7 @@ public struct StorageClientOptions: Sendable {
   public var download: ReadObjectOptions
 
   public init(
-    client: GoogleCloudGax.ClientOptions = .init(),
+    client: GoogleGax.ClientOptions = .init(),
     upload: UploadOptions = .default,
     download: ReadObjectOptions = .default
   ) {

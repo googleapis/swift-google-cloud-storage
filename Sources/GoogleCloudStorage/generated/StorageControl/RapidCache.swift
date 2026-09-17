@@ -15,10 +15,10 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// A Rapid Cache Instance.
-public struct RapidCache: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct RapidCache: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Immutable. The resource name of this RapidCache.
@@ -38,7 +38,7 @@ public struct RapidCache: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   /// that defines how long a cache entry can live. Default ttl value (24hrs)
   /// is applied if not specified in the create request. TTL must be in whole
   /// seconds.
-  public var ttl: GoogleCloudWKT.Duration? = nil
+  public var ttl: GoogleWKT.Duration? = nil
 
   /// Cache admission policy. Valid policies includes:
   /// no_read_admission, admit-on-first-miss and admit-on-second-miss. Defaults
@@ -50,18 +50,18 @@ public struct RapidCache: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   public var state: Swift.String = Swift.String()
 
   /// Output only. Time when Rapid cache instance is allocated.
-  public var createTime: GoogleCloudWKT.Timestamp? = nil
+  public var createTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. Time when Rapid cache instance is last updated, including
   /// creation.
-  public var updateTime: GoogleCloudWKT.Timestamp? = nil
+  public var updateTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. True if there is an active update operation against this cache
   /// instance. Subsequential update requests will be rejected if this field is
   /// true. Output only.
   public var pendingUpdate: Swift.Bool = Swift.Bool()
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `RapidCache`.
   public init() {}
@@ -119,23 +119,21 @@ public struct RapidCache: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .cacheType) {
       self.cacheType = value
     }
-    self.ttl = try container.decodeIfPresent(GoogleCloudWKT.Duration.self, forKey: .ttl)
+    self.ttl = try container.decodeIfPresent(GoogleWKT.Duration.self, forKey: .ttl)
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .admissionPolicy) {
       self.admissionPolicy = value
     }
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .state) {
       self.state = value
     }
-    self.createTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .createTime)
-    self.updateTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .updateTime)
+    self.createTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .createTime)
+    self.updateTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .updateTime)
     if let value = try container.decodeIfPresent(Swift.Bool.self, forKey: .pendingUpdate) {
       self.pendingUpdate = value
     }
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -158,10 +156,10 @@ public struct RapidCache: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.RapidCache"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

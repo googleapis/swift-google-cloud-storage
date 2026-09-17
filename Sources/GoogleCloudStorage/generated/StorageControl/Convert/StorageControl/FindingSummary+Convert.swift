@@ -15,11 +15,11 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 internal import StorageControlProtos
 internal import SwiftProtobuf
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
-internal import GoogleCloudWKTConvert
+@_spi(GoogleCloudInternal) import GoogleWKT
+internal import GoogleWKTConvert
 
 extension FindingSummary {
   internal typealias ProtoType = StorageControlProtos.Google_Storage_Control_V2_FindingSummary
@@ -120,7 +120,7 @@ extension FindingSummary.SummaryDetails.ResourceType {
         .ResourceType(rawValue: val)
         ?? .UNRECOGNIZED(val)
     case .unknownStringValue(let str):
-      throw GoogleCloudGax.ProtobufConversionError.noIntegerValue(
+      throw GoogleGax.ProtobufConversionError.noIntegerValue(
         enumType: "FindingSummary.SummaryDetails.ResourceType", stringValue: str)
     }
   }

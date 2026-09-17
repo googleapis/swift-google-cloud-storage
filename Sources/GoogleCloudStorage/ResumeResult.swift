@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 
 /// The result of evaluating an error with a ``ResumePolicy``.
 public enum ResumeResult: Sendable {

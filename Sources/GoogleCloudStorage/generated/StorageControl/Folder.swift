@@ -15,11 +15,11 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// A folder resource. This resource can only exist in a hierarchical namespace
 /// enabled bucket.
-public struct Folder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct Folder: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Identifier. The name of this folder.
@@ -31,10 +31,10 @@ public struct Folder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   public var metageneration: Swift.Int64 = Swift.Int64()
 
   /// Output only. The creation time of the folder.
-  public var createTime: GoogleCloudWKT.Timestamp? = nil
+  public var createTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. The modification time of the folder.
-  public var updateTime: GoogleCloudWKT.Timestamp? = nil
+  public var updateTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. Only present if the folder is part of an ongoing RenameFolder
   /// operation. Contains information which can be used to query the operation
@@ -43,7 +43,7 @@ public struct Folder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   /// operations.
   public var pendingRenameInfo: PendingRenameInfo? = nil
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `Folder`.
   public init() {}
@@ -90,15 +90,13 @@ public struct Folder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     if let value = try container.decodeIfPresent(Swift.Int64.self, forKey: .metageneration) {
       self.metageneration = value
     }
-    self.createTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .createTime)
-    self.updateTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .updateTime)
+    self.createTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .createTime)
+    self.updateTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .updateTime)
     self.pendingRenameInfo = try container.decodeIfPresent(
       PendingRenameInfo.self, forKey: .pendingRenameInfo)
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -117,10 +115,10 @@ public struct Folder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.Folder"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

@@ -15,10 +15,10 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// A managed folder.
-public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct ManagedFolder: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Identifier. The name of this managed folder.
@@ -32,15 +32,15 @@ public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   public var metageneration: Swift.Int64 = Swift.Int64()
 
   /// Output only. The creation time of the managed folder.
-  public var createTime: GoogleCloudWKT.Timestamp? = nil
+  public var createTime: GoogleWKT.Timestamp? = nil
 
   /// Output only. The modification time of the managed folder.
-  public var updateTime: GoogleCloudWKT.Timestamp? = nil
+  public var updateTime: GoogleWKT.Timestamp? = nil
 
   /// Rapid Cache configuration for a managed prefix.
   public var rapidCacheConfig: ManagedFolder.RapidCacheConfig? = nil
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `ManagedFolder`.
   public init() {}
@@ -87,15 +87,13 @@ public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     if let value = try container.decodeIfPresent(Swift.Int64.self, forKey: .metageneration) {
       self.metageneration = value
     }
-    self.createTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .createTime)
-    self.updateTime = try container.decodeIfPresent(
-      GoogleCloudWKT.Timestamp.self, forKey: .updateTime)
+    self.createTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .createTime)
+    self.updateTime = try container.decodeIfPresent(GoogleWKT.Timestamp.self, forKey: .updateTime)
     self.rapidCacheConfig = try container.decodeIfPresent(
       ManagedFolder.RapidCacheConfig.self, forKey: .rapidCacheConfig)
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -114,7 +112,7 @@ public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
   /// Rapid Cache configuration for a managed prefix. This configuration is used
   /// to determine how the rapid cache behaves for objects under the managed
   /// folder.
-  public struct RapidCacheConfig: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+  public struct RapidCacheConfig: Codable, Equatable, GoogleWKT._AnyPackable,
     Sendable
   {
     /// Optional. A map of rapid_cache_id to RapidCachePolicy for this prefix.
@@ -124,7 +122,7 @@ public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     /// from zone to a cache id if required.
     public var policies: [Swift.String: ManagedFolder.RapidCacheConfig.RapidCachePolicy] = [:]
 
-    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
     /// Initialize a new instance of `RapidCacheConfig`.
     public init() {}
@@ -164,7 +162,7 @@ public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
       }
       for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
         self._unknownFields.json[key.stringValue] = try container.decode(
-          GoogleCloudWKT.Value.self, forKey: key)
+          GoogleWKT.Value.self, forKey: key)
       }
     }
 
@@ -177,7 +175,7 @@ public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
     }
 
     /// Rapid Cache policy for a managed folder.
-    public struct RapidCachePolicy: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+    public struct RapidCachePolicy: Codable, Equatable, GoogleWKT._AnyPackable,
       Sendable
     {
       /// Required. The identifier for the rapid cache.
@@ -188,7 +186,7 @@ public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
       public var ingestOnWrite: ManagedFolder.RapidCacheConfig.RapidCachePolicy.IngestOnWrite =
         ManagedFolder.RapidCacheConfig.RapidCachePolicy.IngestOnWrite()
 
-      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
       /// Initialize a new instance of `RapidCachePolicy`.
       public init() {}
@@ -233,7 +231,7 @@ public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
         }
         for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
           self._unknownFields.json[key.stringValue] = try container.decode(
-            GoogleCloudWKT.Value.self, forKey: key)
+            GoogleWKT.Value.self, forKey: key)
         }
       }
 
@@ -350,32 +348,32 @@ public struct ManagedFolder: Codable, Equatable, GoogleCloudWKT._AnyPackable,
         return
           "type.googleapis.com/google.storage.control.v2.ManagedFolder.RapidCacheConfig.RapidCachePolicy"
       }
-      public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-        self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+      public init(fromAny any: GoogleWKT.`Any`) throws {
+        self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
       }
-      public func _pack() throws -> GoogleCloudWKT.Struct {
-        return try GoogleCloudWKT._slowAnySerialize(message: self)
+      public func _pack() throws -> GoogleWKT.Struct {
+        return try GoogleWKT._slowAnySerialize(message: self)
       }
     }
 
     public static var _anyTypeUrl: Swift.String {
       return "type.googleapis.com/google.storage.control.v2.ManagedFolder.RapidCacheConfig"
     }
-    public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-      self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+    public init(fromAny any: GoogleWKT.`Any`) throws {
+      self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
     }
-    public func _pack() throws -> GoogleCloudWKT.Struct {
-      return try GoogleCloudWKT._slowAnySerialize(message: self)
+    public func _pack() throws -> GoogleWKT.Struct {
+      return try GoogleWKT._slowAnySerialize(message: self)
     }
   }
 
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.control.v2.ManagedFolder"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

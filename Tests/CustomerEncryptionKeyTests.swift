@@ -17,7 +17,7 @@ import Foundation
 #if canImport(FoundationNetworking)
   import FoundationNetworking
 #endif
-import GoogleCloudGax
+import GoogleGax
 @testable import GoogleCloudStorage
 import Testing
 

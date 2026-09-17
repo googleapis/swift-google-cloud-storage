@@ -15,12 +15,12 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// Request message for [ComposeObject][google.storage.v2.Storage.ComposeObject].
 ///
 /// [google.storage.v2.Storage.ComposeObject]: <doc:StorageControlClient/composeObject(request:options:)>
-public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct ComposeObjectRequest: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Required. Properties of the resulting object.
@@ -61,7 +61,7 @@ public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPacka
   /// Whether the source objects should be deleted in the compose request.
   public var deleteSourceObjects: Swift.Bool? = nil
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `ComposeObjectRequest`.
   public init() {}
@@ -136,7 +136,7 @@ public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPacka
       Swift.Bool.self, forKey: .deleteSourceObjects)
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -158,7 +158,7 @@ public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPacka
   }
 
   /// Description of a source object for a composition request.
-  public struct SourceObject: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+  public struct SourceObject: Codable, Equatable, GoogleWKT._AnyPackable,
     Sendable
   {
     /// Required. The source object's name. All source objects must reside in the
@@ -171,7 +171,7 @@ public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPacka
     /// Optional. Conditions that must be met for this operation to execute.
     public var objectPreconditions: ComposeObjectRequest.SourceObject.ObjectPreconditions? = nil
 
-    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+    @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
     /// Initialize a new instance of `SourceObject`.
     public init() {}
@@ -218,7 +218,7 @@ public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPacka
         ComposeObjectRequest.SourceObject.ObjectPreconditions.self, forKey: .objectPreconditions)
       for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
         self._unknownFields.json[key.stringValue] = try container.decode(
-          GoogleCloudWKT.Value.self, forKey: key)
+          GoogleWKT.Value.self, forKey: key)
       }
     }
 
@@ -233,7 +233,7 @@ public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPacka
     }
 
     /// Preconditions for a source object of a composition request.
-    public struct ObjectPreconditions: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+    public struct ObjectPreconditions: Codable, Equatable, GoogleWKT._AnyPackable,
       Sendable
     {
       /// Only perform the composition if the generation of the source object
@@ -241,7 +241,7 @@ public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPacka
       /// are both specified, they must be the same value or the call fails.
       public var ifGenerationMatch: Swift.Int64? = nil
 
-      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+      @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
       /// Initialize a new instance of `ObjectPreconditions`.
       public init() {}
@@ -278,7 +278,7 @@ public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPacka
           Swift.Int64.self, forKey: .ifGenerationMatch)
         for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
           self._unknownFields.json[key.stringValue] = try container.decode(
-            GoogleCloudWKT.Value.self, forKey: key)
+            GoogleWKT.Value.self, forKey: key)
         }
       }
 
@@ -294,32 +294,32 @@ public struct ComposeObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPacka
         return
           "type.googleapis.com/google.storage.v2.ComposeObjectRequest.SourceObject.ObjectPreconditions"
       }
-      public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-        self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+      public init(fromAny any: GoogleWKT.`Any`) throws {
+        self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
       }
-      public func _pack() throws -> GoogleCloudWKT.Struct {
-        return try GoogleCloudWKT._slowAnySerialize(message: self)
+      public func _pack() throws -> GoogleWKT.Struct {
+        return try GoogleWKT._slowAnySerialize(message: self)
       }
     }
 
     public static var _anyTypeUrl: Swift.String {
       return "type.googleapis.com/google.storage.v2.ComposeObjectRequest.SourceObject"
     }
-    public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-      self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+    public init(fromAny any: GoogleWKT.`Any`) throws {
+      self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
     }
-    public func _pack() throws -> GoogleCloudWKT.Struct {
-      return try GoogleCloudWKT._slowAnySerialize(message: self)
+    public func _pack() throws -> GoogleWKT.Struct {
+      return try GoogleWKT._slowAnySerialize(message: self)
     }
   }
 
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.v2.ComposeObjectRequest"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

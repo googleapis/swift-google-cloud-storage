@@ -14,7 +14,7 @@
 
 import Foundation
 import GoogleAuth
-import GoogleCloudGax
+import GoogleGax
 @testable import GoogleCloudStorage
 import Testing
 
@@ -27,14 +27,14 @@ import Testing
     let client = try StorageControlClient(options)
     #expect(
       client.pollingErrorPolicy
-        is GoogleCloudGax.LimitedElapsedTime<GoogleCloudGax.BasePollingErrorPolicy>)
-    #expect(client.pollingBackoffPolicy is GoogleCloudGax.ExponentialBackoff)
+        is GoogleGax.LimitedElapsedTime<GoogleGax.BasePollingErrorPolicy>)
+    #expect(client.pollingBackoffPolicy is GoogleGax.ExponentialBackoff)
   }
 
   @Test func customPollingPolicies() throws {
     let credentials = try Credentials(configuration: .anonymous)
-    let customErrorPolicy = GoogleCloudGax.BasePollingErrorPolicy().withTimeLimit(.seconds(120))
-    let customBackoffPolicy = GoogleCloudGax.ExponentialBackoff()
+    let customErrorPolicy = GoogleGax.BasePollingErrorPolicy().withTimeLimit(.seconds(120))
+    let customBackoffPolicy = GoogleGax.ExponentialBackoff()
     let options = ClientOptions().with {
       $0.credentials = credentials
       $0.pollingErrorPolicy = customErrorPolicy
@@ -43,8 +43,8 @@ import Testing
     let client = try StorageControlClient(options)
     #expect(
       client.pollingErrorPolicy
-        is GoogleCloudGax.LimitedElapsedTime<GoogleCloudGax.BasePollingErrorPolicy>)
-    #expect(client.pollingBackoffPolicy is GoogleCloudGax.ExponentialBackoff)
+        is GoogleGax.LimitedElapsedTime<GoogleGax.BasePollingErrorPolicy>)
+    #expect(client.pollingBackoffPolicy is GoogleGax.ExponentialBackoff)
   }
 
   static func assertSendable<T: Sendable>(_ type: T.Type) {}

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import Foundation
-import GoogleCloudGax
+import GoogleGax
 @testable import GoogleCloudStorage
 import NIOCore
 import Testing
@@ -509,7 +509,7 @@ struct StorageClientIntegrationTests {
 
   // Reproduces https://github.com/googleapis/google-cloud-swift/issues/805:
   // GCS JSON API returns HTTP error responses without a gRPC "status" string,
-  // causing GoogleCloudGax._ErrorWrapper to set ServiceError.code to .unknown
+  // causing GoogleGax._ErrorWrapper to set ServiceError.code to .unknown
   // instead of mapping to the expected Code (e.g. .notFound).
   @Test func testUploadToNonExistentBucketReturnsNotFound() async throws {
     let bucket = "non-existent-bucket-\(UUID().uuidString.lowercased())"

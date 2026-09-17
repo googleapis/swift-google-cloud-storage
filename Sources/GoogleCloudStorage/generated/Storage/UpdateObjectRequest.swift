@@ -15,12 +15,12 @@
 // limitations under the License.
 
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudWKT
+@_spi(GoogleCloudInternal) import GoogleWKT
 
 /// Request message for [UpdateObject][google.storage.v2.Storage.UpdateObject].
 ///
 /// [google.storage.v2.Storage.UpdateObject]: <doc:StorageControlClient/updateObject(request:options:)>
-public struct UpdateObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackable,
+public struct UpdateObjectRequest: Codable, Equatable, GoogleWKT._AnyPackable,
   Sendable
 {
   /// Required. The object to update.
@@ -62,7 +62,7 @@ public struct UpdateObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackab
   /// might accidentally reset the new field's value.
   ///
   /// Not specifying any fields is an error.
-  public var updateMask: GoogleCloudWKT.FieldMask? = nil
+  public var updateMask: GoogleWKT.FieldMask? = nil
 
   /// Optional. A set of parameters common to Storage API requests concerning an
   /// object.
@@ -71,7 +71,7 @@ public struct UpdateObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackab
   /// Optional. Overrides the unlocked retention config on the object.
   public var overrideUnlockedRetention: Swift.Bool = Swift.Bool()
 
-  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleCloudWKT._UnknownFields = .init()
+  @_spi(GoogleCloudInternal) public var _unknownFields: GoogleWKT._UnknownFields = .init()
 
   /// Initialize a new instance of `UpdateObjectRequest`.
   public init() {}
@@ -132,8 +132,7 @@ public struct UpdateObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackab
     if let value = try container.decodeIfPresent(Swift.String.self, forKey: .predefinedAcl) {
       self.predefinedAcl = value
     }
-    self.updateMask = try container.decodeIfPresent(
-      GoogleCloudWKT.FieldMask.self, forKey: .updateMask)
+    self.updateMask = try container.decodeIfPresent(GoogleWKT.FieldMask.self, forKey: .updateMask)
     self.commonObjectRequestParams = try container.decodeIfPresent(
       CommonObjectRequestParams.self, forKey: .commonObjectRequestParams)
     if let value = try container.decodeIfPresent(
@@ -143,7 +142,7 @@ public struct UpdateObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackab
     }
     for key in container.allKeys where !CodingKeys._knownKeys.contains(key.stringValue) {
       self._unknownFields.json[key.stringValue] = try container.decode(
-        GoogleCloudWKT.Value.self, forKey: key)
+        GoogleWKT.Value.self, forKey: key)
     }
   }
 
@@ -167,10 +166,10 @@ public struct UpdateObjectRequest: Codable, Equatable, GoogleCloudWKT._AnyPackab
   public static var _anyTypeUrl: Swift.String {
     return "type.googleapis.com/google.storage.v2.UpdateObjectRequest"
   }
-  public init(fromAny any: GoogleCloudWKT.`Any`) throws {
-    self = try GoogleCloudWKT._slowAnyDeserialize(Self.self, from: any)
+  public init(fromAny any: GoogleWKT.`Any`) throws {
+    self = try GoogleWKT._slowAnyDeserialize(Self.self, from: any)
   }
-  public func _pack() throws -> GoogleCloudWKT.Struct {
-    return try GoogleCloudWKT._slowAnySerialize(message: self)
+  public func _pack() throws -> GoogleWKT.Struct {
+    return try GoogleWKT._slowAnySerialize(message: self)
   }
 }

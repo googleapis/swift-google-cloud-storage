@@ -14,7 +14,7 @@
 
 import Crypto
 import Foundation
-@_spi(GoogleCloudInternal) import GoogleCloudGax
+@_spi(GoogleCloudInternal) import GoogleGax
 @testable import GoogleCloudStorage
 import NIOCore
 import Testing
