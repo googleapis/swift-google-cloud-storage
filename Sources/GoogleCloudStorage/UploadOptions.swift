@@ -181,9 +181,9 @@ public struct StoragePreconditions: Sendable {
 
   public init() {}
 
-  public func with(_ config: (inout Self) -> Void) -> Self {
+  public func with(_ config: (inout Self) throws -> Void) rethrows -> Self {
     var copy = self
-    config(&copy)
+    try config(&copy)
     return copy
   }
 }
@@ -231,9 +231,9 @@ public struct ObjectRetention: Sendable, Codable, Equatable {
 
   public init() {}
 
-  public func with(_ config: (inout Self) -> Void) -> Self {
+  public func with(_ config: (inout Self) throws -> Void) rethrows -> Self {
     var copy = self
-    config(&copy)
+    try config(&copy)
     return copy
   }
 }
@@ -245,9 +245,9 @@ public struct ObjectOwner: Sendable, Codable, Equatable {
 
   public init() {}
 
-  public func with(_ config: (inout Self) -> Void) -> Self {
+  public func with(_ config: (inout Self) throws -> Void) rethrows -> Self {
     var copy = self
-    config(&copy)
+    try config(&copy)
     return copy
   }
 }
@@ -350,9 +350,9 @@ public struct UploadMetadata: Sendable, Codable, Equatable {
 
   public init() {}
 
-  public func with(_ config: (inout Self) -> Void) -> Self {
+  public func with(_ config: (inout Self) throws -> Void) rethrows -> Self {
     var copy = self
-    config(&copy)
+    try config(&copy)
     return copy
   }
 }
@@ -592,9 +592,9 @@ public struct UploadOptions: Sendable {
 
   public init() {}
 
-  public func with(_ config: (inout Self) -> Void) -> Self {
+  public func with(_ config: (inout Self) throws -> Void) rethrows -> Self {
     var copy = self
-    config(&copy)
+    try config(&copy)
     return copy
   }
 }
