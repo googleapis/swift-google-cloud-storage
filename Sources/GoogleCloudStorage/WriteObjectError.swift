@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import Foundation
+public import GoogleGax
 
 /// Errors thrown by the write object API.
 ///
@@ -20,10 +20,6 @@ import Foundation
 ///   enumeration in minor or patch releases. Always handle unexpected cases using an `@unknown default:`
 ///   clause in `switch` statements.
 public enum WriteObjectError: Error, Sendable {
-  /// The local source is smaller than the offset reported by GCS.
-  /// Indicates the source was modified or truncated.
-  case localSourceTooSmall(localSize: UInt64, gcsOffset: UInt64)
-
   /// The resumable session has expired (usually after 7 days) or was not found.
   case sessionExpired(uploadId: String, underlyingError: Error?)
 
@@ -41,4 +37,17 @@ public enum WriteObjectError: Error, Sendable {
 
   /// The range header returned by GCS is invalid.
   case invalidRangeHeader(String)
+
+  /// A request or service error occurred during the write operation.
+  case requestError(RequestError)
+
+  /// An error occurred while reading from or seeking the write object source.
+  case sourceError(any Error)
+
+  package static func fromSourceError(_ error: any Error) -> WriteObjectError {
+    if let writeError = error as? WriteObjectError {
+      return writeError
+    }
+    return .sourceError(error)
+  }
 }
