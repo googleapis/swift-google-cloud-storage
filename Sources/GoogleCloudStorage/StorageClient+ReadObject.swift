@@ -17,18 +17,29 @@ import Foundation
 import NIOHTTP1
 
 extension StorageClient {
-  /// Reads (downloads) an object from Cloud Storage as an async sequence of `ByteChunk` chunks.
+  /// Starts an object download from Cloud Storage.
+  ///
+  /// Iterate over ``ReadObjectHandle/body`` on the returned ``ReadObjectHandle`` to stream the
+  /// object's content as an asynchronous sequence of ``ByteChunk`` chunks, or `await`
+  /// ``ReadObjectHandle/metadata`` to inspect the object's metadata.
+  ///
+  /// ```swift
+  /// let download = client.readObject(from: "my-bucket", object: "file.txt")
+  /// for try await chunk in download.body {
+  ///   // Process ByteChunk chunk
+  /// }
+  /// ```
   ///
   /// - Parameters:
   ///   - bucket: The GCS bucket name.
   ///   - object: The GCS object name.
   ///   - options: Configuration options for the read operation.
-  /// - Returns: A `ReadObjectTask` containing initial object metadata and streaming body sequence.
+  /// - Returns: A ``ReadObjectHandle`` providing access to the object's ``ReadObjectHandle/metadata`` and streaming ``ReadObjectHandle/body``.
   public func readObject(
     from bucket: String,
     object: String,
     options: ReadObjectOptions = .init()
-  ) -> ReadObjectTask {
+  ) -> ReadObjectHandle {
     let effectiveOptions = options.withDefaults(self.options.readObject)
     let resumeLoop = _ResumeLoop(
       resumePolicy: effectiveOptions.resumePolicy
@@ -43,7 +54,7 @@ extension StorageClient {
       httpClient: inner,
       resumeLoop: resumeLoop
     )
-    return ReadObjectTask(coordinator: coordinator)
+    return ReadObjectHandle(coordinator: coordinator)
   }
 
   internal static func parseReadObjectMetadata(
