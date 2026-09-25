@@ -257,16 +257,10 @@ import Testing
     let firstPart = Data(repeating: 42, count: 8)
 
     let firstPartCRC = _CRC32C.compute(firstPart)
-    let firstPartBigEndian = firstPartCRC.bigEndian
-    var firstPartBytes = [UInt8]()
-    withUnsafeBytes(of: firstPartBigEndian) { firstPartBytes = Array($0) }
-    let runningHashHeader = "crc32c=" + Data(firstPartBytes).base64EncodedString()
+    let runningHashHeader = "crc32c=" + crc32cBase64(firstPartCRC)
 
     let fullCRC = _CRC32C.compute(fullData)
-    let fullBigEndian = fullCRC.bigEndian
-    var fullBytes = [UInt8]()
-    withUnsafeBytes(of: fullBigEndian) { fullBytes = Array($0) }
-    let expectedFullHashHeader = "crc32c=" + Data(fullBytes).base64EncodedString()
+    let expectedFullHashHeader = "crc32c=" + crc32cBase64(fullCRC)
 
     let source = BytesSource(data: fullData)
     let queryUrl = registry.url("/upload/storage/v1/b/\(bucket)/o?upload_id=running-hash-id")
@@ -2767,7 +2761,9 @@ import Testing
     let client = try makeClient(registry: registry)
 
     let task = Task {
-      withUnsafeCurrentTask { $0?.cancel() }
+      // SAFETY: The `UnsafeCurrentTask` reference is only used synchronously to cancel the current
+      // task and does not escape the closure.
+      unsafe withUnsafeCurrentTask { unsafe $0?.cancel() }
       return try await client.writeObject(source, to: bucket, as: objectName)
     }
 
@@ -2788,7 +2784,9 @@ import Testing
     let client = try makeClient(registry: registry)
 
     let task = Task {
-      withUnsafeCurrentTask { $0?.cancel() }
+      // SAFETY: The `UnsafeCurrentTask` reference is only used synchronously to cancel the current
+      // task and does not escape the closure.
+      unsafe withUnsafeCurrentTask { unsafe $0?.cancel() }
       return try await client.writeObject(source, to: bucket, as: objectName)
     }
 
@@ -2847,7 +2845,9 @@ import Testing
     let client = try makeClient(registry: registry)
 
     let task = Task {
-      withUnsafeCurrentTask { $0?.cancel() }
+      // SAFETY: The `UnsafeCurrentTask` reference is only used synchronously to cancel the current
+      // task and does not escape the closure.
+      unsafe withUnsafeCurrentTask { unsafe $0?.cancel() }
       return try await client.resumeWriteObject(source, uploadId: queryUrl.absoluteString)
     }
 

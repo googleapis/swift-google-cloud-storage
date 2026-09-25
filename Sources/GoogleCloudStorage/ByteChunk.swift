@@ -49,8 +49,11 @@ public struct ByteChunk: Sendable, ContiguousBytes {
   }
 
   /// Creates a byte chunk from a contiguous raw buffer pointer.
+  // Marked `@safe` to override SE-0458's implicit `@unsafe` inference on `UnsafeRawBufferPointer`:
+  // `NIOCore.ByteBuffer(bytes:)` immediately copies `bufferPointer.count` bytes into managed storage.
+  @safe
   public init(_ bufferPointer: UnsafeRawBufferPointer) {
-    self.storage = .byteBuffer(NIOCore.ByteBuffer(bytes: bufferPointer))
+    self.storage = .byteBuffer(unsafe NIOCore.ByteBuffer(bytes: bufferPointer))
   }
 }
 
@@ -74,37 +77,49 @@ extension ByteChunk {
   }
 
   /// Calls a closure with a pointer to the contiguous bytes without copying.
+  // Marked `@safe` (matching `Array.withUnsafeBytes` in the Swift stdlib) to override SE-0458's
+  // implicit `@unsafe` inference from the `UnsafeRawBufferPointer` closure argument: `ByteChunk`
+  // owns the backing storage and guarantees the pointer's lifetime and bounds for `body`'s duration.
+  @safe
   public func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R {
     switch storage {
     case .data(let data):
-      return try data.withUnsafeBytes(body)
+      // `Foundation.Data.withUnsafeBytes` is not yet marked `@safe` in `FoundationEssentials`.
+      return try unsafe data.withUnsafeBytes(body)
     case .byteBuffer(let buffer):
-      return try buffer.withUnsafeReadableBytes(body)
+      // `NIOCore.ByteBuffer.withUnsafeReadableBytes` is not yet marked `@safe` in SwiftNIO.
+      return try unsafe buffer.withUnsafeReadableBytes(body)
     }
   }
 
   /// Executes a closure on the sequence's contiguous storage.
+  // Marked `@safe` (matching `Sequence.withContiguousStorageIfAvailable` in the Swift stdlib) because
+  // the pointer yielded to `body` is guaranteed valid for the duration of the call.
+  @safe
   @inlinable
   public func withContiguousStorageIfAvailable<R>(
     _ body: (UnsafeBufferPointer<UInt8>) throws -> R
   ) rethrows -> R? {
     try withUnsafeBytes { rawBuffer in
-      try rawBuffer.withMemoryRebound(to: UInt8.self) { buffer in
-        try body(buffer)
+      // SAFETY: Rebinding raw bytes to `UInt8` is always trivial and alignment-safe (stride == 1).
+      try unsafe rawBuffer.withMemoryRebound(to: UInt8.self) { buffer in
+        try unsafe body(buffer)
       }
     }
   }
 
   /// The underlying contents as a `Foundation.Data` instance.
   ///
-  /// - Returns: The original `Data` with zero copies if backed by `Data`,
-  ///   or copies the bytes into a new `Data` instance if backed by an internal network buffer.
+  /// - Returns: The original `Data` with zero copies if backed by `Data`, or a `Data` instance
+  ///   created via SwiftNIO's automatic byte transfer strategy if backed by an internal network
+  ///   buffer (copying buffers up to 256 KiB and sharing underlying buffer storage without copying
+  ///   for larger buffers).
   public var data: Data {
     switch storage {
     case .data(let data):
       return data
     case .byteBuffer(let buffer):
-      return buffer.withUnsafeReadableBytes { Data($0) }
+      return Data(buffer: buffer)
     }
   }
 
@@ -117,18 +132,8 @@ extension ByteChunk {
     case .byteBuffer(let buffer):
       return buffer
     case .data(let data):
-      return data.withUnsafeBytes { rawBuffer in
-        var buf = ByteBufferAllocator().buffer(capacity: rawBuffer.count)
-        buf.writeBytes(rawBuffer)
-        return buf
-      }
+      return NIOCore.ByteBuffer(data: data)
     }
-  }
-
-  /// Returns the bytes as a newly allocated `[UInt8]` array.
-  @inlinable
-  public var byteArray: [UInt8] {
-    withUnsafeBytes { Array($0) }
   }
 
   /// Returns a zero-copy sub-chunk within the specified byte range.
@@ -181,9 +186,11 @@ extension ByteChunk: Equatable {
     return lhs.withUnsafeBytes { lhsBytes in
       rhs.withUnsafeBytes { rhsBytes in
         guard let lhsBase = lhsBytes.baseAddress, let rhsBase = rhsBytes.baseAddress else {
-          return lhsBytes.isEmpty && rhsBytes.isEmpty
+          // `UnsafeRawBufferPointer.isEmpty` requires `unsafe` because its `Collection` conformance is `@unsafe`.
+          return unsafe lhsBytes.isEmpty && rhsBytes.isEmpty
         }
-        return memcmp(lhsBase, rhsBase, lhsBytes.count) == 0
+        // SAFETY: `lhs.count == rhs.count` is verified above, and both pointers are non-nil and valid.
+        return unsafe memcmp(lhsBase, rhsBase, lhsBytes.count) == 0
       }
     }
   }
@@ -192,7 +199,8 @@ extension ByteChunk: Equatable {
 extension ByteChunk: Hashable {
   @inlinable
   public func hash(into hasher: inout Hasher) {
-    withUnsafeBytes { hasher.combine(bytes: $0) }
+    // SAFETY: `Hasher.combine(bytes:)` is implicitly `@unsafe` due to its `UnsafeRawBufferPointer` parameter.
+    withUnsafeBytes { unsafe hasher.combine(bytes: $0) }
   }
 }
 

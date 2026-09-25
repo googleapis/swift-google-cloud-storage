@@ -924,7 +924,7 @@ extension StorageClient {
 
     let metadataJson = try GoogleWKT._ProtoJSONEncoder().encode(metadata ?? WriteObjectMetadata())
     var buffer = ByteBufferAllocator().buffer(capacity: metadataJson.count)
-    _ = metadataJson.withUnsafeBytes { buffer.writeBytes($0) }
+    buffer.writeBytes(metadataJson)
     request.setBody(buffer: buffer)
     return request
   }
@@ -999,7 +999,9 @@ extension StorageClient {
       if trimmed.hasPrefix("crc32c=") {
         let b64 = String(trimmed.dropFirst("crc32c=".count))
         guard let data = Data(base64Encoded: b64), data.count == 4 else { return nil }
-        let bigEndian = data.withUnsafeBytes { $0.load(as: UInt32.self) }
+        // SAFETY: `data.count == 4` matches `MemoryLayout<UInt32>.size`, and `loadUnaligned`
+        // avoids alignment requirements on `Data`'s backing buffer.
+        let bigEndian = unsafe data.withUnsafeBytes { unsafe $0.loadUnaligned(as: UInt32.self) }
         return UInt32(bigEndian: bigEndian)
       }
     }

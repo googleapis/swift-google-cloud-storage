@@ -55,7 +55,7 @@ import Testing
 
     let downloadUrl = registry.url("/storage/v1/b/\(bucket)/o/\(objectName)?alt=media")
     let computedCrc = _CRC32C.compute(payload)
-    let crcBase64 = withUnsafeBytes(of: computedCrc.bigEndian) { Data($0).base64EncodedString() }
+    let crcBase64 = crc32cBase64(computedCrc)
     let md5Base64 = Data(Insecure.MD5.hash(data: payload)).base64EncodedString()
 
     let headers = [
@@ -733,7 +733,7 @@ import Testing
     let chunk3 = Data("Chunk-3".utf8)
     let fullPayload = chunk1 + chunk2 + chunk3
     let computedCrc = _CRC32C.compute(fullPayload)
-    let crcBase64 = withUnsafeBytes(of: computedCrc.bigEndian) { Data($0).base64EncodedString() }
+    let crcBase64 = crc32cBase64(computedCrc)
 
     let downloadUrl = registry.url("/storage/v1/b/\(bucket)/o/\(objectName)?alt=media")
     let headers = [
@@ -1462,7 +1462,9 @@ import Testing
     let download: ReadObjectHandle = client.readObject(from: bucket, object: objectName)
 
     let task = Task {
-      withUnsafeCurrentTask { $0?.cancel() }
+      // SAFETY: The `UnsafeCurrentTask` reference is only used synchronously to cancel the current
+      // task and does not escape the closure.
+      unsafe withUnsafeCurrentTask { unsafe $0?.cancel() }
       return try await download.metadata
     }
 
@@ -1498,7 +1500,9 @@ import Testing
       var received = Data()
       for try await chunk in download.body {
         received.append(contentsOf: chunk)
-        withUnsafeCurrentTask { $0?.cancel() }
+        // SAFETY: The `UnsafeCurrentTask` reference is only used synchronously to cancel the
+        // current task and does not escape the closure.
+        unsafe withUnsafeCurrentTask { unsafe $0?.cancel() }
       }
       return received
     }

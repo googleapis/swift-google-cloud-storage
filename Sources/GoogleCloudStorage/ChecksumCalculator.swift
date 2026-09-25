@@ -22,8 +22,8 @@ protocol ChecksumCalculator: Sendable {
   /// The algorithm name matching the HTTP header tag (e.g. "crc32c", "md5").
   var algorithmName: String { get }
 
-  /// Incrementally updates the checksum state from raw memory.
-  mutating func update(_ buffer: UnsafeRawBufferPointer)
+  /// Incrementally updates the checksum state from a byte chunk.
+  mutating func update(_ buffer: ByteChunk)
 
   /// Finalizes the checksum and returns the Base64-encoded string.
   func finalize() -> String
@@ -32,17 +32,12 @@ protocol ChecksumCalculator: Sendable {
 extension ChecksumCalculator {
   /// Convenience helper for Data chunks.
   mutating func update(_ data: Data) {
-    data.withUnsafeBytes { update($0) }
-  }
-
-  /// Convenience helper for ByteChunk chunks.
-  mutating func update(_ buffer: ByteChunk) {
-    buffer.withUnsafeBytes { update($0) }
+    update(ByteChunk(data))
   }
 
   /// Convenience helper for NIOCore.ByteBuffer chunks.
   mutating func update(_ buffer: NIOCore.ByteBuffer) {
-    buffer.withUnsafeReadableBytes { update($0) }
+    update(ByteChunk(buffer))
   }
 }
 
@@ -55,13 +50,12 @@ struct CRC32CCalculator: ChecksumCalculator {
     self.crc32c = seed != nil ? _CRC32C(seed: seed!) : _CRC32C()
   }
 
-  mutating func update(_ buffer: UnsafeRawBufferPointer) {
-    crc32c.update(buffer)
+  mutating func update(_ buffer: ByteChunk) {
+    buffer.withUnsafeBytes { crc32c.update($0) }
   }
 
   func finalize() -> String {
-    let bigEndian = crc32c.finalize().bigEndian
-    return withUnsafeBytes(of: bigEndian) { Data($0).base64EncodedString() }
+    crc32cBase64(crc32c.finalize())
   }
 }
 
@@ -72,8 +66,10 @@ struct MD5Calculator: ChecksumCalculator {
 
   init() {}
 
-  mutating func update(_ buffer: UnsafeRawBufferPointer) {
-    md5.update(bufferPointer: buffer)
+  mutating func update(_ buffer: ByteChunk) {
+    // SAFETY: `Insecure.MD5.update(bufferPointer:)` is implicitly `@unsafe` due to its
+    // `UnsafeRawBufferPointer` parameter; `ByteChunk.withUnsafeBytes` guarantees pointer validity.
+    buffer.withUnsafeBytes { unsafe md5.update(bufferPointer: $0) }
   }
 
   func finalize() -> String {
@@ -96,7 +92,7 @@ struct ProvidedChecksumCalculator: ChecksumCalculator {
     }
   }
 
-  mutating func update(_ buffer: UnsafeRawBufferPointer) {
+  mutating func update(_ buffer: ByteChunk) {
     // No-op: value is static and already provided
   }
 

@@ -46,7 +46,7 @@ struct StorageClientReadObjectChecksumIntegrationTests {
     #expect(obj.name == objName)
 
     let computedCrc = _CRC32C.compute(data)
-    let crcBase64 = withUnsafeBytes(of: computedCrc.bigEndian) { Data($0).base64EncodedString() }
+    let crcBase64 = crc32cBase64(computedCrc)
     let md5Base64 = Data(Insecure.MD5.hash(data: data)).base64EncodedString()
 
     return FixtureState(
@@ -211,9 +211,7 @@ struct StorageClientReadObjectChecksumIntegrationTests {
     // 2. Ranged download with user-provided expected range checksums
     let rangeSlice = fixture.data.subdata(in: 0..<10)
     let rangeCrc = _CRC32C.compute(rangeSlice)
-    let rangeCrcBase64 = withUnsafeBytes(of: rangeCrc.bigEndian) {
-      Data($0).base64EncodedString()
-    }
+    let rangeCrcBase64 = crc32cBase64(rangeCrc)
     let rangeMd5Base64 = Data(Insecure.MD5.hash(data: rangeSlice)).base64EncodedString()
 
     // 2a. User-provided range CRC32C
