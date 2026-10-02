@@ -23,7 +23,7 @@ public import GoogleWKT
 ///   enumeration in minor or patch releases. Always handle unexpected cases using an `@unknown default:`
 ///   clause in `switch` statements.
 public enum CustomerEncryptionKeyError: Error, Sendable, Equatable,
-  CustomStringConvertible
+  CustomStringConvertible, CustomDebugStringConvertible
 {
   /// The key length in bytes does not match the expected length required by the algorithm.
   case invalidKeyLength(actual: Int, expected: Int)
@@ -38,6 +38,15 @@ public enum CustomerEncryptionKeyError: Error, Sendable, Equatable,
         "Invalid customer encryption key length: got \(actual) bytes, expected \(expected) bytes."
     case .invalidBase64Key:
       return "Customer encryption key is not a valid base64-encoded string."
+    }
+  }
+
+  public var debugDescription: String {
+    switch self {
+    case .invalidKeyLength(let actual, let expected):
+      return "CustomerEncryptionKeyError.invalidKeyLength(actual: \(actual), expected: \(expected))"
+    case .invalidBase64Key:
+      return "CustomerEncryptionKeyError.invalidBase64Key"
     }
   }
 }

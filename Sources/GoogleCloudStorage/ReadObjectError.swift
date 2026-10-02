@@ -19,7 +19,9 @@ public import GoogleGax
 /// - Note: As Google Cloud APIs and client libraries evolve, new error cases may be added to this
 ///   enumeration in minor or patch releases. Always handle unexpected cases using an `@unknown default:`
 ///   clause in `switch` statements.
-public enum ReadObjectError: Error, Sendable {
+public enum ReadObjectError: Error, Sendable, CustomStringConvertible,
+  CustomDebugStringConvertible
+{
   /// The downloaded payload checksum did not match the expected checksum.
   case checksumMismatch(expected: String, actual: String, algorithm: String)
 
@@ -34,4 +36,37 @@ public enum ReadObjectError: Error, Sendable {
 
   /// A request or service error occurred during the read operation.
   case requestError(RequestError)
+
+  public var description: String {
+    switch self {
+    case .checksumMismatch(let expected, let actual, let algorithm):
+      return "Checksum mismatch using \(algorithm): expected '\(expected)', got '\(actual)'"
+    case .invalidRangeHeader(let header):
+      return "Invalid range header: '\(header)'"
+    case .resumeFailed(let bytesReceived, let underlyingError):
+      return "Resume download failed after receiving \(bytesReceived) bytes: \(underlyingError)"
+    case .unexpectedServerResponse(let statusCode, let message):
+      return "Unexpected server response with status code \(statusCode): \(message)"
+    case .requestError(let error):
+      return "\(error)"
+    }
+  }
+
+  public var debugDescription: String {
+    switch self {
+    case .checksumMismatch(let expected, let actual, let algorithm):
+      return
+        "ReadObjectError.checksumMismatch(expected: \(String(reflecting: expected)), actual: \(String(reflecting: actual)), algorithm: \(String(reflecting: algorithm)))"
+    case .invalidRangeHeader(let header):
+      return "ReadObjectError.invalidRangeHeader(\(String(reflecting: header)))"
+    case .resumeFailed(let bytesReceived, let underlyingError):
+      return
+        "ReadObjectError.resumeFailed(bytesReceived: \(bytesReceived), underlyingError: \(String(reflecting: underlyingError)))"
+    case .unexpectedServerResponse(let statusCode, let message):
+      return
+        "ReadObjectError.unexpectedServerResponse(statusCode: \(statusCode), message: \(String(reflecting: message)))"
+    case .requestError(let error):
+      return "ReadObjectError.requestError(\(String(reflecting: error)))"
+    }
+  }
 }

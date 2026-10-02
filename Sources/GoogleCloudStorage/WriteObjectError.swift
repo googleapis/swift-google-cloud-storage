@@ -19,7 +19,9 @@ public import GoogleGax
 /// - Note: As Google Cloud APIs and client libraries evolve, new error cases may be added to this
 ///   enumeration in minor or patch releases. Always handle unexpected cases using an `@unknown default:`
 ///   clause in `switch` statements.
-public enum WriteObjectError: Error, Sendable {
+public enum WriteObjectError: Error, Sendable, CustomStringConvertible,
+  CustomDebugStringConvertible
+{
   /// GCS returned an unexpected response.
   case unexpectedServerResponse(statusCode: Int, message: String)
 
@@ -40,5 +42,36 @@ public enum WriteObjectError: Error, Sendable {
       return writeError
     }
     return .sourceError(error)
+  }
+
+  public var description: String {
+    switch self {
+    case .unexpectedServerResponse(let statusCode, let message):
+      return "Unexpected server response with status code \(statusCode): \(message)"
+    case .internalError(let message):
+      return "Internal error in upload library: \(message)"
+    case .invalidRangeHeader(let header):
+      return "Invalid range header: '\(header)'"
+    case .requestError(let error):
+      return "\(error)"
+    case .sourceError(let error):
+      return "Source error: \(error)"
+    }
+  }
+
+  public var debugDescription: String {
+    switch self {
+    case .unexpectedServerResponse(let statusCode, let message):
+      return
+        "WriteObjectError.unexpectedServerResponse(statusCode: \(statusCode), message: \(String(reflecting: message)))"
+    case .internalError(let message):
+      return "WriteObjectError.internalError(\(String(reflecting: message)))"
+    case .invalidRangeHeader(let header):
+      return "WriteObjectError.invalidRangeHeader(\(String(reflecting: header)))"
+    case .requestError(let error):
+      return "WriteObjectError.requestError(\(String(reflecting: error)))"
+    case .sourceError(let error):
+      return "WriteObjectError.sourceError(\(String(reflecting: error)))"
+    }
   }
 }
