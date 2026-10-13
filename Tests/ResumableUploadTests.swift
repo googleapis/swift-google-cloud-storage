@@ -2257,8 +2257,8 @@ import Testing
     #expect(requests.first?.url?.absoluteString == initUrl.absoluteString)
   }
 
-  /// Tests that resumable uploads are always idempotent and retry transient failures even if `options.idempotency = false`.
-  @Test func resumableUploadIgnoresIdempotencyFalseAndRetries() async throws {
+  /// Tests that resumable uploads are always idempotent and retry transient failures even if `options.idempotent = false`.
+  @Test func resumableUploadIgnoresIdempotentFalseAndRetries() async throws {
     let registry = MockRegistry.create()
     let bucket = "test-bucket"
     let objectName = "test-resumable-idempotency-false"
@@ -2292,7 +2292,7 @@ import Testing
 
     let client = try makeClient(registry: registry)
     let options = WriteObjectOptions().with {
-      $0.idempotency = false
+      $0.idempotent = false
     }
     let object = try await client.writeObject(source, to: bucket, as: objectName, options: options)
 
